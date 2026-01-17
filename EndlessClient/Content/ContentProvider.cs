@@ -135,25 +135,28 @@ namespace EndlessClient.Content
             foreach (var sfxFile in GetSoundEffects("sfx*.wav"))
                 _sfx[id++] = sfxFile;
             if (_sfx.Count < 81)
-                throw new FileNotFoundException("Unexpected number of SFX");
+                throw new FileNotFoundException($"Unexpected number of SFX (Expected 81, Found {_sfx.Count})");
         }
 
         private void LoadHarp()
         {
             _harpNotes.AddRange(GetSoundEffects("har*.wav"));
             if (_harpNotes.Count != 36)
-                throw new FileNotFoundException("Unexpected number of harp SFX");
+                throw new FileNotFoundException($"Unexpected number of harp SFX (Expected 36, Found {_harpNotes.Count})");
         }
 
         private void LoadGuitar()
         {
             _guitarNotes.AddRange(GetSoundEffects("gui*.wav"));
             if (_guitarNotes.Count != 36)
-                throw new FileNotFoundException("Unexpected number of guitar SFX");
+                throw new FileNotFoundException($"Unexpected number of guitar SFX (Expected 36, Found {_guitarNotes.Count})");
         }
 
         private static IEnumerable<SoundEffect> GetSoundEffects(string filter)
         {
+            if (!Directory.Exists(Constants.SfxDirectory))
+                throw new DirectoryNotFoundException($"SFX directory not found: {Constants.SfxDirectory}");
+
             var sfxFiles = Directory.GetFiles(Constants.SfxDirectory, filter).ToList();
             sfxFiles.Sort();
 

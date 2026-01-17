@@ -53,7 +53,7 @@ namespace EndlessClient.GameExecution
             }
             catch (FileNotFoundException fnfe)
             {
-                ShowErrorMessage(fnfe.Message, "Missing required file");
+                ShowErrorMessage(fnfe.Message, "Missing required file: " + fnfe.FileName);
                 return false;
             }
             catch (LibraryLoadException lle)

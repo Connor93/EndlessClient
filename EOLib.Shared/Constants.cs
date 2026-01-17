@@ -14,7 +14,7 @@
 
         public const int GhostTime = 5;
 
-        public const int ExpectedNumberOfDataFiles = 12;
+        public const int ExpectedNumberOfDataFiles = 13;
 
         public static string Default_Config_File { get; } = PathResolver.GetModifiablePath("config/settings.ini");
 

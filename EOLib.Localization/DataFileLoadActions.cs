@@ -22,19 +22,19 @@ namespace EOLib.Localization
         public void LoadDataFiles()
         {
             if (!Directory.Exists(Constants.DataFilePath))
-                throw new DataFileLoadException();
+                throw new DataFileLoadException($"Data directory not found: {Constants.DataFilePath}");
 
             var files = Directory.GetFiles(Constants.DataFilePath, "*.edf")
                                  .OrderBy(x => x)
                                  .ToArray();
             if (files.Length != Constants.ExpectedNumberOfDataFiles)
-                throw new DataFileLoadException();
+                throw new DataFileLoadException($"Invalid number of data files! Found {files.Length}, expected {Constants.ExpectedNumberOfDataFiles}");
 
             _dataFileRepository.DataFiles.Clear();
             for (int i = 1; i <= Constants.ExpectedNumberOfDataFiles; ++i)
             {
                 if (!DataFileNameIsValid(i, files[i - 1]))
-                    throw new DataFileLoadException();
+                    throw new DataFileLoadException($"Invalid data file name! Expected {string.Format(Constants.DataFileFormat, i)}, found {files[i - 1]}");
 
                 var fileToLoad = (DataFiles)i;
                 _dataFileRepository.DataFiles[fileToLoad] = _edfLoaderService.LoadFile(files[i - 1], fileToLoad);

@@ -26,6 +26,9 @@ namespace EOLib.IO.Services
 
         public IEnumerable<IPubFile<TRecord>> LoadPubFromExplicitFile(string directory, string searchPattern)
         {
+            if (!Directory.Exists(directory))
+                throw new DirectoryNotFoundException($"Pub directory not found: {directory}");
+
             var files = Directory.GetFiles(directory, searchPattern, SearchOption.TopDirectoryOnly);
             if (files.Length == 0)
                 throw new ArgumentException($"No pub files matching {searchPattern} were found in {directory}", nameof(searchPattern));

@@ -8,5 +8,8 @@ namespace EOLib.Localization
 
         public DataFileLoadException()
             : base(ExceptionMessage) { }
+
+        public DataFileLoadException(string message)
+            : base(message) { }
     }
 }
