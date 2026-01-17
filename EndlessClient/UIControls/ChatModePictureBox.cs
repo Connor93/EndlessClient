@@ -14,6 +14,7 @@ namespace EndlessClient.UIControls
     {
         private readonly IChatModeCalculator _chatModeCalculator;
         private readonly IHudControlProvider _hudControlProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         public enum ChatMode
         {
@@ -37,14 +38,15 @@ namespace EndlessClient.UIControls
         {
             _chatModeCalculator = chatModeCalculator;
             _hudControlProvider = hudControlProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
 
             _lastChat = "";
             _endMuteTime = Option.None<DateTime>();
 
             Texture = nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 31);
 
-            DrawArea = new Rectangle(16, 309, Texture.Width, Texture.Height / 8 - 2);
-            SourceRectangle = new Rectangle(0, 0, Texture.Width, Texture.Height / 8 - 2);
+            DrawArea = new Rectangle(16, 309, Texture.Width, Texture.Height / 8 - 4);
+            SourceRectangle = new Rectangle(0, 0, Texture.Width, Texture.Height / 8 - 4);
 
             if (clientWindowSizeProvider.Resizable)
             {
@@ -95,7 +97,14 @@ namespace EndlessClient.UIControls
             if (!SourceRectangle.HasValue)
                 throw new InvalidOperationException("SourceRectangle is expected to have a value.");
 
-            SourceRectangle = new Rectangle(0, (int)((int)mode * (Texture.Height / 8f)), Texture.Width, Texture.Height / 8 - 2);
+            SourceRectangle = new Rectangle(0, (int)((int)mode * (Texture.Height / 8f)), Texture.Width, Texture.Height / 8 - 4);
+
+            var yOffset = mode == ChatMode.NoText ? 0 : 2;
+
+            if (_clientWindowSizeProvider.Resizable)
+                DrawPosition = new Vector2(122, _clientWindowSizeProvider.Height - 39 + yOffset);
+            else
+                DrawArea = new Rectangle(16, 309 + yOffset, Texture.Width, Texture.Height / 8 - 4);
         }
 
         private ChatTextBox ChatTextBox => _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox);

@@ -304,7 +304,7 @@ namespace EndlessClient.Rendering.Sprites
 
         public ISpriteSheet GetSkinTexture(CharacterRenderProperties characterRenderProperties)
         {
-            const int SheetRows = 7;
+            const int SheetRows = 12;  // etheos uses 12 skin colors
             var sheetColumns = 4;
             var gfxNum = 1;
 

@@ -48,7 +48,7 @@ namespace EOLib.PacketHandlers.Warp
         public override bool HandlePacket(WarpRequestServerPacket packet)
         {
             if (_mapStateRepository.MapWarpState != WarpState.None)
-                throw new InvalidOperationException("Attempted to warp while another warp was in progress");
+                return true;
 
             _mapStateRepository.MapWarpState = WarpState.WarpStarted;
 

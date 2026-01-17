@@ -62,7 +62,7 @@ namespace EOLib.PacketHandlers.Warp
             }
 
             var characters = packet.Nearby.Characters.Select(Character.FromNearby).ToList();
-            var updatedMainCharacter = characters.Single(x => x.ID == _characterRepository.MainCharacter.ID);
+            var updatedMainCharacter = characters.First(x => x.ID == _characterRepository.MainCharacter.ID);
             var withoutMainCharacter = characters.Except(new[] { updatedMainCharacter });
 
             var npcs = packet.Nearby.Npcs.Select(DomainNPC.FromNearby);

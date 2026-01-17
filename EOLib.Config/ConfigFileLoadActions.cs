@@ -58,6 +58,9 @@ namespace EOLib.Config
             _configRepository.InGameWidth = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.InGameWidth, out tempInt) ? tempInt : 0;
             _configRepository.InGameHeight = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.InGameHeight, out tempInt) ? tempInt : 0;
 
+            string theme;
+            _configRepository.Theme = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.Theme, out theme) ? theme : string.Empty;
+
             string host;
             _configRepository.Host = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Host, out host) ? host : ConfigDefaults.Host;
             _configRepository.Port = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Port, out tempInt) ? tempInt : ConfigDefaults.Port;

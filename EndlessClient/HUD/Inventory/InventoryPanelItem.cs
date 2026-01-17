@@ -60,7 +60,7 @@ namespace EndlessClient.HUD.Inventory
         // uses absolute coordinates
         protected override Rectangle GridArea => new Rectangle(
             _parentContainer.DrawPositionWithParentOffset.ToPoint() + new Point(12, 8),
-            new Point(363, 102));
+            new Point(441, 102));
 
         public InventoryPanelItem(IItemNameColorService itemNameColorService,
                                   InventoryPanel inventoryPanel,

@@ -53,25 +53,25 @@ namespace EndlessClient.Dialogs
             _characterIconSheet = GraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 32, true);
             _characterIconSourceRect = Option.None<Rectangle>();
 
-            _name = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 22, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _name = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 38, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _name.SetParentControl(this);
 
-            _home = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 52, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _home = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 177, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _home.SetParentControl(this);
 
-            _class = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 82, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _class = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 82, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _class.SetParentControl(this);
 
-            _partner = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 112, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _partner = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 147, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _partner.SetParentControl(this);
 
-            _title = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 142, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _title = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 105, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _title.SetParentControl(this);
 
-            _guild = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 202, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _guild = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 195, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _guild.SetParentControl(this);
 
-            _rank = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(228, 232, 1, 1), ForeColor = ColorConstants.LightGrayText };
+            _rank = new XNALabel(Constants.FontSize08pt5) { DrawArea = new Rectangle(248, 216, 1, 1), ForeColor = ColorConstants.LightGrayText };
             _rank.SetParentControl(this);
 
             var okButton = new XNAButton(eoDialogButtonService.SmallButtonSheet,

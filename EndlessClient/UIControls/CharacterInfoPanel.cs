@@ -50,14 +50,14 @@ namespace EndlessClient.UIControls
             DrawPosition = new Vector2(334, 36 + characterIndex * 124);
 
             _loginButton = new XNAButton(dialogButtonService.SmallButtonSheet,
-                new Vector2(161, 57),
+                new Vector2(150, 57),
                 dialogButtonService.GetSmallDialogButtonOutSource(SmallButton.Login),
                 dialogButtonService.GetSmallDialogButtonOverSource(SmallButton.Login));
             _loginButton.OnMouseDown += (o, e) => AsyncButtonClick(() => _loginController.LoginToCharacter(_character));
             _loginButton.SetParentControl(this);
 
             _deleteButton = new XNAButton(dialogButtonService.SmallButtonSheet,
-                new Vector2(161, 85),
+                new Vector2(150, 85),
                 dialogButtonService.GetSmallDialogButtonOutSource(SmallButton.Delete),
                 dialogButtonService.GetSmallDialogButtonOverSource(SmallButton.Delete));
             _deleteButton.OnMouseDown += (o, e) => AsyncButtonClick(() => _characterManagementController.DeleteCharacter(_character));
@@ -90,7 +90,7 @@ namespace EndlessClient.UIControls
 
             _characterControl = new CharacterControl(character, rendererFactory)
             {
-                DrawPosition = new Vector2(68, 28)
+                DrawPosition = new Vector2(57, 38)
             };
             _characterControl.SetParentControl(this);
 
@@ -195,17 +195,17 @@ namespace EndlessClient.UIControls
 
         private static Rectangle GetNameLabelLocation()
         {
-            return new Rectangle(165, 26, 89, 22);
+            return new Rectangle(154, 26, 89, 22);
         }
 
         private static Rectangle GetLevelLabelLocation()
         {
-            return new Rectangle(29, 99, 1, 1);
+            return new Rectangle(18, 99, 1, 1);
         }
 
         private Vector2 GetAdminGraphicLocation()
         {
-            return new Vector2(DrawAreaWithParentOffset.X + 109, DrawAreaWithParentOffset.Y + 97);
+            return new Vector2(DrawAreaWithParentOffset.X + 98, DrawAreaWithParentOffset.Y + 97);
         }
 
         private static string CapitalizeName(string name)

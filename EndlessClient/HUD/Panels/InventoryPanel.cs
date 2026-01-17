@@ -27,6 +27,7 @@ using EOLib.Localization;
 using EOLib.Shared;
 using Microsoft.Win32;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Input;
 using Optional;
 using Optional.Collections;
@@ -37,7 +38,7 @@ namespace EndlessClient.HUD.Panels
     public class InventoryPanel : DraggableHudPanel, IHudPanel, IDraggableItemContainer
     {
         public const int InventoryRows = 4;
-        public const int InventoryRowSlots = 14;
+        public const int InventoryRowSlots = 17;
 
         private readonly IInventoryController _inventoryController;
         private readonly IStatusLabelSetter _statusLabelSetter;
@@ -56,8 +57,8 @@ namespace EndlessClient.HUD.Panels
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly List<InventoryPanelItem> _childItems = new List<InventoryPanelItem>();
 
-        private readonly IXNALabel _weightLabel;
-        private readonly IXNAButton _drop, _junk, _paperdoll;
+        //private readonly IXNALabel _weightLabel;
+        private readonly IXNAButton _drop, _junk, _page1, _page2;
         //private readonly ScrollBar _scrollBar;
 
         private Option<CharacterStats> _cachedStats;
@@ -100,30 +101,35 @@ namespace EndlessClient.HUD.Panels
             _configProvider = configProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
 
-            _weightLabel = new XNALabel(Constants.FontSize08pt5)
+            /*_weightLabel = new XNALabel(Constants.FontSize08pt5)
             {
-                DrawArea = new Rectangle(385, 37, 88, 18),
+                DrawArea = new Rectangle(395, 37, 88, 18),
                 ForeColor = ColorConstants.LightGrayText,
                 TextAlign = LabelAlignment.MiddleCenter,
                 Visible = true,
                 AutoSize = false
-            };
+            };*/
 
-            var weirdOffsetSheet = NativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 27);
+            // Using Resource 23 as these contain the theme specific inventory buttons
+            var themeSheet = NativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 23, true);
 
-            _paperdoll = new XNAButton(weirdOffsetSheet, new Vector2(385, 9), new Rectangle(39, 385, 88, 19), new Rectangle(126, 385, 88, 19));
-            _paperdoll.OnMouseEnter += MouseOverButton;
-            _paperdoll.OnMouseDown += (_, _) =>
-            {
-                _inventoryController.ShowPaperdollDialog();
-                _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
-            };
+            // Button 1: Page 1 (Top)
+            _page1 = new XNAButton(themeSheet, new Vector2(453, 7), new Rectangle(0, 0, 23, 26), new Rectangle(23, 0, 23, 26));
+            _page1.OnMouseEnter += MouseOverButton;
+            _page1.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick); // Todo: Handle Page 1 click
 
-            _drop = new XNAButton(weirdOffsetSheet, new Vector2(389, 68), new Rectangle(0, 15, 38, 37), new Rectangle(0, 52, 38, 37));
+            // Button 2: Page 2
+            _page2 = new XNAButton(themeSheet, new Vector2(453, 34), new Rectangle(0, 26, 23, 27), new Rectangle(23, 26, 23, 27));
+            _page2.OnMouseEnter += MouseOverButton;
+            _page2.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick); // Todo: Handle Page 2 click
+
+            // Button 3: Drop
+            _drop = new XNAButton(themeSheet, new Vector2(453, 60), new Rectangle(0, 53, 23, 26), new Rectangle(23, 53, 23, 26));
             _drop.OnMouseEnter += MouseOverButton;
             _drop.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.InventoryPlace);
 
-            _junk = new XNAButton(weirdOffsetSheet, new Vector2(431, 68), new Rectangle(0, 89, 38, 37), new Rectangle(0, 126, 38, 37));
+            // Button 4: Junk (X)
+            _junk = new XNAButton(themeSheet, new Vector2(453, 86), new Rectangle(0, 79, 23, 27), new Rectangle(23, 79, 23, 27));
             _junk.OnMouseEnter += MouseOverButton;
             _junk.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.InventoryPlace);
 
@@ -140,11 +146,14 @@ namespace EndlessClient.HUD.Panels
 
         public override void Initialize()
         {
-            _weightLabel.Initialize();
-            _weightLabel.SetParentControl(this);
+            //_weightLabel.Initialize();
+            //_weightLabel.SetParentControl(this);
 
-            _paperdoll.Initialize();
-            _paperdoll.SetParentControl(this);
+            _page1.Initialize();
+            _page1.SetParentControl(this);
+
+            _page2.Initialize();
+            _page2.SetParentControl(this);
 
             _drop.Initialize();
             _drop.SetParentControl(this);
@@ -181,14 +190,14 @@ namespace EndlessClient.HUD.Panels
                         {
                             var newStats = _characterProvider.MainCharacter.Stats;
                             _cachedStats = Option.Some(newStats);
-                            _weightLabel.Text = $"{newStats[CharacterStat.Weight]} / {newStats[CharacterStat.MaxWeight]}";
+                            //_weightLabel.Text = $"{newStats[CharacterStat.Weight]} / {newStats[CharacterStat.MaxWeight]}";
                         });
                 },
                 none: () =>
                 {
                     var stats = _characterProvider.MainCharacter.Stats;
                     _cachedStats = Option.Some(stats);
-                    _weightLabel.Text = $"{stats[CharacterStat.Weight]} / {stats[CharacterStat.MaxWeight]}";
+                    //_weightLabel.Text = $"{stats[CharacterStat.Weight]} / {stats[CharacterStat.MaxWeight]}";
                 });
 
             if (!_cachedInventory.SetEquals(_characterInventoryProvider.ItemInventory))
@@ -268,7 +277,8 @@ namespace EndlessClient.HUD.Panels
         {
             if (disposing)
             {
-                _paperdoll.OnMouseEnter -= MouseOverButton;
+                _page1.OnMouseEnter -= MouseOverButton;
+                _page2.OnMouseEnter -= MouseOverButton;
                 _drop.OnMouseEnter -= MouseOverButton;
                 _junk.OnMouseEnter -= MouseOverButton;
                 Game.Exiting -= SaveInventoryFile;
@@ -284,11 +294,15 @@ namespace EndlessClient.HUD.Panels
 
         private void MouseOverButton(object sender, MouseStateExtended e)
         {
-            var id = sender == _paperdoll
-                ? EOResourceID.STATUS_LABEL_INVENTORY_SHOW_YOUR_PAPERDOLL
-                : sender == _drop
-                    ? EOResourceID.STATUS_LABEL_INVENTORY_DROP_BUTTON
-                    : EOResourceID.STATUS_LABEL_INVENTORY_JUNK_BUTTON;
+            var id = sender == _drop
+                ? EOResourceID.STATUS_LABEL_INVENTORY_DROP_BUTTON
+                : sender == _junk
+                    ? EOResourceID.STATUS_LABEL_INVENTORY_JUNK_BUTTON
+                    : EOResourceID.STATUS_LABEL_TYPE_BUTTON;
+
+            if (sender == _page1 || sender == _page2)
+                return;
+
             _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_BUTTON, id);
         }
 

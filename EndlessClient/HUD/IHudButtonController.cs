@@ -31,5 +31,7 @@
         void ClickSessionExp();
 
         void ClickQuestStatus();
+
+        void ClickPaperdoll();
     }
 }

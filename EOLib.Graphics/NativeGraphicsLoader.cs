@@ -22,18 +22,13 @@ namespace EOLib.Graphics
             }
             catch (ArgumentException)
             {
-#if DEBUG
-                throw;
-#endif
+                // Resource not found - return empty bytes to use a placeholder texture
+                return Array.Empty<byte>();
             }
 
             if (fileBytes.Length == 0)
             {
-#if DEBUG
-                throw new GFXLoadException(resourceValue, file);
-#else
                 return Array.Empty<byte>();
-#endif
             }
 
             return fileBytes;

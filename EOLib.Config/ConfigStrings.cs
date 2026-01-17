@@ -36,5 +36,7 @@ namespace EOLib.Config
         public const string HearWhisper = "HearWhisper";
         public const string Interaction = "Interaction";
         public const string LogChat = "LogChat";
+
+        public const string Theme = nameof(Theme);
     }
 }

@@ -243,6 +243,8 @@ namespace EndlessClient.Controllers
                 });
             }
 
+
+
             await DispatcherGameComponent.InvokeAsync(() =>
             {
                 _gameStateActions.ChangeToState(GameStates.PlayingTheGame);

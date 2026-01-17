@@ -184,6 +184,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.PassiveSpellsButton, CreateStateChangeButton(InGameStates.PassiveSpells)},
                 {HudControlIdentifier.ChatButton, CreateStateChangeButton(InGameStates.Chat)},
                 {HudControlIdentifier.StatsButton, CreateStateChangeButton(InGameStates.Stats)},
+                {HudControlIdentifier.PaperdollButton, CreateStateChangeButton(InGameStates.Paperdoll)},
                 {HudControlIdentifier.OnlineListButton, CreateStateChangeButton(InGameStates.OnlineList)},
                 {HudControlIdentifier.PartyButton, CreateStateChangeButton(InGameStates.Party)},
                 {HudControlIdentifier.MacroButton, CreateStateChangeButton(InGameStates.Macro)},
@@ -368,6 +369,9 @@ namespace EndlessClient.HUD.Controls
                     _hudButtonController.ClickChat();
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_ACTION, EOResourceID.STATUS_LABEL_CHAT_PANEL_NOW_VIEWED);
                     break;
+                case InGameStates.Paperdoll:
+                    _hudButtonController.ClickPaperdoll();
+                    break;
                 case InGameStates.Stats:
                     _hudButtonController.ClickStats();
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_ACTION, EOResourceID.STATUS_LABEL_STATS_PANEL_NOW_VIEWED);
@@ -377,7 +381,9 @@ namespace EndlessClient.HUD.Controls
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_ACTION, EOResourceID.STATUS_LABEL_ONLINE_PLAYERS_NOW_VIEWED);
                     break;
                 case InGameStates.Party: _hudButtonController.ClickParty(); break;
-                case InGameStates.Macro: break;
+                case InGameStates.Macro:
+                    _hudButtonController.ClickSettings();
+                    break;
                 case InGameStates.Settings: _hudButtonController.ClickSettings(); break;
                 case InGameStates.Help:
                     _hudButtonController.ClickHelp();
@@ -410,7 +416,6 @@ namespace EndlessClient.HUD.Controls
 
             retPanel.Activated += () => retPanel.DrawOrder = _hudControlProvider.HudPanels.Select(x => x.DrawOrder).Max() + 1;
 
-            //news is visible by default when loading the game if news text is set
             retPanel.Visible = (_newsProvider.NewsText.Any() && whichState == InGameStates.News) ||
                                (!_newsProvider.NewsText.Any() && whichState == InGameStates.Chat);
 
@@ -463,6 +468,7 @@ namespace EndlessClient.HUD.Controls
             }
         }
 
+
         private IGameComponent CreateSessionExpButton()
         {
             var btn = new XNAButton(
@@ -471,7 +477,8 @@ namespace EndlessClient.HUD.Controls
                 new Rectangle(331, 30, 22, 14),
                 new Rectangle(331, 30, 22, 14))
             {
-                DrawOrder = HUD_CONTROL_LAYER
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = false
             };
             btn.OnMouseDown += (_, _) => _hudButtonController.ClickSessionExp();
             btn.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
@@ -486,7 +493,8 @@ namespace EndlessClient.HUD.Controls
                 new Rectangle(353, 30, 22, 14),
                 new Rectangle(353, 30, 22, 14))
             {
-                DrawOrder = HUD_CONTROL_LAYER
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = false
             };
             btn.OnMouseDown += (_, _) => _hudButtonController.ClickQuestStatus();
             btn.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);

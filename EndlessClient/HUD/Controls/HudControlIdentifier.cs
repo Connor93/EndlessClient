@@ -31,6 +31,7 @@ namespace EndlessClient.HUD.Controls
 
         StatsButton,
         StatsPanel,
+        PaperdollButton,
 
         OnlineListButton,
         OnlineListPanel,

@@ -90,7 +90,7 @@ namespace EndlessClient.ControlSets
         private IXNATextBox GetLoginUserNameTextBox()
         {
             var textBox = new ClearableTextBox(
-                new Rectangle(402, 322, 140, _textBoxBackground.Height),
+                new Rectangle(402, 315, 140, _textBoxBackground.Height),
                 Constants.FontSize08,
                 _textBoxBackground,
                 _textBoxLeft,
@@ -112,7 +112,7 @@ namespace EndlessClient.ControlSets
         private IXNATextBox GetLoginPasswordTextBox()
         {
             var textBox = new ClearableTextBox(
-                new Rectangle(402, 358, 140, _textBoxBackground.Height),
+                new Rectangle(402, 346, 140, _textBoxBackground.Height),
                 Constants.FontSize08,
                 _textBoxBackground,
                 _textBoxLeft,

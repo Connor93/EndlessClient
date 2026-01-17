@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) AND '$(BuildMacOS)' != 'true'">
     <TargetFramework>net8.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
     <MonoGamePlatform>Windows</MonoGamePlatform>
@@ -13,7 +13,7 @@
     <DefineConstants>$(DefineConstants);LINUX</DefineConstants>
     <MonoGamePlatform>Linux</MonoGamePlatform>
   </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) OR '$(BuildMacOS)' == 'true'">
     <TargetFramework>net8.0-macos</TargetFramework>
     <OutputType>Exe</OutputType>
     <DefineConstants>$(DefineConstants);OSX</DefineConstants>
@@ -53,7 +53,7 @@
     <ProjectReference Include="..\EOLib.Logger\EOLib.Logger.csproj" />
     <ProjectReference Include="..\EOLib\EOLib.csproj" />
   </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) OR '$(BuildMacOS)' == 'true'">
     <_client Include="$(MSBuildThisFileDirectory)\..\packages\endlessclient.binaries\$(EndlessClientBinariesPackageVersion)\build\net462\client\**\*.*" />
     <None Include="@(_client)" CopyToOutputDirectory="Always" PublishFolderType="Resource" />
   </ItemGroup>
@@ -75,4 +75,14 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.10" />
     <PackageReference Include="XNAControls" Version="2.3.1" />
   </ItemGroup>
+
+  <!-- Custom etheos assets - these override the default package assets -->
+  <Target Name="CopyCustomClientAssets" AfterTargets="CopyDependencies">
+    <ItemGroup>
+      <_customAssets Include="$(MSBuildThisFileDirectory)..\ClientAssets\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_customAssets)"
+          DestinationFiles="@(_customAssets->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
 </Project>

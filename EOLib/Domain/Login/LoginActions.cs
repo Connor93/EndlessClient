@@ -156,7 +156,7 @@ namespace EOLib.Domain.Login
             _newsRepository.NewsHeader = data.News.First();
             _newsRepository.NewsText = data.News.Skip(1).ToList();
 
-            var mainCharacter = data.Nearby.Characters.Single(
+            var mainCharacter = data.Nearby.Characters.First(
                 x => x.Name.Equals(_characterRepository.MainCharacter.Name, StringComparison.OrdinalIgnoreCase));
 
             var stats = _characterRepository.MainCharacter.Stats

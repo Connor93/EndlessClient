@@ -42,11 +42,11 @@ namespace EndlessClient.HUD.Controls
 
             _spriteBatch.Draw(_filler, new Rectangle(0, 400, 640, 80), Color.White);
 
-            _spriteBatch.Draw(_topBar, new Vector2(49, 7), Color.White);
+            //_spriteBatch.Draw(_topBar, new Vector2(49, 7), Color.White);
             _spriteBatch.Draw(_mainFrame, Vector2.Zero, Color.White);
             _spriteBatch.Draw(_topLeft, Vector2.Zero, Color.White);
-            _spriteBatch.Draw(_sidebar, new Vector2(7, 53), Color.White);
-            _spriteBatch.Draw(_sidebar, new Vector2(629, 53), new Rectangle(3, 0, 1, _sidebar.Height), Color.White);
+            //_spriteBatch.Draw(_sidebar, new Vector2(7, 53), Color.White);
+            //_spriteBatch.Draw(_sidebar, new Vector2(629, 53), new Rectangle(3, 0, 1, _sidebar.Height), Color.White);
 
             //fill in some extra holes with black lines
             _spriteBatch.Draw(_filler, new Rectangle(542, 0, 1, 8), Color.White);

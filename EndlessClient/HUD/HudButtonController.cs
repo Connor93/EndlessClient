@@ -3,6 +3,7 @@ using EndlessClient.Dialogs.Actions;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Online;
 using EOLib.Localization;
+using EOLib.Domain.Character;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
 
 namespace EndlessClient.HUD
@@ -16,13 +17,15 @@ namespace EndlessClient.HUD
         private readonly IQuestActions _questActions;
         private readonly IStatusLabelSetter _statusLabelSetter;
         private readonly ILocalizedStringFinder _localizedStringFinder;
+        private readonly ICharacterProvider _characterProvider;
 
         public HudButtonController(IHudStateActions hudStateActions,
                                    IOnlinePlayerActions onlinePlayerActions,
                                    IInGameDialogActions inGameDialogActions,
                                    IQuestActions questActions,
                                    IStatusLabelSetter statusLabelSetter,
-                                   ILocalizedStringFinder localizedStringFinder)
+                                   ILocalizedStringFinder localizedStringFinder,
+                                   ICharacterProvider characterProvider)
         {
             _hudStateActions = hudStateActions;
             _onlinePlayerActions = onlinePlayerActions;
@@ -30,6 +33,7 @@ namespace EndlessClient.HUD
             _questActions = questActions;
             _statusLabelSetter = statusLabelSetter;
             _localizedStringFinder = localizedStringFinder;
+            _characterProvider = characterProvider;
         }
 
         public void ShowNews()
@@ -122,6 +126,11 @@ namespace EndlessClient.HUD
             _questActions.RequestQuestHistory(QuestPage.Progress);
             _questActions.RequestQuestHistory(QuestPage.History);
             _inGameDialogActions.ShowQuestStatusDialog();
+        }
+
+        public void ClickPaperdoll()
+        {
+            _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);
         }
     }
 }

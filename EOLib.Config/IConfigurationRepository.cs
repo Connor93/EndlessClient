@@ -32,6 +32,8 @@ namespace EOLib.Config
 
         int InGameWidth { get; set; }
         int InGameHeight { get; set; }
+
+        string Theme { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -63,6 +65,8 @@ namespace EOLib.Config
 
         int InGameWidth { get; }
         int InGameHeight { get; }
+
+        string Theme { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -95,5 +99,7 @@ namespace EOLib.Config
 
         public int InGameWidth { get; set; }
         public int InGameHeight { get; set; }
+
+        public string Theme { get; set; }
     }
 }
