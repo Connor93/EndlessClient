@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using AutomaticTypeMapper;
 using EndlessClient.Initialization;
 using EOLib.Config;
@@ -27,6 +28,46 @@ namespace EndlessClient.GameExecution
         public virtual bool SetupDependencies()
         {
             _registry.RegisterDiscoveredTypes();
+
+            // Attempt to fix broken CodeGeneration by manually registering Singletons
+            try
+            {
+                Type registryType = _registry.GetType();
+                File.AppendAllText("debug_log.txt", $"Registry Type: {registryType.FullName}\n");
+                foreach (var prop in registryType.GetProperties())
+                    File.AppendAllText("debug_log.txt", $"Property: {prop.Name} ({prop.PropertyType})\n");
+
+                object container = null;
+                var containerProp = registryType.GetProperty("UnityContainer");
+                if (containerProp != null)
+                {
+                    container = containerProp.GetValue(_registry);
+                }
+                else
+                {
+                    // Try field
+                    var containerField = registryType.GetField("_container", BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (containerField != null) container = containerField.GetValue(_registry);
+
+                    // Try cast
+                    // if (_registry is IUnityContainer) container = _registry; 
+                    // Can't check interface easily without reference, but checking properties might reveal it.
+                }
+
+                if (container != null)
+                {
+                    File.AppendAllText("debug_log.txt", "Found container object. Registering...\n");
+                    ManualRegistrar.Register(container);
+                }
+                else
+                {
+                    File.AppendAllText("debug_log.txt", "COULD NOT FIND CONTAINER!\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                File.AppendAllText("debug_log.txt", $"Manual Registration failed: {ex}\n");
+            }
 
             var initializers = _registry.ResolveAll<IGameInitializer>();
             try

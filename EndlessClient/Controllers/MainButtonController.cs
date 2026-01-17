@@ -70,25 +70,51 @@ namespace EndlessClient.Controllers
 
         public async Task ClickCreateAccount()
         {
+            System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount() called\n");
             var result = await StartNetworkConnection().ConfigureAwait(false);
+            System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - StartNetworkConnection returned: {result}\n");
 
             if (result)
             {
-                await DispatcherGameComponent.InvokeAsync(() =>
+                System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - About to call InvokeAsync\n");
+                try
                 {
-                    _gameStateActions.ChangeToState(GameStates.CreateAccount);
-                    _accountDialogDisplayActions.ShowInitialCreateWarningDialog();
-                });
+                    await DispatcherGameComponent.InvokeAsync(() =>
+                    {
+                        System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - Inside InvokeAsync, calling ChangeToState\n");
+                        _gameStateActions.ChangeToState(GameStates.CreateAccount);
+                        System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - ChangeToState done, calling ShowInitialCreateWarningDialog\n");
+                        _accountDialogDisplayActions.ShowInitialCreateWarningDialog();
+                        System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - ShowInitialCreateWarningDialog done\n");
+                    });
+                    System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - InvokeAsync completed\n");
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickCreateAccount - EXCEPTION: {ex}\n");
+                    throw;
+                }
             }
         }
 
         public async Task ClickLogin()
         {
+            System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ClickLogin() called\n");
             var result = await StartNetworkConnection().ConfigureAwait(false);
+            System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] StartNetworkConnection returned: {result}\n");
 
             if (result)
             {
-                await DispatcherGameComponent.InvokeAsync(() => _gameStateActions.ChangeToState(GameStates.Login));
+                System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] About to call DispatcherGameComponent.InvokeAsync...\n");
+                try
+                {
+                    await DispatcherGameComponent.InvokeAsync(() => _gameStateActions.ChangeToState(GameStates.Login));
+                    System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] Changed to Login state successfully\n");
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] DispatcherGameComponent.InvokeAsync FAILED: {ex}\n");
+                }
             }
         }
 
@@ -105,17 +131,24 @@ namespace EndlessClient.Controllers
 
         private async Task<bool> StartNetworkConnection()
         {
+            System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] StartNetworkConnection() called, request count: {_numberOfConnectionRequests}\n");
             if (Interlocked.Increment(ref _numberOfConnectionRequests) != 1)
+            {
+                System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] Connection already in progress, returning false\n");
                 return false;
+            }
 
             try
             {
+                System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] Calling ConnectToServer()...\n");
                 var connectResult = await _networkConnectionActions.ConnectToServer().ConfigureAwait(false);
+                System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] ConnectToServer result: {connectResult}\n");
                 if (connectResult == ConnectResult.AlreadyConnected)
                     return true;
 
                 if (connectResult != ConnectResult.Success)
                 {
+                    System.IO.File.AppendAllText("debug_log.txt", $"[{DateTime.Now:HH:mm:ss}] Connection failed, showing error dialog\n");
                     _errorDialogDisplayAction.ShowError(connectResult);
                     return false;
                 }

@@ -6,10 +6,10 @@ using EOLib.Config;
 using EOLib.Domain.Chat;
 using EOLib.Domain.Notifiers;
 using EOLib.Domain.Party;
+using EOLib.Extensions;
 using EOLib.Localization;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
 using XNAControls;
-using EOLib.Extensions;
 
 namespace EndlessClient.Dialogs.Actions
 {

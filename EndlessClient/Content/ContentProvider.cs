@@ -45,21 +45,21 @@ namespace EndlessClient.Content
         public const string TBLeft = "tbLeft";
         public const string TBRight = "tbRight";
 
-        public const string ChatTL = @"ChatBubble\TL";
-        public const string ChatTM = @"ChatBubble\TM";
-        public const string ChatTR = @"ChatBubble\TR";
-        public const string ChatML = @"ChatBubble\ML";
-        public const string ChatMM = @"ChatBubble\MM";
-        public const string ChatMR = @"ChatBubble\MR";
-        public const string ChatRL = @"ChatBubble\RL";
-        public const string ChatRM = @"ChatBubble\RM";
-        public const string ChatRR = @"ChatBubble\RR";
-        public const string ChatNUB = @"ChatBubble\NUB";
+        public const string ChatTL = @"ChatBubble/TL";
+        public const string ChatTM = @"ChatBubble/TM";
+        public const string ChatTR = @"ChatBubble/TR";
+        public const string ChatML = @"ChatBubble/ML";
+        public const string ChatMM = @"ChatBubble/MM";
+        public const string ChatMR = @"ChatBubble/MR";
+        public const string ChatRL = @"ChatBubble/RL";
+        public const string ChatRM = @"ChatBubble/RM";
+        public const string ChatRR = @"ChatBubble/RR";
+        public const string ChatNUB = @"ChatBubble/NUB";
 
-        public const string HPOutline = @"Party\hp-outline";
-        public const string HPRed = @"Party\hp-red";
-        public const string HPYellow = @"Party\hp-yellow";
-        public const string HPGreen = @"Party\hp-green";
+        public const string HPOutline = @"Party/hp-outline";
+        public const string HPRed = @"Party/hp-red";
+        public const string HPYellow = @"Party/hp-yellow";
+        public const string HPGreen = @"Party/hp-green";
 
         public IReadOnlyDictionary<string, Texture2D> Textures => _textures;
 

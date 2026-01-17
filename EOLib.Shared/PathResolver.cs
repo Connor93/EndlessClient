@@ -13,7 +13,15 @@ namespace EOLib.Shared
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                return Path.Combine(ResourcesRoot, inputPath);
+                var bundlePath = Path.Combine(ResourcesRoot, inputPath);
+                // When running in app bundle, Contents/Resources exists
+                // When running in development (dotnet run), fall back to direct path
+                if (Directory.Exists(Path.GetDirectoryName(bundlePath)) || File.Exists(bundlePath))
+                {
+                    return bundlePath;
+                }
+                // Fallback: check if path exists directly (development mode)
+                return inputPath;
             }
             else
             {
@@ -28,8 +36,16 @@ namespace EOLib.Shared
                 var home = Environment.GetEnvironmentVariable("HOME");
                 if (home != null)
                 {
-                    return Path.Combine(home, LocalFilesRoot, inputPath);
+                    var homePath = Path.Combine(home, LocalFilesRoot, inputPath);
+                    // Only use home path if the actual file exists there
+                    // This allows development builds to use the local config/settings.ini
+                    if (File.Exists(homePath))
+                    {
+                        return homePath;
+                    }
                 }
+                // Fallback: use local path for development
+                return inputPath;
             }
 
             return inputPath;

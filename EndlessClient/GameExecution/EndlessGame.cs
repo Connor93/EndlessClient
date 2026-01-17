@@ -75,6 +75,7 @@ namespace EndlessClient.GameExecution
                            IMainButtonController mainButtonController,
                            IScrollingListDialogFactory scrollingListDialogFactory)
         {
+            System.IO.File.AppendAllText("debug_log.txt", "EndlessGame Constructor START\n");
             _windowSizeRepository = windowSizeRepository;
             _contentProvider = contentProvider;
             _graphicsDeviceRepository = graphicsDeviceRepository;

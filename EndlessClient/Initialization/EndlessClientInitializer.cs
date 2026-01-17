@@ -6,6 +6,8 @@ using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Controls;
+using EndlessClient.Network;
+using EndlessClient.Rendering;
 using EndlessClient.UIControls;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Input.InputListeners;
@@ -32,6 +34,8 @@ namespace EndlessClient.Initialization
         private readonly ICharacterInfoPanelFactory _characterInfoPanelFactory;
         private readonly IHudControlsFactory _hudControlsFactory;
         private readonly IPaperdollDialogFactory _paperdollDialogFactory;
+        private readonly DispatcherGameComponent _dispatcherGameComponent;
+        private readonly PacketHandlerGameComponent _packetHandlerGameComponent;
 
         public EndlessClientInitializer(IEndlessGame game,
                                         IEndlessGameRepository endlessGameRepository,
@@ -49,8 +53,12 @@ namespace EndlessClient.Initialization
                                         IControlSetFactory controlSetFactory,
                                         ICharacterInfoPanelFactory characterInfoPanelFactory,
                                         IHudControlsFactory hudControlsFactory,
-                                        IPaperdollDialogFactory paperdollDialogFactory)
+                                        IPaperdollDialogFactory paperdollDialogFactory,
+                                        // Persistent game components (required for macOS manual registration)
+                                        DispatcherGameComponent dispatcherGameComponent,
+                                        PacketHandlerGameComponent packetHandlerGameComponent)
         {
+            System.IO.File.AppendAllText("debug_log.txt", "EndlessClientInitializer Constructor START\n");
             _game = game;
             _endlessGameRepository = endlessGameRepository;
             _contentProvider = contentProvider;
@@ -65,6 +73,8 @@ namespace EndlessClient.Initialization
             _characterInfoPanelFactory = characterInfoPanelFactory;
             _hudControlsFactory = hudControlsFactory;
             _paperdollDialogFactory = paperdollDialogFactory;
+            _dispatcherGameComponent = dispatcherGameComponent;
+            _packetHandlerGameComponent = packetHandlerGameComponent;
         }
 
         public void Initialize()
@@ -73,6 +83,10 @@ namespace EndlessClient.Initialization
 
             foreach (var component in _persistentComponents)
                 _game.Components.Add(component);
+
+            // Add persistent game components (fixes macOS manual registration issue)
+            _game.Components.Add(_dispatcherGameComponent);
+            _game.Components.Add(_packetHandlerGameComponent);
 
             var mouseListenerSettings = new MouseListenerSettings
             {
@@ -83,7 +97,19 @@ namespace EndlessClient.Initialization
 
             _endlessGameRepository.Game = _game;
 
-            _game.Content.RootDirectory = "ContentPipeline";
+            // On macOS, MonoGame prepends Contents/Resources to content paths.
+            // Use absolute path to bypass this when running outside app bundle.
+            var contentDir = "ContentPipeline";
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+            {
+                var bundlePath = System.IO.Path.Combine("Contents", "Resources", "ContentPipeline");
+                if (!System.IO.Directory.Exists(bundlePath))
+                {
+                    // Running in development mode - use absolute path
+                    contentDir = System.IO.Path.GetFullPath("ContentPipeline");
+                }
+            }
+            _game.Content.RootDirectory = contentDir;
             _contentProvider.SetContentManager(_game.Content);
 
             _controlSetFactory.InjectControllers(_mainButtonController,

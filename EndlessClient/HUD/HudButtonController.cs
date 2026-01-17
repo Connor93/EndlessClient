@@ -1,9 +1,9 @@
 ﻿using AutomaticTypeMapper;
 using EndlessClient.Dialogs.Actions;
+using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Online;
 using EOLib.Localization;
-using EOLib.Domain.Character;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
 
 namespace EndlessClient.HUD

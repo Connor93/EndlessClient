@@ -14,14 +14,13 @@
     <MonoGamePlatform>Linux</MonoGamePlatform>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) OR '$(BuildMacOS)' == 'true'">
-    <TargetFramework>net8.0-macos</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <OutputType>Exe</OutputType>
     <DefineConstants>$(DefineConstants);OSX</DefineConstants>
-    <MonoGamePlatform>MacOSX</MonoGamePlatform>
+    <MonoGamePlatform>DesktopGL</MonoGamePlatform>
     <ApplicationId>io.moffat.endlessclient</ApplicationId>
     <NoNFloatUsing>true</NoNFloatUsing>
-    <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
-    <RuntimeIdentifiers>osx-x64;osx-arm64</RuntimeIdentifiers>
     <SelfContained>true</SelfContained>
   </PropertyGroup>
   <PropertyGroup>
@@ -77,10 +76,11 @@
   </ItemGroup>
 
   <!-- Custom etheos assets - these override the default package assets -->
-  <Target Name="CopyCustomClientAssets" AfterTargets="CopyDependencies">
+  <Target Name="CopyCustomClientAssets" AfterTargets="Build">
     <ItemGroup>
       <_customAssets Include="$(MSBuildThisFileDirectory)..\ClientAssets\**\*.*" />
     </ItemGroup>
+
     <Copy SourceFiles="@(_customAssets)"
           DestinationFiles="@(_customAssets->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true" />

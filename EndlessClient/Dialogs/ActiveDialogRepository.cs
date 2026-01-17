@@ -51,6 +51,8 @@ namespace EndlessClient.Dialogs
 
         Option<ScrollingListDialog> HelpDialog { get; }
 
+        Option<ItemInfoDialog> ItemInfoDialog { get; }
+
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs { get; }
     }
 
@@ -99,6 +101,8 @@ namespace EndlessClient.Dialogs
         Option<GuildDialog> GuildDialog { get; set; }
 
         Option<ScrollingListDialog> HelpDialog { get; set; }
+
+        Option<ItemInfoDialog> ItemInfoDialog { get; set; }
 
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs { get; }
     }
@@ -150,6 +154,8 @@ namespace EndlessClient.Dialogs
 
         public Option<ScrollingListDialog> HelpDialog { get; set; }
 
+        public Option<ItemInfoDialog> ItemInfoDialog { get; set; }
+
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs
         {
             get
@@ -178,6 +184,7 @@ namespace EndlessClient.Dialogs
                     BarberDialog.Map(Map),
                     GuildDialog.Map(Map),
                     HelpDialog.Map(Map),
+                    ItemInfoDialog.Map(Map),
                 }.ToList();
 
                 static IXNADialog Map(object d)
@@ -218,6 +225,7 @@ namespace EndlessClient.Dialogs
             BarberDialog = Option.None<BarberDialog>();
             GuildDialog = Option.None<GuildDialog>();
             HelpDialog = Option.None<ScrollingListDialog>();
+            ItemInfoDialog = Option.None<ItemInfoDialog>();
         }
     }
 }
