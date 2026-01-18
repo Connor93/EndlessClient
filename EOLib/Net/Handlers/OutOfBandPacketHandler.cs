@@ -43,11 +43,23 @@ namespace EOLib.Net.Handlers
         private bool FindAndHandlePacket(IPacket packet)
         {
             if (!_packetHandlerFinder.HandlerExists(packet.Family, packet.Action))
+            {
+                if (packet.Family == PacketFamily.Item && packet.Action == PacketAction.Spec)
+                    System.Console.WriteLine($"[DEBUG] No handler exists for ITEM_SPEC");
                 return false;
+            }
 
             var handler = _packetHandlerFinder.FindHandler(packet.Family, packet.Action);
             if (!handler.CanHandle || !handler.IsHandlerFor(packet))
+            {
+                if (packet.Family == PacketFamily.Item && packet.Action == PacketAction.Spec)
+                {
+                    System.Console.WriteLine($"[DEBUG] Handler found but CanHandle={handler.CanHandle}, IsHandlerFor={handler.IsHandlerFor(packet)}");
+                    System.Console.WriteLine($"[DEBUG] PacketType: {packet.GetType().FullName}, Assembly: {packet.GetType().Assembly.GetName().Name}");
+                    System.Console.WriteLine($"[DEBUG] HandlerType: {handler.GetType().FullName}");
+                }
                 return false;
+            }
 
             //todo: catch exceptions and log error details
             //      should also exit out of game gracefully as state may be corrupted by not handling packet (i.e. for warp packets)

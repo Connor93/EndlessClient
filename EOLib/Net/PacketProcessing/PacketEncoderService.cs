@@ -1,4 +1,7 @@
-﻿using AutomaticTypeMapper;
+﻿using System;
+using System.Linq;
+using AutomaticTypeMapper;
+using EOLib.PacketHandlers.Items;
 using Moffat.EndlessOnline.SDK.Data;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
 using Optional;
@@ -43,7 +46,45 @@ namespace EOLib.Net.PacketProcessing
                 decodedBytes = DataEncrypter.SwapMultiples(decodedBytes, decodeMultiplier);
             }
 
-            return _packetFactory.Create(decodedBytes);
+            // Try SDK factory first
+            var result = _packetFactory.Create(decodedBytes);
+            if (result.HasValue)
+                return result;
+
+            // Fallback for custom packets not in SDK
+            return TryCreateCustomPacket(decodedBytes);
+        }
+
+        private Option<IPacket> TryCreateCustomPacket(byte[] data)
+        {
+            if (data.Length < 2)
+                return Option.None<IPacket>();
+
+            var action = data[0];
+            var family = (PacketFamily)data[1];
+
+            // Handle ITEM family with action 19 (our custom item source packet)
+            if (family == PacketFamily.Item && action == 19)
+            {
+                // Server packet format (after client decodes): action (1), family (1), payload...
+                // Server packets don't include sequence bytes - those are only added by client for client→server
+                int payloadStart = 2;
+
+                Console.WriteLine($"[DEBUG] Raw packet data: {string.Join(" ", data.Select(b => b.ToString("X2")))}");
+                Console.WriteLine($"[DEBUG] Payload starts at byte {payloadStart}, first 5 payload bytes: {string.Join(" ", data.Skip(payloadStart).Take(5).Select(b => b.ToString("X2")))}");
+
+                // Create payload slice without header
+                var payloadData = new byte[data.Length - payloadStart];
+                Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+
+                var reader = new EoReader(payloadData);
+                var packet = new ItemSourceResponsePacket();
+                packet.Deserialize(reader);
+                Console.WriteLine($"[DEBUG] Custom packet decoded: ItemId={packet.ItemId}, Sources={packet.Sources.Count}");
+                return Option.Some<IPacket>(packet);
+            }
+
+            return Option.None<IPacket>();
         }
 
         private static bool PacketValidForEncode(IPacket pkt)

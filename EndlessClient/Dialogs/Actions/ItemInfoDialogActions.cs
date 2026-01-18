@@ -4,8 +4,9 @@ using EndlessClient.Audio;
 using EndlessClient.Dialogs.Factories;
 using EOLib.Domain.Chat;
 using EOLib.Domain.Interact;
-using EOLib.Graphics;
 using EOLib.IO.Repositories;
+using EOLib.Net.Communication;
+using EOLib.Net.Packets;
 using Optional;
 
 namespace EndlessClient.Dialogs.Actions
@@ -19,13 +20,15 @@ namespace EndlessClient.Dialogs.Actions
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly IChatRepository _chatRepository;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IPacketSendService _packetSendService;
 
         public ItemInfoDialogActions(IItemInfoDialogFactory dialogFactory,
                                       IScrollingListDialogFactory scrollingListDialogFactory,
                                       IActiveDialogRepository activeDialogRepository,
                                       IEIFFileProvider eifFileProvider,
                                       IChatRepository chatRepository,
-                                      ISfxPlayer sfxPlayer)
+                                      ISfxPlayer sfxPlayer,
+                                      IPacketSendService packetSendService)
         {
             _dialogFactory = dialogFactory;
             _scrollingListDialogFactory = scrollingListDialogFactory;
@@ -33,6 +36,7 @@ namespace EndlessClient.Dialogs.Actions
             _eifFileProvider = eifFileProvider;
             _chatRepository = chatRepository;
             _sfxPlayer = sfxPlayer;
+            _packetSendService = packetSendService;
         }
 
         public void ShowItemInfo(int itemId)
@@ -55,6 +59,10 @@ namespace EndlessClient.Dialogs.Actions
             dlg.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
 
             dlg.Show();
+
+            // Request item source info from server
+            System.Console.WriteLine($"[DEBUG] Sending item source request for item {itemId}");
+            _packetSendService.SendPacketAsync(new ItemSourceRequestPacket { ItemId = itemId });
         }
 
         public void ShowNoItemsFound(string searchTerm)

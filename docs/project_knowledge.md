@@ -224,3 +224,114 @@ public interface IPlayerCommand
 
 *   **ActiveDialogRepository**: Add new dialog types to `IActiveDialogProvider`, `IActiveDialogRepository`, and `ActiveDialogRepository` class (property + ActiveDialogs list + Dispose).
 
+## 7. Custom Client-Server Packets
+
+### SDK Packet Factory Limitations
+The `Moffat.EndlessOnline.SDK` contains a `PacketFactory` that creates packet objects from raw bytes. It only recognizes packets defined in the SDK's `Protocol.Net.Server` namespace.
+
+*   **Problem**: If you need to send/receive custom packets not in the SDK, the factory returns `Option.None` and the packet is silently dropped.
+*   **Problem 2**: If the SDK HAS a packet type for your Family+Action but with a different format than your server sends, the SDK creates its packet type (wrong data) and the handler fails `IsHandlerFor()` check because types don't match.
+
+### Solution: Use Unused Packet Actions
+To avoid conflicts with SDK-defined packets:
+
+1. **Choose an unused action number** - Check the SDK's packet definitions; action 19 (DIALOG) is unused for ITEM family.
+2. **Server**: Use `static_cast<PacketAction>(19)` in PacketBuilder.
+3. **Client**: Add fallback in `PacketEncoderService.Decode()`:
+   ```csharp
+   var result = _packetFactory.Create(decodedBytes);
+   if (result.HasValue)
+       return result;
+   return TryCreateCustomPacket(decodedBytes);  // Fallback for custom packets
+   ```
+
+### Etheos Server Packet Format
+The etheos server's `PacketBuilder::Get()` produces this format:
+
+```
+[length_low][length_high][action][family][payload...]
+```
+
+*   **Length**: 2 bytes (EO-encoded), stripped by client during receive
+*   **Action**: 1 byte (sent first, read as byte 0 after length stripped)
+*   **Family**: 1 byte (byte 1 after length stripped)  
+*   **Payload**: Starts at byte 2 (NO sequence bytes on server→client!)
+
+**Critical**: Server→client packets do NOT include sequence bytes. Only client→server packets have them. When decoding custom server packets, use `payloadStart = 2`, not 3+.
+
+### EO Number Encoding (etheos)
+The etheos server uses `PacketProcessor::ENumber()` for encoding numbers:
+
+*   **Char** (1 byte): `value + 1` (to avoid null bytes)
+*   **Short** (2 bytes): Low byte = `(value % 254) + 1`, High byte = `(value / 254) + 1`
+*   **FE (254)**: Break/delimiter character, represents value 253 or field separator
+*   **00 (0)**: Encoded as 128 in some contexts
+
+The SDK's `EoReader.GetShort()` uses the same decoding, so values from etheos are compatible.
+
+### Custom Packet Implementation Pattern
+
+**Server (etheos) - Item.cpp**:
+```cpp
+PacketBuilder reply(PACKET_ITEM, static_cast<PacketAction>(19), 128);
+reply.AddShort(item_id);
+reply.AddChar(num_sources);
+// ... data
+character->Send(reply);
+```
+
+**Client - Register handler with PacketHandlerFinder**:
+```csharp
+[AutoMappedType]
+public class ItemSourceHandler : InGameOnlyPacketHandler<ItemSourceResponsePacket>
+{
+    public override PacketFamily Family => PacketFamily.Item;
+    public override PacketAction Action => (PacketAction)19;  // Custom action
+}
+```
+
+**Client - Custom packet type**:
+```csharp
+public class ItemSourceResponsePacket : IPacket
+{
+    public PacketFamily Family => PacketFamily.Item;
+    public PacketAction Action => (PacketAction)19;
+    
+    public void Deserialize(EoReader reader) { /* parse payload */ }
+}
+```
+
+**Client - Fallback decoder in PacketEncoderService**:
+```csharp
+private Option<IPacket> TryCreateCustomPacket(byte[] data)
+{
+    if (data[1] == (byte)PacketFamily.Item && data[0] == 19)
+    {
+        int payloadStart = 2;  // NO sequence bytes on server packets!
+        var payloadData = new byte[data.Length - payloadStart];
+        Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+        
+        var packet = new ItemSourceResponsePacket();
+        packet.Deserialize(new EoReader(payloadData));
+        return Option.Some<IPacket>(packet);
+    }
+    return Option.None<IPacket>();
+}
+```
+
+## 8. Dialog Types and Sizing
+
+### ScrollingListDialog DialogType Enum
+The `DialogType` enum controls dialog size and features:
+
+| Type | Size | Scroll | Use Case |
+|------|------|--------|----------|
+| `Shop`, `FriendIgnore`, `Locker`, etc. | Large | Yes | Shops, inventories |
+| `Help` | Large (alt bg) | Yes | Help screens |
+| `Chest` | Large | No | Chest contents |
+| `QuestProgressHistory`, `Board` | Medium | Yes | Quest progress, boards |
+| `NpcQuestDialog` | Small | Yes | NPC dialogs |
+| `BankAccountDialog` | Small | No | Bank info |
+
+*   **Recommendation**: Use `QuestProgressHistory` for medium-sized info dialogs (like item info).
+*   **Item Graphics**: Draw over the dialog using `OnDrawControl()` with `_spriteBatch.Begin()`/`End()`.
