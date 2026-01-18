@@ -190,3 +190,37 @@ dotnet EndlessClient.dll
 *   **Symptom**: Client uses old settings even after editing `ClientAssets/config/settings.ini`.
 *   **Cause**: Old `~/.endlessclient/config/settings.ini` file exists from a previous install.
 *   **Fix**: Delete the home directory config: `rm ~/.endlessclient/config/settings.ini`
+
+## 6. Player Commands
+
+### Command System Architecture
+Player commands (prefixed with `#`) are handled client-side via the `IPlayerCommand` interface:
+
+```csharp
+public interface IPlayerCommand
+{
+    string CommandText { get; }  // e.g., "item"
+    bool Execute(string parameter);
+}
+```
+
+*   **Registration**: Commands use `[AutoMappedType]` attribute for automatic DI registration.
+*   **Location**: `EOLib/Domain/Chat/Commands/`
+*   **Handler**: `LocalCommandHandler` dispatches commands to matching `IPlayerCommand` implementations.
+
+### Item Lookup Command (`#item`)
+*   **Files Created**:
+    *   `EOLib/Domain/Chat/Commands/ItemCommand.cs` - Command handler
+    *   `EOLib/Domain/Interact/IItemInfoDialogActions.cs` - Dialog interface
+    *   `EndlessClient/Dialogs/ItemInfoDialog.cs` - Extends `ScrollingListDialog`
+    *   `EndlessClient/Dialogs/Factories/ItemInfoDialogFactory.cs` - Creates dialogs with item graphics
+    *   `EndlessClient/Dialogs/Actions/ItemInfoDialogActions.cs` - Display logic
+
+*   **Key Patterns**:
+    *   Commands in `EOLib` cannot access UI directly; use interface (`IItemInfoDialogActions`) implemented in `EndlessClient`.
+    *   Item graphics loaded via `GFXTypes.Items` with formula: `2 * item.Graphic - 1`.
+    *   Dialogs extend `ScrollingListDialog` and use `ListDialogItem` for text (not custom SpriteBatch drawing).
+    *   Search results dialog uses `SetPrimaryClickAction()` for clickable items.
+
+*   **ActiveDialogRepository**: Add new dialog types to `IActiveDialogProvider`, `IActiveDialogRepository`, and `ActiveDialogRepository` class (property + ActiveDialogs list + Dispose).
+
