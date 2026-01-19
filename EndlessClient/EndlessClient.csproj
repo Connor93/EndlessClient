@@ -83,6 +83,6 @@
 
     <Copy SourceFiles="@(_customAssets)"
           DestinationFiles="@(_customAssets->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+          SkipUnchangedFiles="false" />
   </Target>
 </Project>

@@ -34,6 +34,8 @@ namespace EOLib.Config
         int InGameHeight { get; set; }
 
         string Theme { get; set; }
+
+        bool NPCGhosting { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -67,6 +69,8 @@ namespace EOLib.Config
         int InGameHeight { get; }
 
         string Theme { get; }
+
+        bool NPCGhosting { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -101,5 +105,7 @@ namespace EOLib.Config
         public int InGameHeight { get; set; }
 
         public string Theme { get; set; }
+
+        public bool NPCGhosting { get; set; }
     }
 }

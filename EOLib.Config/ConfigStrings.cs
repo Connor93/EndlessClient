@@ -38,5 +38,7 @@ namespace EOLib.Config
         public const string LogChat = "LogChat";
 
         public const string Theme = nameof(Theme);
+
+        public const string NPCGhosting = nameof(NPCGhosting);
     }
 }
