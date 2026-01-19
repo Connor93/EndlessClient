@@ -251,6 +251,7 @@ namespace EndlessClient.HUD.Panels
 
                         newItem.OnMouseEnter += (_, _) => _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_ITEM, newItem.Text);
                         newItem.DoubleClick += HandleItemDoubleClick;
+                        newItem.RightClick += HandleItemDoubleClick;
                         newItem.DraggingFinishing += HandleItemDoneDragging;
                         newItem.DraggingFinished += (_, _) => ResetSlotMap(_childItems.Where(x => !x.IsDragging));
 

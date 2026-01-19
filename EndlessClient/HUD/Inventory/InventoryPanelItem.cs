@@ -55,6 +55,8 @@ namespace EndlessClient.HUD.Inventory
 
         public event EventHandler<EIFRecord> DoubleClick;
 
+        public event EventHandler<EIFRecord> RightClick;
+
         public override Rectangle EventArea => IsDragging ? DrawArea : DrawAreaWithParentOffset;
 
         // uses absolute coordinates
@@ -174,6 +176,17 @@ namespace EndlessClient.HUD.Inventory
             DoubleClick?.Invoke(control, Data);
 
             return true;
+        }
+
+        protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
+        {
+            if (eventArgs.Button == MouseButton.Right && !IsDragging)
+            {
+                RightClick?.Invoke(control, Data);
+                return true;
+            }
+
+            return base.HandleClick(control, eventArgs);
         }
 
         protected override void Dispose(bool disposing)
