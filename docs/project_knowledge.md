@@ -597,3 +597,65 @@ catch (InvalidOperationException ex) when (ex.Message.Contains("Collection was m
 
 **Key Pattern**: Any code that modifies controls during a click event handler should use `DispatcherGameComponent.Invoke()`.
 
+## 13. Input Handler Architecture
+
+### Handler Chain Pattern
+Keyboard input is processed through a chain of `IInputHandler` implementations created by `UserInputHandler`:
+
+```
+UserInputHandler
+  ↳ ArrowKeyHandler     (movement via arrows + WASD)
+  ↳ ControlKeyHandler   (attack via Ctrl + Space)
+  ↳ FunctionKeyHandler  (F1-F12 macros/spells)
+  ↳ NumPadHandler       (emotes)
+  ↳ PanelShortcutHandler (panel toggles, resizable mode only)
+```
+
+### Adding Dependencies to Input Handlers
+To inject new dependencies into an input handler:
+
+1. **Handler**: Add field, constructor parameter, store dependency
+2. **UserInputHandler**: Add constructor parameter, pass to handler instantiation
+3. **UserInputHandlerFactory**: Add field, constructor parameter, pass to `CreateUserInputHandler()`
+
+*Example*: Adding `IConfigurationProvider` and `IHudControlProvider` to check game state during input handling.
+
+### Conditional Keyboard Override Pattern (WASD Movement)
+When keyboard keys need dual-purpose (game action vs typing), use this pattern:
+
+**In Input Handler** (e.g., `ArrowKeyHandler`, `ControlKeyHandler`):
+```csharp
+// Only use key for game action if:
+// 1. Feature is enabled in config
+// 2. Shift is NOT held (allows typing capitals)
+// 3. Chat box is empty (player hasn't started typing)
+if (_configurationProvider.WASDMovement && !IsShiftHeld() && !IsChatActive())
+{
+    if (IsKeyHeld(Keys.W) && _arrowKeyController.MoveUp())
+        return Option.Some(Keys.W);
+}
+
+private bool IsChatActive()
+{
+    return _hudControlProvider.IsInGame &&
+           _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox).Text.Length > 0;
+}
+```
+
+**In ChatTextBox.IsSpecialInput()** (filter keys from text input):
+```csharp
+// Same conditions: filter WASD/Space from typing when used for movement/attack
+if (_configurationProvider.WASDMovement && modifiers != KeyboardModifiers.Shift && Text.Length == 0)
+{
+    if (k == Keys.W || k == Keys.A || k == Keys.S || k == Keys.D || k == Keys.Space)
+        return true;  // Don't type this key
+}
+```
+
+**Files Involved**:
+- `ArrowKeyHandler.cs` - WASD movement
+- `ControlKeyHandler.cs` - Spacebar attack
+- `ChatTextBox.cs` - Filter keys from typing
+- `UserInputHandler.cs` / `UserInputHandlerFactory.cs` - Dependency wiring
+- `settings.ini` - `WASDMovement=true/false` toggle
+
