@@ -659,3 +659,64 @@ if (_configurationProvider.WASDMovement && modifiers != KeyboardModifiers.Shift 
 - `UserInputHandler.cs` / `UserInputHandlerFactory.cs` - Dependency wiring
 - `settings.ini` - `WASDMovement=true/false` toggle
 
+## 14. SDK Packet Structure Quirks
+
+### EquipmentWelcome vs EquipmentPaperdoll Field Ordering
+The `Moffat.EndlessOnline.SDK` (v1.0.1) has two packet structures for equipment data that deserialize bytes into **differently-ordered properties**:
+
+| Structure | Byte Order (deserialized into) |
+|-----------|--------------------------------|
+| `EquipmentWelcome` | Boots, **Gloves**, **Accessory**, **Armor**, **Belt**, Necklace, Hat, Shield, Weapon |
+| `EquipmentPaperdoll` | Boots, **Accessory**, **Gloves**, **Belt**, **Armor**, Necklace, Hat, Shield, Weapon |
+
+*   **`EquipmentWelcome`**: Sent at login when selecting a character (used by HUD paperdoll button)
+*   **`EquipmentPaperdoll`**: Sent in response to paperdoll request packet (used by right-click on character)
+
+### The Problem
+The `EquipLocation` enum follows the `EquipmentPaperdoll` order:
+```csharp
+public enum EquipLocation
+{
+    Boots = 0,     // byte 0 in both
+    Accessory,     // byte 1 in Paperdoll, but Gloves property in Welcome
+    Gloves,        // byte 2 in Paperdoll, but Accessory property in Welcome
+    Belt,          // byte 3 in Paperdoll, but Armor property in Welcome
+    Armor,         // byte 4 in Paperdoll, but Belt property in Welcome
+    ...
+}
+```
+
+If the server sends equipment in `EquipLocation` order, the SDK's `EquipmentWelcome` properties have **mismatched names** relative to what they actually contain.
+
+### Symptom
+Paperdoll slots are reversed when clicking the HUD paperdoll button vs right-clicking on character:
+- Armor ↔ Belt swapped
+- Gloves ↔ Accessory swapped
+
+### Fix
+In `PaperdollExtensions.GetPaperdoll(EquipmentWelcome)`, compensate by mapping SDK properties to correct `EquipLocation` values based on byte position:
+
+```csharp
+[EquipLocation.Boots] = equipment.Boots,
+[EquipLocation.Accessory] = equipment.Gloves,     // SDK's Gloves is at byte pos 1 = Accessory
+[EquipLocation.Gloves] = equipment.Accessory,     // SDK's Accessory is at byte pos 2 = Gloves
+[EquipLocation.Belt] = equipment.Armor,           // SDK's Armor is at byte pos 3 = Belt
+[EquipLocation.Armor] = equipment.Belt,           // SDK's Belt is at byte pos 4 = Armor
+```
+
+**File Modified**: `EOLib/Domain/Extensions/PaperdollExtensions.cs`
+
+### External References
+The SDK is generated from the `eo-protocol` XML specification. These repos are useful for understanding packet structures:
+
+| Resource | URL | Purpose |
+|----------|-----|---------|
+| **SDK Source** | https://github.com/ethanmoffat/eolib-dotnet | C# SDK implementation, generated from protocol XML |
+| **Protocol Spec** | https://github.com/Cirras/eo-protocol | Authoritative XML definitions of all EO packets |
+| **Server Protocol XML** | [xml/net/server/protocol.xml](https://github.com/Cirras/eo-protocol/blob/master/xml/net/server/protocol.xml) | All server→client packet structures |
+| **Client Protocol XML** | [xml/net/client/](https://github.com/Cirras/eo-protocol/tree/master/xml/net/client) | All client→server packet structures |
+
+*   **Usage**: When debugging packet issues, check the protocol XML first - it's the source of truth for field ordering and types.
+*   **SDK Generation**: The SDK is generated from the protocol XML via the `ProtocolGenerator` project in `eolib-dotnet`.
+*   **Version**: EndlessClient uses SDK version 1.0.1 via NuGet (`Moffat.EndlessOnline.SDK`).
+
