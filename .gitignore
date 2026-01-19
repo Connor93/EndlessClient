@@ -150,7 +150,13 @@ ClientBin/
 *.pfx
 *.publishsettings
 node_modules/
-ClientAssets/*
+ClientAssets/data
+ClientAssets/gfx
+ClientAssets/jbox
+ClientAssets/pub
+ClientAssets/mfx
+ClientAssets/sfx
+ClientAssets/maps
 
 # RIA/Silverlight projects
 Generated_Code/
