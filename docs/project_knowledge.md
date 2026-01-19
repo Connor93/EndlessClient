@@ -407,3 +407,140 @@ For packets using actions not defined in the SDK:
 |--------|--------|---------|
 | Item | 19 | Item source lookup |
 | Npc | 20 | NPC source lookup |
+
+## 11. Macro Panel Patterns
+
+### Panel Creation Architecture
+New HUD panels follow this wiring pattern:
+
+1. **Enum**: Add identifier to `HudControlIdentifier.cs`
+2. **Factory Interface**: Add method to `IHudPanelFactory.cs`
+3. **Factory Implementation**: Implement in `HudPanelFactory.cs`
+4. **Controls Factory**: Wire up in `HudControlsFactory.CreateHud()` dictionary and `CreateStatePanel()` switch
+5. **Button Controller**: Add `Click<Panel>()` to `IHudButtonController.cs` and `HudButtonController.cs`
+6. **Control Provider**: Add to `HudPanels` list in `IHudControlProvider.cs`
+7. **State Handler**: Update `DoHudStateChangeClick()` in `HudControlsFactory.cs`
+
+### DraggablePanelItem Pattern
+For draggable items within panels:
+
+```csharp
+public class MyPanelItem : DraggablePanelItem<TData>
+{
+    // GridArea defines bounds for drag validity (absolute coords)
+    protected override Rectangle GridArea => new Rectangle(
+        _parentContainer.DrawPositionWithParentOffset.ToPoint() + new Point(x, y),
+        new Point(width, height));
+
+    // EventArea determines mouse hit testing
+    public override Rectangle EventArea => IsDragging ? DrawArea : DrawAreaWithParentOffset;
+}
+```
+
+### Macro Slot Storage
+Macro slots use `Option<MacroSlot>[]` with file persistence:
+
+```ini
+# config/macros.ini format:
+[host:account]
+CharacterName.0=S:1    # Slot 0: Spell ID 1
+CharacterName.8=I:378  # Slot 8 (Shift+F1): Item ID 378
+```
+
+*   **S prefix**: Spell
+*   **I prefix**: Item
+
+### F-Key Handling Priority
+`FunctionKeyController.SelectSpell()` checks in this order:
+1. Macro slot (if assigned) - uses item or casts spell
+2. Active Spells panel slot (fallback)
+
+### Macro Spell Hotkey Activation
+For `SpellTarget.Normal` spells (offensive spells requiring a target click):
+1. `FunctionKeyController.HandleSpellCast()` sets:
+   - `SpellSlotDataRepository.PreparedMacroSpellId = Option.Some(spellId)`
+   - `SpellSlotDataRepository.SpellIsPrepared = true`
+   - `SpellSlotDataRepository.SelectedSpellSlot = Option.None<int>()` (to avoid conflicting with slot system)
+2. Plays `SoundEffectID.SpellActivate` and shows "X spell was selected" message
+3. `MapInteractionController.LeftClick(ISpellTargetable)` checks `PreparedMacroSpellId` first, falling back to `SelectedSpellInfo` from spell slots
+4. After casting, clears `PreparedMacroSpellId`, `SpellIsPrepared`, and `SelectedSpellSlot`
+
+**Key Gotcha**: Without `PreparedMacroSpellId`, macro spells would only show the selection UI but never cast, because `SelectedSpellInfo` is derived from `SelectedSpellSlot` (the normal spell panel slot system).
+
+### Cross-Panel Drag Support
+For drag-and-drop between panels (e.g., Inventory→MacroPanel):
+
+1. In source panel's `HandleItemDoneDragging`, detect target panel:
+   ```csharp
+   var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(HudControlIdentifier.MacroPanel);
+   if (macroPanel.MouseOver)
+   {
+       var mousePos = MouseExtended.GetState().Position.ToVector2();
+       var targetSlot = macroPanel.GetSlotFromPosition(mousePos);
+       if (targetSlot >= 0)
+       {
+           macroPanel.AcceptItemDrop(item.ItemID, targetSlot);
+           e.RestoreOriginalSlot = true;  // Keep item in original panel
+           return;
+       }
+   }
+   ```
+
+2. Target panel provides `Accept*Drop()` methods:
+   - `AcceptItemDrop(int itemId, int targetSlot)`
+   - `AcceptSpellDrop(int spellId, int targetSlot)`
+
+3. Target panel updates its repository and refreshes display
+
+### MacroPanel Grid Layout Constants
+The MacroPanel uses resource 72 background with a 4x2 grid on each of two panels. **Final values after tuning**:
+
+```csharp
+private const int LeftPanelX = 16;      // Left edge of left panel grid
+private const int RightPanelX = 230;    // Left edge of right panel grid
+private const int GridStartY = 26;      // Top edge of both grids
+private const int SlotWidth = 52;       // Width per slot
+private const int SlotHeight = 45;      // Height per slot
+```
+
+*   **Cell Padding**: `GetSlotPosition()` adds 5px padding in both X and Y to center items within cells.
+*   **Two-Panel Issue**: The left and right panels require different X offsets; `RightPanelX` is NOT simply `LeftPanelX + (4 * SlotWidth)`.
+
+### OK Button Positioning
+The MacroPanel uses an OK button (via `IEODialogButtonService`) instead of an X close button:
+
+```csharp
+_closeButton = new XNAButton(dialogButtonService.SmallButtonSheet,
+    new Vector2(BackgroundImage.Width / 2 - 40, BackgroundImage.Height - 42),
+    dialogButtonService.GetSmallDialogButtonOutSource(SmallButton.Ok),
+    dialogButtonService.GetSmallDialogButtonOverSource(SmallButton.Ok));
+```
+
+*   **Event Handler**: Use `OnMouseDown` (not `OnClick`) to prevent the panel from instantly closing when reopened:
+    ```csharp
+    _closeButton.OnMouseDown += (_, _) => { Visible = false; };
+    ```
+
+### Drag-from-Inventory Fix
+When handling drag-and-drop from InventoryPanel to MacroPanel, the MacroPanel check **must be positioned BEFORE** other drop target checks:
+
+```csharp
+private void HandleItemDoneDragging(...)
+{
+    ResetSlotMap(...);
+    
+    // Check MacroPanel FIRST (before map drop, other button checks)
+    var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(...);
+    if (macroPanel.Visible && macroPanel.MouseOver)
+    {
+        // Handle drop...
+        return;
+    }
+    
+    // Then other checks (map drop, junk button, dialogs, etc.)
+}
+```
+
+*   **Visibility Check**: Include `macroPanel.Visible` for safety, though MacroPanel must be visible for user to target it.
+
+

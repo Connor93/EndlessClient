@@ -215,21 +215,29 @@ namespace EndlessClient.Controllers
             if (!_spellSlotDataRepository.SpellIsPrepared)
                 return false;
 
-            _spellSlotDataRepository.SelectedSpellInfo.MatchSome(si =>
+            // Try macro spell first, then fall back to selected spell slot
+            var spellId = _spellSlotDataRepository.PreparedMacroSpellId.Match(
+                some: id => id,
+                none: () => _spellSlotDataRepository.SelectedSpellInfo.Match(
+                    some: si => si.ID,
+                    none: () => -1));
+
+            if (spellId > 0)
             {
-                var result = _spellCastValidationActions.ValidateSpellCast(si.ID, target);
-                if (result == SpellCastValidationResult.Ok && _characterAnimationActions.PrepareMainCharacterSpell(si.ID, target))
-                    _characterActions.PrepareCastSpell(si.ID);
+                var result = _spellCastValidationActions.ValidateSpellCast(spellId, target);
+                if (result == SpellCastValidationResult.Ok && _characterAnimationActions.PrepareMainCharacterSpell(spellId, target))
+                    _characterActions.PrepareCastSpell(spellId);
                 else if (result == SpellCastValidationResult.CannotAttackNPC)
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.YOU_CANNOT_ATTACK_THIS_NPC);
                 else if (result == SpellCastValidationResult.ExhaustedNoTp)
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.ATTACK_YOU_ARE_EXHAUSTED_TP);
                 else if (result == SpellCastValidationResult.ExhaustedNoSp)
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.ATTACK_YOU_ARE_EXHAUSTED_SP);
-            });
+            }
 
             _spellSlotDataRepository.SpellIsPrepared = false;
             _spellSlotDataRepository.SelectedSpellSlot = Option.None<int>();
+            _spellSlotDataRepository.PreparedMacroSpellId = Option.None<int>();
 
             return true;
         }

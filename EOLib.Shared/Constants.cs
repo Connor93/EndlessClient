@@ -46,6 +46,7 @@
 
         public static string InventoryFile { get; } = PathResolver.GetModifiablePath("config/inventory.ini");
         public static string SpellsFile { get; } = PathResolver.GetModifiablePath("config/spells.ini");
+        public static string MacrosFile { get; } = PathResolver.GetModifiablePath("config/macros.ini");
         public static string PanelLayoutFile { get; } = PathResolver.GetModifiablePath("config/layout.ini");
         public static string ChatLogFile { get; } = PathResolver.GetModifiablePath("chatlog.txt");
 

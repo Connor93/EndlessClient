@@ -20,6 +20,8 @@
 
         SettingsPanel CreateSettingsPanel();
 
+        MacroPanel CreateMacroPanel();
+
         HelpPanel CreateHelpPanel();
     }
 }

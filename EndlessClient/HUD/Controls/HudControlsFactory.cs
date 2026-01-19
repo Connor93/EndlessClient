@@ -202,7 +202,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.StatsPanel, CreateStatePanel(InGameStates.Stats)},
                 {HudControlIdentifier.OnlineListPanel, CreateStatePanel(InGameStates.OnlineList)},
                 {HudControlIdentifier.PartyPanel, CreateStatePanel(InGameStates.Party)},
-                //macro panel
+                {HudControlIdentifier.MacroPanel, CreateStatePanel(InGameStates.Macro)},
                 {HudControlIdentifier.SettingsPanel, CreateStatePanel(InGameStates.Settings)},
                 {HudControlIdentifier.HelpPanel, CreateStatePanel(InGameStates.Help)},
 
@@ -382,7 +382,7 @@ namespace EndlessClient.HUD.Controls
                     break;
                 case InGameStates.Party: _hudButtonController.ClickParty(); break;
                 case InGameStates.Macro:
-                    _hudButtonController.ClickSettings();
+                    _hudButtonController.ClickMacro();
                     break;
                 case InGameStates.Settings: _hudButtonController.ClickSettings(); break;
                 case InGameStates.Help:
@@ -408,6 +408,7 @@ namespace EndlessClient.HUD.Controls
                 case InGameStates.Stats: retPanel = _hudPanelFactory.CreateStatsPanel(); break;
                 case InGameStates.OnlineList: retPanel = _hudPanelFactory.CreateOnlineListPanel(); break;
                 case InGameStates.Party: retPanel = _hudPanelFactory.CreatePartyPanel(); break;
+                case InGameStates.Macro: retPanel = _hudPanelFactory.CreateMacroPanel(); break;
                 case InGameStates.Settings: retPanel = _hudPanelFactory.CreateSettingsPanel(); break;
                 case InGameStates.Help: retPanel = _hudPanelFactory.CreateHelpPanel(); break;
                 case InGameStates.News: retPanel = _hudPanelFactory.CreateNewsPanel(); break;

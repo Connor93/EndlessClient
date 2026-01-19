@@ -408,6 +408,20 @@ namespace EndlessClient.HUD.Panels
 
             ResetSlotMap(_childItems.Where(x => !x.IsDragging));
 
+            // Check if item was dropped onto the MacroPanel (check first, before other handlers)
+            var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(HudControlIdentifier.MacroPanel);
+            if (macroPanel.Visible && macroPanel.MouseOver)
+            {
+                var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position.ToVector2();
+                var targetSlot = macroPanel.GetSlotFromPosition(mousePos);
+                if (targetSlot >= 0)
+                {
+                    macroPanel.AcceptItemDrop(item.InventoryItem.ItemID, targetSlot);
+                    e.RestoreOriginalSlot = true;  // Keep item in inventory
+                    return;
+                }
+            }
+
             var oldSlot = item.Slot;
             var fitsInOldSlot = _inventoryService.FitsInSlot(_inventorySlotRepository.FilledSlots, oldSlot, e.Data.Size);
 

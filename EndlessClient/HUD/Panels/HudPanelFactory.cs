@@ -5,6 +5,7 @@ using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.Dialogs.Factories;
+using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.HUD.Spells;
 using EndlessClient.Rendering;
@@ -60,6 +61,8 @@ namespace EndlessClient.HUD.Panels
         private readonly IPartyDataProvider _partyDataProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly HUD.Macros.IMacroSlotDataRepository _macroSlotDataRepository;
+        private readonly IEODialogButtonService _dialogButtonService;
 
         public HudPanelFactory(INativeGraphicsManager nativeGraphicsManager,
                                IInventoryController inventoryController,
@@ -91,7 +94,9 @@ namespace EndlessClient.HUD.Panels
                                IPartyActions partyActions,
                                IPartyDataProvider partyDataProvider,
                                IConfigurationProvider configurationProvider,
-                               IClientWindowSizeProvider clientWindowSizeProvider)
+                               IClientWindowSizeProvider clientWindowSizeProvider,
+                               HUD.Macros.IMacroSlotDataRepository macroSlotDataRepository,
+                               IEODialogButtonService dialogButtonService)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _inventoryController = inventoryController;
@@ -124,6 +129,8 @@ namespace EndlessClient.HUD.Panels
             _partyDataProvider = partyDataProvider;
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _macroSlotDataRepository = macroSlotDataRepository;
+            _dialogButtonService = dialogButtonService;
         }
 
         public NewsPanel CreateNewsPanel()
@@ -230,6 +237,22 @@ namespace EndlessClient.HUD.Panels
                 _configurationRepository,
                 _sfxPlayer,
                 _clientWindowSizeProvider)
+            { DrawOrder = HUD_CONTROL_LAYER };
+        }
+
+        public MacroPanel CreateMacroPanel()
+        {
+            return new MacroPanel(_nativeGraphicsManager,
+                _statusLabelSetter,
+                _playerInfoProvider,
+                _characterProvider,
+                _pubFileProvider,
+                _pubFileProvider,
+                _macroSlotDataRepository,
+                _sfxPlayer,
+                _configurationProvider,
+                _clientWindowSizeProvider,
+                _dialogButtonService)
             { DrawOrder = HUD_CONTROL_LAYER };
         }
 

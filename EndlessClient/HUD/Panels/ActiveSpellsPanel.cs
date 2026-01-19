@@ -436,6 +436,20 @@ namespace EndlessClient.HUD.Panels
             if (item == null)
                 return;
 
+            // Check if spell was dropped onto the MacroPanel
+            var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(HudControlIdentifier.MacroPanel);
+            if (macroPanel.MouseOver)
+            {
+                var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position.ToVector2();
+                var targetSlot = macroPanel.GetSlotFromPosition(mousePos);
+                if (targetSlot >= 0)
+                {
+                    macroPanel.AcceptSpellDrop(item.InventorySpell.ID, targetSlot);
+                    e.RestoreOriginalSlot = true;  // Keep spell in spell panel
+                    return;
+                }
+            }
+
             if (e.DragOutOfBounds)
             {
                 e.RestoreOriginalSlot = true;

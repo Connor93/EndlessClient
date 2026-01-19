@@ -27,6 +27,11 @@ namespace EndlessClient.HUD.Spells
         /// Array of inventory spells by their slot number.
         /// </summary>
         Option<InventorySpell>[] SpellSlots { get; set; }
+
+        /// <summary>
+        /// Spell ID prepared via macro hotkey (bypasses slot system). Cleared after casting or on cancel.
+        /// </summary>
+        Option<int> PreparedMacroSpellId { get; set; }
     }
 
     public interface ISpellSlotDataProvider
@@ -38,6 +43,8 @@ namespace EndlessClient.HUD.Spells
         bool SpellIsPrepared { get; }
 
         IReadOnlyList<Option<InventorySpell>> SpellSlots { get; }
+
+        Option<int> PreparedMacroSpellId { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -55,6 +62,8 @@ namespace EndlessClient.HUD.Spells
         public bool SpellIsPrepared { get; set; }
 
         public Option<InventorySpell>[] SpellSlots { get; set; }
+
+        public Option<int> PreparedMacroSpellId { get; set; }
 
         IReadOnlyList<Option<InventorySpell>> ISpellSlotDataProvider.SpellSlots => SpellSlots;
 
