@@ -40,5 +40,7 @@ namespace EOLib.Config
         public const string Theme = nameof(Theme);
 
         public const string NPCGhosting = nameof(NPCGhosting);
+
+        public const string WASDMovement = nameof(WASDMovement);
     }
 }

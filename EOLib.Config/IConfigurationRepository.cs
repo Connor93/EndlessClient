@@ -36,6 +36,8 @@ namespace EOLib.Config
         string Theme { get; set; }
 
         bool NPCGhosting { get; set; }
+
+        bool WASDMovement { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -71,6 +73,8 @@ namespace EOLib.Config
         string Theme { get; }
 
         bool NPCGhosting { get; }
+
+        bool WASDMovement { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -107,5 +111,7 @@ namespace EOLib.Config
         public string Theme { get; set; }
 
         public bool NPCGhosting { get; set; }
+
+        public bool WASDMovement { get; set; }
     }
 }

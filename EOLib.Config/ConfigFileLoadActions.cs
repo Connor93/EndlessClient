@@ -61,6 +61,7 @@ namespace EOLib.Config
             string theme;
             _configRepository.Theme = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.Theme, out theme) ? theme : string.Empty;
             _configRepository.NPCGhosting = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.NPCGhosting, out tempBool) && tempBool;
+            _configRepository.WASDMovement = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.WASDMovement, out tempBool) && tempBool;
 
             string host;
             _configRepository.Host = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Host, out host) ? host : ConfigDefaults.Host;
