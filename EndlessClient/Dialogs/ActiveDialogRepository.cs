@@ -53,6 +53,8 @@ namespace EndlessClient.Dialogs
 
         Option<ItemInfoDialog> ItemInfoDialog { get; }
 
+        Option<NpcInfoDialog> NpcInfoDialog { get; }
+
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs { get; }
     }
 
@@ -103,6 +105,8 @@ namespace EndlessClient.Dialogs
         Option<ScrollingListDialog> HelpDialog { get; set; }
 
         Option<ItemInfoDialog> ItemInfoDialog { get; set; }
+
+        Option<NpcInfoDialog> NpcInfoDialog { get; set; }
 
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs { get; }
     }
@@ -156,6 +160,8 @@ namespace EndlessClient.Dialogs
 
         public Option<ItemInfoDialog> ItemInfoDialog { get; set; }
 
+        public Option<NpcInfoDialog> NpcInfoDialog { get; set; }
+
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs
         {
             get
@@ -185,6 +191,7 @@ namespace EndlessClient.Dialogs
                     GuildDialog.Map(Map),
                     HelpDialog.Map(Map),
                     ItemInfoDialog.Map(Map),
+                    NpcInfoDialog.Map(Map),
                 }.ToList();
 
                 static IXNADialog Map(object d)
@@ -226,6 +233,7 @@ namespace EndlessClient.Dialogs
             GuildDialog = Option.None<GuildDialog>();
             HelpDialog = Option.None<ScrollingListDialog>();
             ItemInfoDialog = Option.None<ItemInfoDialog>();
+            NpcInfoDialog = Option.None<NpcInfoDialog>();
         }
     }
 }

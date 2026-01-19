@@ -335,3 +335,75 @@ The `DialogType` enum controls dialog size and features:
 
 *   **Recommendation**: Use `QuestProgressHistory` for medium-sized info dialogs (like item info).
 *   **Item Graphics**: Draw over the dialog using `OnDrawControl()` with `_spriteBatch.Begin()`/`End()`.
+
+## 9. NPC Graphics Formula
+
+When loading NPC sprites from `GFXTypes.NPC`, the formula is:
+```
+resourceId = (npc.Graphic - 1) * 40 + frameOffset
+```
+
+**Frame offsets** (based on direction Down/Right vs Up/Left):
+| Frame | Down/Right | Up/Left |
+|-------|------------|---------|
+| Standing | 1 | 3 |
+| Standing2 | 2 | 4 |
+| Walk1 | 5 | 9 |
+| Walk2 | 6 | 10 |
+| Walk3 | 7 | 11 |
+| Walk4 | 8 | 12 |
+| Attack1 | 13 | 15 |
+| Attack2 | 14 | 16 |
+
+*   **For dialogs**: Use `(npc.Graphic - 1) * 40 + 1` for the standing south frame.
+*   **Reference**: See `NPCSpriteSheet.GetNPCTexture()` for the complete implementation.
+
+### NPC Lookup Command (`#npc`)
+*   **Files Created**:
+    *   `EOLib/Domain/Chat/Commands/NpcCommand.cs` - Command handler
+    *   `EOLib/Domain/Interact/INpcInfoDialogActions.cs` - Dialog interface
+    *   `EOLib/Domain/Interact/NpcSourceRepository.cs` - Data model for drops/shops/crafts/spawns
+    *   `EOLib/Net/Packets/NpcSourceRequestPacket.cs` - Request packet
+    *   `EOLib/PacketHandlers/Npcs/NpcSourceHandler.cs` - Packet handler (action 20)
+    *   `EndlessClient/Dialogs/NpcInfoDialog.cs` - Extends `ScrollingListDialog`
+    *   `EndlessClient/Dialogs/Factories/NpcInfoDialogFactory.cs` - Creates dialogs
+    *   `EndlessClient/Dialogs/Actions/NpcInfoDialogActions.cs` - Display logic
+
+*   **Custom Packet Pattern**: Uses `PacketFamily.Npc` with action 20 (not in SDK)
+    *   Request packet: `NpcSourceRequestPacket` implements `IPacket`
+    *   Response handled via `PacketEncoderService.TryDecodePacket()` fallback
+    *   Must add decoding case to `PacketEncoderService.cs` for custom server responses
+
+*   **Dialog Tracking**: Added `NpcInfoDialog` property to `ActiveDialogRepository`
+
+## 10. Custom Packet Handling Pattern
+
+For packets using actions not defined in the SDK:
+
+1. **Client Request**: Create a custom `IPacket` class with `Serialize()`:
+   ```csharp
+   public class MyRequestPacket : IPacket {
+       public PacketFamily Family => PacketFamily.XXX;
+       public PacketAction Action => (PacketAction)NN; // Unused action number
+   }
+   ```
+
+2. **Client Response**: Add case to `PacketEncoderService.TryDecodePacket()`:
+   ```csharp
+   if (family == PacketFamily.XXX && action == NN) {
+       var packet = new MyResponsePacket();
+       packet.Deserialize(reader);
+       return Option.Some<IPacket>(packet);
+   }
+   ```
+
+3. **Handler**: Create handler extending `InGameOnlyPacketHandler<T>`:
+   ```csharp
+   public override PacketAction Action => (PacketAction)NN;
+   ```
+
+**Current Custom Packets**:
+| Family | Action | Purpose |
+|--------|--------|---------|
+| Item | 19 | Item source lookup |
+| Npc | 20 | NPC source lookup |

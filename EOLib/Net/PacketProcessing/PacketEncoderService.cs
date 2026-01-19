@@ -70,9 +70,6 @@ namespace EOLib.Net.PacketProcessing
                 // Server packets don't include sequence bytes - those are only added by client for client→server
                 int payloadStart = 2;
 
-                Console.WriteLine($"[DEBUG] Raw packet data: {string.Join(" ", data.Select(b => b.ToString("X2")))}");
-                Console.WriteLine($"[DEBUG] Payload starts at byte {payloadStart}, first 5 payload bytes: {string.Join(" ", data.Skip(payloadStart).Take(5).Select(b => b.ToString("X2")))}");
-
                 // Create payload slice without header
                 var payloadData = new byte[data.Length - payloadStart];
                 Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
@@ -80,7 +77,20 @@ namespace EOLib.Net.PacketProcessing
                 var reader = new EoReader(payloadData);
                 var packet = new ItemSourceResponsePacket();
                 packet.Deserialize(reader);
-                Console.WriteLine($"[DEBUG] Custom packet decoded: ItemId={packet.ItemId}, Sources={packet.Sources.Count}");
+                return Option.Some<IPacket>(packet);
+            }
+
+            // Handle NPC family with action 20 (our custom NPC source packet)
+            if (family == PacketFamily.Npc && action == 20)
+            {
+                int payloadStart = 2;
+
+                var payloadData = new byte[data.Length - payloadStart];
+                Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+
+                var reader = new EoReader(payloadData);
+                var packet = new EOLib.PacketHandlers.Npcs.NpcSourceResponsePacket();
+                packet.Deserialize(reader);
                 return Option.Some<IPacket>(packet);
             }
 
