@@ -79,10 +79,12 @@ namespace EndlessClient.Rendering.Map
         {
             _contextMenuRepository.ContextMenu.MatchSome(contextMenu =>
             {
-                Game.Components.Remove(contextMenu);
-                contextMenu.Dispose();
-
                 _contextMenuRepository.ContextMenu = Option.None<IContextMenuRenderer>();
+                DispatcherGameComponent.Invoke(() =>
+                {
+                    Game.Components.Remove(contextMenu);
+                    contextMenu.Dispose();
+                });
             });
 
             var mapRenderer = _hudControlProvider.GetComponent<IMapRenderer>(HudControlIdentifier.MapRenderer);
@@ -224,7 +226,7 @@ namespace EndlessClient.Rendering.Map
             }
             else if (renderer.IsClickablePixel(currentMousePosition))
             {
-                _npcInteractionController.ShowNPCDialog(n);
+                DispatcherGameComponent.Invoke(() => _npcInteractionController.ShowNPCDialog(n));
             }
 
             return true;

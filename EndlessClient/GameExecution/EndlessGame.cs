@@ -197,6 +197,12 @@ namespace EndlessClient.GameExecution
                 {
                     base.Update(gameTime);
                 }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("Collection was modified"))
+                {
+                    // XNAControls has a race condition where modifying controls during click event
+                    // enumeration causes a crash. Log and continue - the operation will retry next frame.
+                    System.Diagnostics.Debug.WriteLine($"[XNAControls] Collection modification during input: {ex.Message}");
+                }
 #if DEBUG
                 catch
                 {

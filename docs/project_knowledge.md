@@ -543,4 +543,57 @@ private void HandleItemDoneDragging(...)
 
 *   **Visibility Check**: Include `macroPanel.Visible` for safety, though MacroPanel must be visible for user to target it.
 
+## 12. XNAControls Collection Modification Bug
+
+### The Problem
+Clicking on NPC dialogs (like the wiseman/skillmaster) can cause a crash:
+```
+InvalidOperationException: Collection was modified; enumeration operation may not execute.
+   at XNAControls.Input.InputTargetFinder.GetMouseButtonEventTargetControl
+```
+
+### Root Cause
+`XNAControls` (NuGet package v2.3.1) iterates over the control collection during mouse click handling. If **any** control is added or removed during this iteration, .NET throws `InvalidOperationException`.
+
+Common triggers:
+- Dialog `Close()` during click handler
+- `ClearItemList()` / `RemoveFromList()` removing controls
+- `ShowDialog()` adding new controls
+- Context menu disposal
+
+### Solution: Deferred Execution
+Wrap control modifications with `DispatcherGameComponent.Invoke()` to defer them to the next frame:
+
+```csharp
+// Instead of:
+ClearItemList();
+
+// Do:
+DispatcherGameComponent.Invoke(() => 
+{
+    foreach (var item in itemsToDispose)
+    {
+        item.SetControlUnparented();
+        item.Dispose();
+    }
+});
+```
+
+**Files Modified**:
+- `ClickDispatcher.cs` - Deferred `ShowNPCDialog` and context menu disposal
+- `SkillmasterDialog.cs` - Deferred `SetState` in click handlers
+- `ScrollingListDialog.cs` - Deferred `ClearItemList`, `RemoveFromList`, link click actions
+
+### Safety Net: Exception Handler
+Added catch in `EndlessGame.Update()` for any remaining edge cases:
+
+```csharp
+catch (InvalidOperationException ex) when (ex.Message.Contains("Collection was modified"))
+{
+    System.Diagnostics.Debug.WriteLine($"[XNAControls] Collection modification: {ex.Message}");
+    // Operation retries next frame
+}
+```
+
+**Key Pattern**: Any code that modifies controls during a click event handler should use `DispatcherGameComponent.Invoke()`.
 
