@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
 using AutomaticTypeMapper;
+using EOLib.Config;
 using EOLib.Domain.Extensions;
 using EOLib.Domain.Map;
 using EOLib.IO.Map;
 using EOLib.Shared;
 using Optional;
-using EOLib.Config;
 
 namespace EOLib.Domain.Character
 {

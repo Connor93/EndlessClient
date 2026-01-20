@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.Rendering;
 using EndlessClient.UIControls;
 using EOLib.Graphics;
 using EOLib.Shared;
@@ -10,7 +11,6 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
-using EndlessClient.Rendering;
 
 namespace EndlessClient.Dialogs
 {

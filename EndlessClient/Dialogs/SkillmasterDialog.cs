@@ -6,6 +6,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD;
+using EndlessClient.Rendering;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Skill;
 using EOLib.Graphics;
@@ -15,7 +16,6 @@ using EOLib.Shared;
 using Microsoft.Xna.Framework;
 using Optional.Collections;
 using XNAControls;
-using EndlessClient.Rendering;
 
 namespace EndlessClient.Dialogs
 {
