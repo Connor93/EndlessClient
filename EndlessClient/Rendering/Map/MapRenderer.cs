@@ -59,9 +59,15 @@ namespace EndlessClient.Rendering.Map
             get
             {
                 var ms = Mouse.GetState();
+                // In scaled mode, the mouse coordinates are already transformed to game-space
+                // So we compare against game dimensions, not window dimensions
+                var maxWidth = _clientWindowSizeRepository.GameWidth;
+                var maxHeight = _clientWindowSizeRepository.Resizable
+                    ? _clientWindowSizeRepository.GameHeight
+                    : _clientWindowSizeRepository.GameHeight * 2 / 3;
+
                 return Game.IsActive && ms.X > 0 && ms.Y > 0 &&
-                    ms.X < _clientWindowSizeRepository.Width &&
-                    ms.Y < (_clientWindowSizeRepository.Resizable ? _clientWindowSizeRepository.Height : _clientWindowSizeRepository.Height * 2 / 3);
+                    ms.X < maxWidth && ms.Y < maxHeight;
             }
         }
 

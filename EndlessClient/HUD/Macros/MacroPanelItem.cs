@@ -2,10 +2,10 @@ using System;
 using EndlessClient.Audio;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Panels;
+using EndlessClient.Input;
 using EOLib.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
@@ -19,6 +19,7 @@ namespace EndlessClient.HUD.Macros
         private readonly MacroPanel _macroPanel;
         private readonly INativeGraphicsManager _nativeGraphicsManager;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IUserInputProvider _userInputProvider;
         private readonly Texture2D _whitePixel;
         private Texture2D _iconGraphic;
 
@@ -47,6 +48,7 @@ namespace EndlessClient.HUD.Macros
         public MacroPanelItem(MacroPanel macroPanel,
                               INativeGraphicsManager nativeGraphicsManager,
                               ISfxPlayer sfxPlayer,
+                              IUserInputProvider userInputProvider,
                               int slot,
                               MacroSlot data)
             : base(macroPanel)
@@ -54,6 +56,7 @@ namespace EndlessClient.HUD.Macros
             _macroPanel = macroPanel;
             _nativeGraphicsManager = nativeGraphicsManager;
             _sfxPlayer = sfxPlayer;
+            _userInputProvider = userInputProvider;
 
             Slot = DisplaySlot = slot;
             Data = data;
@@ -164,7 +167,7 @@ namespace EndlessClient.HUD.Macros
                     var highlightPosition = _macroPanel.GetSlotPosition(DisplaySlot);
                     var highlightRectangle = new Rectangle((_parentContainer.DrawPositionWithParentOffset + highlightPosition).ToPoint(), DrawArea.Size);
 
-                    if (highlightRectangle.Contains(Mouse.GetState().Position))
+                    if (highlightRectangle.Contains(_userInputProvider.CurrentMouseState.Position))
                         _spriteBatch.Draw(_whitePixel, highlightRectangle, Color.FromNonPremultiplied(200, 200, 200, 60));
                 }
             }
@@ -189,9 +192,10 @@ namespace EndlessClient.HUD.Macros
             }
             else
             {
+                var mousePos = _userInputProvider.CurrentMouseState.Position;
                 targetDrawArea = new Rectangle(
-                    Mouse.GetState().X - srcRect.Width / 2,
-                    Mouse.GetState().Y - srcRect.Height / 2,
+                    mousePos.X - srcRect.Width / 2,
+                    mousePos.Y - srcRect.Height / 2,
                     srcRect.Width,
                     srcRect.Height);
             }

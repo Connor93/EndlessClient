@@ -2,12 +2,12 @@
 using EndlessClient.Audio;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Panels;
+using EndlessClient.Input;
 using EOLib.Domain.Character;
 using EOLib.Graphics;
 using EOLib.IO.Pub;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
 
@@ -18,6 +18,7 @@ namespace EndlessClient.HUD.Spells
         private const int ICON_AREA_WIDTH = 42, ICON_AREA_HEIGHT = 36;
 
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IUserInputProvider _userInputProvider;
 
         private readonly Texture2D _spellGraphic;
         private Rectangle _spellGraphicSourceRect;
@@ -50,12 +51,14 @@ namespace EndlessClient.HUD.Spells
 
         public SpellPanelItem(ActiveSpellsPanel spellPanel,
                               ISfxPlayer sfxPlayer,
+                              IUserInputProvider userInputProvider,
                               int slot,
                               InventorySpell spell,
                               ESFRecord data)
             : base(spellPanel)
         {
             _sfxPlayer = sfxPlayer;
+            _userInputProvider = userInputProvider;
 
             Slot = DisplaySlot = slot;
             InventorySpell = spell;
@@ -151,7 +154,7 @@ namespace EndlessClient.HUD.Spells
                     var highlightPosition = GetDisplayPosition(DisplaySlot);
                     var highlightRectangle = new Rectangle((_parentContainer.DrawPositionWithParentOffset + highlightPosition).ToPoint(), DrawArea.Size);
 
-                    if (highlightRectangle.Contains(Mouse.GetState().Position))
+                    if (highlightRectangle.Contains(_userInputProvider.CurrentMouseState.Position))
                         _spriteBatch.Draw(_whitePixel, highlightRectangle, Color.FromNonPremultiplied(200, 200, 200, 60));
                 }
             }
@@ -173,9 +176,10 @@ namespace EndlessClient.HUD.Spells
             }
             else
             {
+                var mousePos = _userInputProvider.CurrentMouseState.Position;
                 targetDrawArea = new Rectangle(
-                    Mouse.GetState().X - _spellGraphicSourceRect.Width / 2,
-                    Mouse.GetState().Y - _spellGraphicSourceRect.Height / 2,
+                    mousePos.X - _spellGraphicSourceRect.Width / 2,
+                    mousePos.Y - _spellGraphicSourceRect.Height / 2,
                     _spellGraphicSourceRect.Width,
                     _spellGraphicSourceRect.Height
                     );

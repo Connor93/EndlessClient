@@ -720,3 +720,104 @@ The SDK is generated from the `eo-protocol` XML specification. These repos are u
 *   **SDK Generation**: The SDK is generated from the protocol XML via the `ProtocolGenerator` project in `eolib-dotnet`.
 *   **Version**: EndlessClient uses SDK version 1.0.1 via NuGet (`Moffat.EndlessOnline.SDK`).
 
+## 15. Cross-Platform Release Builds
+
+### Build Scripts
+Two build scripts are available for creating distributable releases:
+
+| Script | Platform | Usage |
+|--------|----------|-------|
+| `build-release.ps1` | Windows (PowerShell) | `.\build-release.ps1` |
+| `build-release.sh` | macOS/Linux (Bash) | `./build-release.sh [options]` |
+
+### Platform Comparison
+
+| Platform | Config | Format | Native Libs | Notes |
+|----------|--------|--------|-------------|-------|
+| **Windows** | Release | Single-file exe | Embedded | ~155 MB, just zip to distribute |
+| **Linux** | Release | Single-file + tarball | Embedded in exe | ~88 MB exe, auto-extracts at runtime |
+| **macOS** | **Debug** | .app bundle | Separate .dylib files | Debug avoids Unity DI reflection issues |
+
+### macOS-Specific Issues
+
+#### Unity DI Reflection Failure in Release Mode
+*   **Issue**: Release builds on macOS fail at startup with `Unity.ResolutionFailedException`.
+*   **Root Cause**: Release optimizations conflict with Unity Container's reflection-based dependency resolution.
+*   **Fix**: macOS builds use Debug configuration by default in `build-release.sh`.
+
+#### Native Library Loading (SDL2/OpenAL)
+*   **Issue**: Single-file publishing (`-p:PublishSingleFile=true`) causes `Failed to load library: libSDL2.dylib` on macOS.
+*   **Root Cause**: Native libraries are embedded but not extracted properly for SDL2's loading mechanism.
+*   **Fix**: macOS builds skip single-file mode; native libs (`libSDL2.dylib`, `libopenal.1.dylib`) remain as separate files.
+
+### Linux Builds
+Linux single-file publishing works correctly. Native libraries are embedded in the executable and auto-extracted at runtime.
+
+```bash
+# Build for Linux x64 with distributable tarball
+./build-release.sh --linux --tar
+
+# Output: bin/Release/EndlessClient-linux-x64.tar.gz
+```
+
+### macOS .app Bundle
+macOS requires a proper `.app` bundle for double-click launching:
+
+```bash
+# Build macOS .app bundle (Apple Silicon)
+./build-release.sh --app
+
+# Output: bin/Debug/EndlessClient.app
+```
+
+**Bundle Structure**:
+```
+EndlessClient.app/
+├── Contents/
+│   ├── Info.plist          # App metadata (bundle ID, version, etc.)
+│   ├── MacOS/
+│   │   └── EndlessClient   # Launcher script (changes to Resources/, runs exe)
+│   └── Resources/
+│       ├── EndlessClient   # Main executable
+│       ├── libSDL2.dylib   # Native libraries
+│       ├── libopenal.1.dylib
+│       ├── config/         # Game assets
+│       ├── data/
+│       └── ...
+```
+
+**Info.plist Key Values**:
+```xml
+<key>CFBundleIdentifier</key><string>com.endlessonline.client</string>
+<key>CFBundleExecutable</key><string>EndlessClient</string>
+<key>LSApplicationCategoryType</key><string>public.app-category.games</string>
+```
+
+### Asset Copying Fix
+*   **Issue**: Default NuGet assets from `EndlessClient.Binaries` package may be missing custom files (e.g., `dat013.edf`).
+*   **Fix**: Build script uses `cp -r source/* dest/` to merge ClientAssets over publish output, ensuring custom files are included.
+
+### Build Script Options
+
+```bash
+./build-release.sh [OPTIONS]
+
+Platforms:
+  --linux           Linux x64
+  --linux-arm       Linux ARM64
+  --osx             macOS x64 (Intel)
+  --osx-arm         macOS ARM64 (Apple Silicon)
+
+Packaging:
+  --app             Create macOS .app bundle
+  --tar             Create .tar.gz archive (Linux)
+
+Configuration:
+  --debug           Force Debug configuration
+  --release         Force Release configuration
+  --clean           Clean output before building
+  --output DIR      Custom output directory
+```
+
+### Workflow Reference
+Use `/build-release` workflow for quick command reference.

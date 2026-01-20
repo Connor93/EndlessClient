@@ -5,6 +5,7 @@ using System.Linq;
 using EndlessClient.Audio;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD.Controls;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EOLib.Config;
 using EOLib.Domain.Character;
@@ -44,6 +45,7 @@ namespace EndlessClient.HUD.Panels
         private readonly HUD.Macros.IMacroSlotDataRepository _macroSlotDataRepository;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
+        private readonly IUserInputProvider _userInputProvider;
 
         private readonly List<HUD.Macros.MacroPanelItem> _childItems;
         private readonly IXNAButton _closeButton;
@@ -60,6 +62,7 @@ namespace EndlessClient.HUD.Panels
                          ISfxPlayer sfxPlayer,
                          IConfigurationProvider configProvider,
                          IClientWindowSizeProvider clientWindowSizeProvider,
+                         IUserInputProvider userInputProvider,
                          IEODialogButtonService dialogButtonService)
             : base(clientWindowSizeProvider.Resizable)
         {
@@ -72,6 +75,7 @@ namespace EndlessClient.HUD.Panels
             _macroSlotDataRepository = macroSlotDataRepository;
             _sfxPlayer = sfxPlayer;
             _configProvider = configProvider;
+            _userInputProvider = userInputProvider;
 
             _childItems = new List<HUD.Macros.MacroPanelItem>();
 
@@ -213,7 +217,7 @@ namespace EndlessClient.HUD.Panels
             {
                 _macroSlotDataRepository.MacroSlots[i].MatchSome(macroSlot =>
                 {
-                    var newItem = new HUD.Macros.MacroPanelItem(this, _nativeGraphicsManager, _sfxPlayer, i, macroSlot);
+                    var newItem = new HUD.Macros.MacroPanelItem(this, _nativeGraphicsManager, _sfxPlayer, _userInputProvider, i, macroSlot);
                     newItem.Initialize();
                     newItem.SetParentControl(this);
 

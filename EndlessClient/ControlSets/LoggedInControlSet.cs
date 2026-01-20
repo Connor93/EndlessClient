@@ -20,6 +20,7 @@ namespace EndlessClient.ControlSets
         private readonly IAccountController _accountController;
         private readonly IEndlessGameProvider _endlessGameProvider;
         private readonly IUserInputRepository _userInputRepository;
+        private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly List<CharacterInfoPanel> _characterInfoPanels;
 
         private IXNAButton _changePasswordButton;
@@ -44,6 +45,7 @@ namespace EndlessClient.ControlSets
             _accountController = accountController;
             _endlessGameProvider = endlessGameProvider;
             _userInputRepository = userInputRepository;
+            _clientWindowSizeRepository = clientWindowSizeRepository;
             _characterInfoPanels = new List<CharacterInfoPanel>();
         }
 
@@ -54,7 +56,7 @@ namespace EndlessClient.ControlSets
             _changePasswordButton = GetControl(currentControlSet, GameControlIdentifier.ChangePasswordButton, GetPasswordButton);
             _characterInfoPanels.AddRange(_characterInfoPanelFactory.CreatePanels(_characterSelectorProvider.Characters));
 
-            _allComponents.Add(new CurrentUserInputTracker(_endlessGameProvider, _userInputRepository));
+            _allComponents.Add(new CurrentUserInputTracker(_endlessGameProvider, _userInputRepository, _clientWindowSizeRepository));
             _allComponents.Add(new PreviousUserInputTracker(_endlessGameProvider, _userInputRepository));
             _allComponents.Add(_changePasswordButton);
             _allComponents.AddRange(_characterInfoPanels);

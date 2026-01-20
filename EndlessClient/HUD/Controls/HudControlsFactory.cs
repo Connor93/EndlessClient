@@ -584,7 +584,7 @@ namespace EndlessClient.HUD.Controls
 
         private CurrentUserInputTracker CreateCurrentUserInputTracker()
         {
-            return new CurrentUserInputTracker(_endlessGameProvider, _userInputRepository);
+            return new CurrentUserInputTracker(_endlessGameProvider, _userInputRepository, _clientWindowSizeRepository);
         }
 
         private IUserInputHandler CreateUserInputHandler()

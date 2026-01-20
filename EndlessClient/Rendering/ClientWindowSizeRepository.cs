@@ -13,6 +13,31 @@ namespace EndlessClient.Rendering
 
         bool Resizable { get; }
 
+        /// <summary>
+        /// When in scaled mode, returns the logical game width (640). Otherwise same as Width.
+        /// </summary>
+        int GameWidth { get; }
+
+        /// <summary>
+        /// When in scaled mode, returns the logical game height (480). Otherwise same as Height.
+        /// </summary>
+        int GameHeight { get; }
+
+        /// <summary>
+        /// Whether the client is in scaled rendering mode
+        /// </summary>
+        bool IsScaledMode { get; }
+
+        /// <summary>
+        /// Current scale factor (1.0 when not scaled, otherwise window size / game size)
+        /// </summary>
+        float ScaleFactor { get; }
+
+        /// <summary>
+        /// Offset for letterboxing/pillarboxing when maintaining aspect ratio
+        /// </summary>
+        (int X, int Y) RenderOffset { get; }
+
         event EventHandler<EventArgs> GameWindowSizeChanged;
     }
 
@@ -22,6 +47,8 @@ namespace EndlessClient.Rendering
         new int Height { get; set; }
 
         new bool Resizable { get; set; }
+
+        new bool IsScaledMode { get; set; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -69,8 +96,45 @@ namespace EndlessClient.Rendering
 
         public bool Resizable
         {
-            get => _gameWindowRepository.Window.AllowUserResizing;
+            // In scaled mode, return false so UI uses fixed layout (even though window can resize)
+            get => !IsScaledMode && _gameWindowRepository.Window.AllowUserResizing;
             set => _gameWindowRepository.Window.AllowUserResizing = value;
+        }
+
+        public bool IsScaledMode { get; set; }
+
+        public int GameWidth => IsScaledMode ? DEFAULT_BACKBUFFER_WIDTH : Width;
+
+        public int GameHeight => IsScaledMode ? DEFAULT_BACKBUFFER_HEIGHT : Height;
+
+        public float ScaleFactor
+        {
+            get
+            {
+                if (!IsScaledMode) return 1.0f;
+
+                // Calculate the scale factor that fits the game in the window while maintaining aspect ratio
+                float scaleX = (float)Width / DEFAULT_BACKBUFFER_WIDTH;
+                float scaleY = (float)Height / DEFAULT_BACKBUFFER_HEIGHT;
+                return Math.Min(scaleX, scaleY);
+            }
+        }
+
+        public (int X, int Y) RenderOffset
+        {
+            get
+            {
+                if (!IsScaledMode) return (0, 0);
+
+                // Calculate letterbox/pillarbox offset for centered rendering
+                int scaledWidth = (int)(DEFAULT_BACKBUFFER_WIDTH * ScaleFactor);
+                int scaledHeight = (int)(DEFAULT_BACKBUFFER_HEIGHT * ScaleFactor);
+
+                int offsetX = (Width - scaledWidth) / 2;
+                int offsetY = (Height - scaledHeight) / 2;
+
+                return (offsetX, offsetY);
+            }
         }
 
         public event EventHandler<EventArgs> GameWindowSizeChanged

@@ -42,5 +42,7 @@ namespace EOLib.Config
         public const string NPCGhosting = nameof(NPCGhosting);
 
         public const string WASDMovement = nameof(WASDMovement);
+
+        public const string ScaledClient = nameof(ScaledClient);
     }
 }

@@ -57,7 +57,12 @@ namespace EndlessClient.GameExecution
         private Stopwatch _lastFrameRenderTime = Stopwatch.StartNew();
         private int _frames, _displayFrames;
         private Texture2D _black;
+#else
+        private SpriteBatch _spriteBatch;
 #endif
+
+        // Render target scaling fields
+        private RenderTarget2D _gameRenderTarget;
 
         public EndlessGame(IClientWindowSizeRepository windowSizeRepository,
                            IContentProvider contentProvider,
@@ -145,8 +150,8 @@ namespace EndlessClient.GameExecution
 
         protected override void LoadContent()
         {
-#if DEBUG
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+#if DEBUG
             _black = new Texture2D(GraphicsDevice, 1, 1);
             _black.SetData(new[] { Color.Black });
 #endif
@@ -161,6 +166,22 @@ namespace EndlessClient.GameExecution
             _graphicsDeviceRepository.GraphicsDevice = GraphicsDevice;
             _graphicsDeviceRepository.GraphicsDeviceManager = _graphicsDeviceManager;
             _gameWindowRepository.Window = Window;
+
+            // Initialize scaled client mode if configured
+            if (_configurationProvider.ScaledClient)
+            {
+                _windowSizeRepository.IsScaledMode = true;
+                // Enable window resizing directly without triggering floating UI layout mode
+                // Don't use _windowSizeRepository.Resizable as that triggers floating windows
+                Window.AllowUserResizing = true;
+                _gameRenderTarget = new RenderTarget2D(
+                    GraphicsDevice,
+                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH,
+                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT,
+                    false,
+                    SurfaceFormat.Color,
+                    DepthFormat.None);
+            }
 
             SetUpInitialControlSet();
 
@@ -223,9 +244,40 @@ namespace EndlessClient.GameExecution
         protected override void Draw(GameTime gameTime)
         {
             var isTestMode = _controlSetRepository.CurrentControlSet.GameState == GameStates.TestMode;
-            GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
 
-            base.Draw(gameTime);
+            if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
+            {
+                // Render the game to the fixed-size render target
+                GraphicsDevice.SetRenderTarget(_gameRenderTarget);
+                GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
+
+                base.Draw(gameTime);
+
+                // Switch back to the main backbuffer and draw the scaled render target
+                GraphicsDevice.SetRenderTarget(null);
+                GraphicsDevice.Clear(Color.Black); // Letterbox/pillarbox color
+
+                // Calculate destination rectangle for scaled rendering
+                var scale = _windowSizeRepository.ScaleFactor;
+                var offset = _windowSizeRepository.RenderOffset;
+                var destRect = new Rectangle(
+                    offset.X,
+                    offset.Y,
+                    (int)(ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH * scale),
+                    (int)(ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT * scale));
+
+                // Draw scaled using point sampling for crisp pixels
+                _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+                _spriteBatch.Draw(_gameRenderTarget, destRect, Color.White);
+                _spriteBatch.End();
+            }
+            else
+            {
+                // Normal rendering path (no scaling)
+                GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
+                base.Draw(gameTime);
+            }
+
 #if DEBUG
             _frames++;
 

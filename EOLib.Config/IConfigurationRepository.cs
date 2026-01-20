@@ -38,6 +38,8 @@ namespace EOLib.Config
         bool NPCGhosting { get; set; }
 
         bool WASDMovement { get; set; }
+
+        bool ScaledClient { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -75,6 +77,8 @@ namespace EOLib.Config
         bool NPCGhosting { get; }
 
         bool WASDMovement { get; }
+
+        bool ScaledClient { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -113,5 +117,7 @@ namespace EOLib.Config
         public bool NPCGhosting { get; set; }
 
         public bool WASDMovement { get; set; }
+
+        public bool ScaledClient { get; set; }
     }
 }

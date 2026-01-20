@@ -234,10 +234,10 @@ namespace EndlessClient.Rendering.Character
             var skinRect = _characterTextures.Skin.SourceRectangle;
 
             var xCoord = _clientWindowSizeRepository.Resizable
-                ? (_clientWindowSizeRepository.Width - skinRect.Width) / 2
+                ? (_clientWindowSizeRepository.GameWidth - skinRect.Width) / 2
                 : 310;
             var yCoord = _clientWindowSizeRepository.Resizable
-                ? (_clientWindowSizeRepository.Height - skinRect.Height) / 2 - 11
+                ? (_clientWindowSizeRepository.GameHeight - skinRect.Height) / 2 - 11
                 : (298 - skinRect.Height) / 2 - skinRect.Height / 4 - 3;
 
             SetAbsoluteScreenPosition(xCoord, yCoord);
@@ -313,8 +313,8 @@ namespace EndlessClient.Rendering.Character
 
         private void SetGridCoordinatePosition()
         {
-            var centerX = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.Width - DrawArea.Width) / 2 : 310;
-            var centerY = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.Height - DrawArea.Height) / 2 - 8 : 104;
+            var centerX = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.GameWidth - DrawArea.Width) / 2 : 310;
+            var centerY = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.GameHeight - DrawArea.Height) / 2 - 8 : 104;
 
             var screenX = _renderOffsetCalculator.CalculateOffsetX(_character.RenderProperties) + centerX - GetMainCharacterOffsetX();
             var screenY = _renderOffsetCalculator.CalculateOffsetY(_character.RenderProperties) + centerY - GetMainCharacterOffsetY();
@@ -516,6 +516,9 @@ namespace EndlessClient.Rendering.Character
         private void RecreateRenderTargetEvent(object sender, EventArgs e)
         {
             RecreateRenderTarget();
+
+            // Force texture update for all characters when window is resized
+            _textureUpdateRequired = true;
 
             if (_character == _characterProvider.MainCharacter)
                 SetToCenterScreenPosition();

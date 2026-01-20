@@ -8,6 +8,7 @@ using EndlessClient.Dialogs.Factories;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.HUD.Spells;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.Services;
@@ -61,6 +62,7 @@ namespace EndlessClient.HUD.Panels
         private readonly IPartyDataProvider _partyDataProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IUserInputProvider _userInputProvider;
         private readonly HUD.Macros.IMacroSlotDataRepository _macroSlotDataRepository;
         private readonly IEODialogButtonService _dialogButtonService;
 
@@ -95,6 +97,7 @@ namespace EndlessClient.HUD.Panels
                                IPartyDataProvider partyDataProvider,
                                IConfigurationProvider configurationProvider,
                                IClientWindowSizeProvider clientWindowSizeProvider,
+                               IUserInputProvider userInputProvider,
                                HUD.Macros.IMacroSlotDataRepository macroSlotDataRepository,
                                IEODialogButtonService dialogButtonService)
         {
@@ -129,6 +132,7 @@ namespace EndlessClient.HUD.Panels
             _partyDataProvider = partyDataProvider;
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _userInputProvider = userInputProvider;
             _macroSlotDataRepository = macroSlotDataRepository;
             _dialogButtonService = dialogButtonService;
         }
@@ -180,7 +184,8 @@ namespace EndlessClient.HUD.Panels
                 _hudControlProvider,
                 _sfxPlayer,
                 _configurationProvider,
-                _clientWindowSizeProvider)
+                _clientWindowSizeProvider,
+                _userInputProvider)
             { DrawOrder = HUD_CONTROL_LAYER };
         }
 
@@ -252,6 +257,7 @@ namespace EndlessClient.HUD.Panels
                 _sfxPlayer,
                 _configurationProvider,
                 _clientWindowSizeProvider,
+                _userInputProvider,
                 _dialogButtonService)
             { DrawOrder = HUD_CONTROL_LAYER };
         }
