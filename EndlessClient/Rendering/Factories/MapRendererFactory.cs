@@ -1,6 +1,7 @@
 using AutomaticTypeMapper;
 using EndlessClient.Content;
 using EndlessClient.GameExecution;
+using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.Effects;
 using EndlessClient.Rendering.Map;
@@ -33,6 +34,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly IFixedTimeStepRepository _fixedTimeStepRepository;
+        private readonly IUserInputProvider _userInputProvider;
 
         public MapRendererFactory(IEndlessGameProvider endlessGameProvider,
             IRenderTargetFactory renderTargetFactory,
@@ -50,7 +52,8 @@ namespace EndlessClient.Rendering.Factories
             IMouseCursorRendererFactory mouseCursorRendererFactory,
             IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
             IClientWindowSizeRepository clientWindowSizeRepository,
-            IFixedTimeStepRepository fixedTimeStepRepository)
+            IFixedTimeStepRepository fixedTimeStepRepository,
+            IUserInputProvider userInputProvider)
         {
             _endlessGameProvider = endlessGameProvider;
             _renderTargetFactory = renderTargetFactory;
@@ -69,6 +72,7 @@ namespace EndlessClient.Rendering.Factories
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _fixedTimeStepRepository = fixedTimeStepRepository;
+            _userInputProvider = userInputProvider;
         }
 
         public IMapRenderer CreateMapRenderer()
@@ -89,7 +93,8 @@ namespace EndlessClient.Rendering.Factories
                                    _mouseCursorRendererFactory.Create(),
                                    _gridDrawCoordinateCalculator,
                                    _clientWindowSizeRepository,
-                                   _fixedTimeStepRepository);
+                                   _fixedTimeStepRepository,
+                                   _userInputProvider);
         }
     }
 }
