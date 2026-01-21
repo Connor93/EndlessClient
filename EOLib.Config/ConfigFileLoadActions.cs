@@ -64,6 +64,18 @@ namespace EOLib.Config
             _configRepository.WASDMovement = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.WASDMovement, out tempBool) && tempBool;
             _configRepository.ScaledClient = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.ScaledClient, out tempBool) && tempBool;
 
+            string uiModeStr;
+            _configRepository.UIMode = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.UIMode, out uiModeStr)
+                && Enum.TryParse<UIMode>(uiModeStr, true, out var uiMode)
+                ? uiMode
+                : UIMode.Gfx;
+
+            string uiStyleStr;
+            _configRepository.UIStyle = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.UIStyle, out uiStyleStr)
+                && Enum.TryParse<UIStyle>(uiStyleStr, true, out var uiStyle)
+                ? uiStyle
+                : UIStyle.Glass;
+
             string host;
             _configRepository.Host = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Host, out host) ? host : ConfigDefaults.Host;
             _configRepository.Port = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Port, out tempInt) ? tempInt : ConfigDefaults.Port;
