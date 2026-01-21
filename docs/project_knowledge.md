@@ -821,3 +821,78 @@ Configuration:
 
 ### Workflow Reference
 Use `/build-release` workflow for quick command reference.
+
+## 16. XNAControls Local Fork (Scaled Rendering)
+
+### The Problem
+When rendering to a fixed-size render target (e.g., 1280x720) and scaling up to fill a larger window, mouse hit detection fails because:
+- UI elements position themselves in game-space (1280x720)
+- XNAControls reads raw mouse coordinates from `MouseExtended.GetState()` (window-space)
+- Window-space coordinates don't match game-space element positions
+
+### Failed Approaches
+- **Coordinate Virtualization**: Making `Width`/`Height` return game dimensions broke internal hit testing in the NuGet package
+- **Mouse.SetPosition()**: Moving the physical cursor trapped it in the game area
+
+### The Solution: Local Fork
+XNAControls was cloned locally and modified to accept a coordinate transformer:
+
+**Project Location**: `XNAControls/` (git submodule/clone)
+**Project Reference**: `EndlessClient.csproj` references `XNAControls/XNAControls/XNAControls.csproj`
+
+### Changes to XNAControls
+
+**1. IMouseCoordinateTransformer Interface** (`XNAControls/XNAControls/Input/IMouseCoordinateTransformer.cs`):
+```csharp
+public interface IMouseCoordinateTransformer
+{
+    Point TransformMousePosition(Point windowPosition);
+}
+```
+
+**2. InputManager Modifications** (`XNAControls/XNAControls/Input/InputManager.cs`):
+- Added constructor overload accepting `IMouseCoordinateTransformer`
+- All hit detection uses `GetTransformedMousePosition()` instead of raw coordinates
+- Click/drag/wheel handlers use `GetClickTargetAtTransformedPosition()`
+
+### EndlessClient Integration
+
+**MouseCoordinateTransformer** (`EndlessClient/Input/MouseCoordinateTransformer.cs`):
+```csharp
+public Point TransformMousePosition(Point windowPosition)
+{
+    if (!_windowSizeProvider.IsScaledMode) return windowPosition;
+    
+    var offset = _windowSizeProvider.RenderOffset;
+    var scale = _windowSizeProvider.ScaleFactor;
+    
+    int gameX = (int)((windowPosition.X - offset.X) / scale);
+    int gameY = (int)((windowPosition.Y - offset.Y) / scale);
+    
+    return new Point(
+        Math.Clamp(gameX, 0, _windowSizeProvider.GameWidth - 1),
+        Math.Clamp(gameY, 0, _windowSizeProvider.GameHeight - 1));
+}
+```
+
+**Initialization** (`EndlessClientInitializer.cs`):
+```csharp
+var mouseCoordinateTransformer = new MouseCoordinateTransformer(_clientWindowSizeProvider);
+_game.Components.Add(new InputManager(GameRepository.GetGame(), mouseListenerSettings, mouseCoordinateTransformer));
+```
+
+### Related Files
+| File | Purpose |
+|------|---------|
+| `XNAControls/XNAControls/Input/IMouseCoordinateTransformer.cs` | Interface for coordinate transformation |
+| `XNAControls/XNAControls/Input/InputManager.cs` | Modified to use transformer |
+| `EndlessClient/Input/MouseCoordinateTransformer.cs` | EndlessClient implementation |
+| `EndlessClient/Initialization/EndlessClientInitializer.cs` | Wires transformer to InputManager |
+| `EndlessClient/Rendering/ClientWindowSizeRepository.cs` | Provides scale factor and render offset |
+
+### Building with Local XNAControls
+The local fork must be restored before building:
+```bash
+dotnet restore XNAControls/XNAControls/XNAControls.csproj
+dotnet build EndlessClient/EndlessClient.csproj
+```

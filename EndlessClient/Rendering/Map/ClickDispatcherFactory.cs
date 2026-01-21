@@ -2,6 +2,7 @@
 using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Spells;
+using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.NPC;
 using EOLib.Domain.Character;
@@ -27,6 +28,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IMapInteractionController _mapInteractionController;
         private readonly INPCInteractionController _npcInteractionController;
+        private readonly IUserInputProvider _userInputProvider;
 
         public ClickDispatcherFactory(IHudControlProvider hudControlProvider,
                                       IClientWindowSizeProvider clientWindowSizeProvider,
@@ -41,7 +43,8 @@ namespace EndlessClient.Rendering.Map
                                       IMapObjectBoundsCalculator mapObjectBoundsCalculator,
                                       IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                       IMapInteractionController mapInteractionController,
-                                      INPCInteractionController npcInteractionController)
+                                      INPCInteractionController npcInteractionController,
+                                      IUserInputProvider userInputProvider)
         {
             _hudControlProvider = hudControlProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -57,6 +60,7 @@ namespace EndlessClient.Rendering.Map
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _mapInteractionController = mapInteractionController;
             _npcInteractionController = npcInteractionController;
+            _userInputProvider = userInputProvider;
         }
 
         public IClickDispatcher Create()
@@ -74,7 +78,8 @@ namespace EndlessClient.Rendering.Map
                 _mapObjectBoundsCalculator,
                 _gridDrawCoordinateCalculator,
                 _mapInteractionController,
-                _npcInteractionController);
+                _npcInteractionController,
+                _userInputProvider);
         }
     }
 

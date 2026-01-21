@@ -56,7 +56,8 @@ namespace EndlessClient.ControlSets
             _changePasswordButton = GetControl(currentControlSet, GameControlIdentifier.ChangePasswordButton, GetPasswordButton);
             _characterInfoPanels.AddRange(_characterInfoPanelFactory.CreatePanels(_characterSelectorProvider.Characters));
 
-            _allComponents.Add(new CurrentUserInputTracker(_endlessGameProvider, _userInputRepository, _clientWindowSizeRepository));
+            // Note: CurrentUserInputTracker was removed from here to avoid conflict with the in-game tracker
+            // The XNAControls library handles mouse coordinate transformation for UI elements via MouseCoordinateTransformer
             _allComponents.Add(new PreviousUserInputTracker(_endlessGameProvider, _userInputRepository));
             _allComponents.Add(_changePasswordButton);
             _allComponents.AddRange(_characterInfoPanels);

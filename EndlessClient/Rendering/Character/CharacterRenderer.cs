@@ -268,6 +268,10 @@ namespace EndlessClient.Rendering.Character
 
         private void DrawToRenderTarget()
         {
+            // Guard against being called before fully initialized (can happen during window resize events)
+            if (_sb == null || _charRenderTarget == null)
+                return;
+
             var weaponMetadata = _weaponMetadataProvider.GetValueOrDefault(Character.RenderProperties.WeaponGraphic);
 
             lock (_rt_locker_)
