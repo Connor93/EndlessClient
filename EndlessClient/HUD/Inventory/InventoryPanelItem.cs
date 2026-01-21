@@ -94,7 +94,7 @@ namespace EndlessClient.HUD.Inventory
                 Text = string.Empty
             };
 
-            OnMouseEnter += (_, _) => _nameLabel.Visible = _parentContainer.NoItemsDragging() && _activeDialogProvider.PaperdollDialog.Match(d => d.NoItemsDragging(), () => true);
+            OnMouseEnter += (_, _) => _nameLabel.Visible = _parentContainer.NoItemsDragging() && _activeDialogProvider.PaperdollDialog.Match(d => d switch { PaperdollDialog pd => pd.NoItemsDragging(), CodeDrawnPaperdollDialog cpd => cpd.NoItemsDragging(), _ => true }, () => true);
             OnMouseOver += InventoryPanelItem_OnMouseOver;
             OnMouseLeave += (_, _) =>
             {

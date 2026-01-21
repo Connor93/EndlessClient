@@ -289,6 +289,17 @@ namespace EndlessClient.Dialogs
 
             base.OnDrawControl(gameTime);
         }
+
+        protected override bool HandleMouseWheelMoved(IXNAControl control, MouseEventArgs eventArgs)
+        {
+            // Forward scroll wheel events to the scrollbar
+            if (eventArgs.ScrollWheelDelta > 0)
+                _scrollBar.ScrollUp(2);
+            else if (eventArgs.ScrollWheelDelta < 0)
+                _scrollBar.ScrollDown(2);
+
+            return true;
+        }
     }
 
     /// <summary>

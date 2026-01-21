@@ -1,13 +1,18 @@
 ﻿using AutomaticTypeMapper;
+using EndlessClient.Content;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.GameExecution;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.UI.Styles;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Map;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -25,6 +30,10 @@ namespace EndlessClient.Dialogs.Factories
         private readonly ILockerDataProvider _lockerDataProvider;
         private readonly IHudControlProvider _hudControlProvider;
         private readonly IEIFFileProvider _eifFileProvider;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IUIStyleProviderFactory _styleProviderFactory;
+        private readonly IGameStateProvider _gameStateProvider;
+        private readonly IContentProvider _contentProvider;
 
         public LockerDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                    ILockerActions lockerActions,
@@ -36,7 +45,11 @@ namespace EndlessClient.Dialogs.Factories
                                    ICharacterProvider characterProvider,
                                    ILockerDataProvider lockerDataProvider,
                                    IHudControlProvider hudControlProvider,
-                                   IEIFFileProvider eifFileProvider)
+                                   IEIFFileProvider eifFileProvider,
+                                   IConfigurationProvider configProvider,
+                                   IUIStyleProviderFactory styleProviderFactory,
+                                   IGameStateProvider gameStateProvider,
+                                   IContentProvider contentProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _lockerActions = lockerActions;
@@ -49,10 +62,30 @@ namespace EndlessClient.Dialogs.Factories
             _lockerDataProvider = lockerDataProvider;
             _hudControlProvider = hudControlProvider;
             _eifFileProvider = eifFileProvider;
+            _configProvider = configProvider;
+            _styleProviderFactory = styleProviderFactory;
+            _gameStateProvider = gameStateProvider;
+            _contentProvider = contentProvider;
         }
 
-        public LockerDialog Create()
+        public IXNADialog Create()
         {
+            if (_configProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnLockerDialog(_styleProviderFactory.Create(),
+                    _gameStateProvider,
+                    _nativeGraphicsManager,
+                    _lockerActions,
+                    _localizedStringFinder,
+                    _inventorySpaceValidator,
+                    _statusLabelSetter,
+                    _messageBoxFactory,
+                    _characterProvider,
+                    _lockerDataProvider,
+                    _eifFileProvider,
+                    _contentProvider);
+            }
+
             return new LockerDialog(_nativeGraphicsManager,
                                     _lockerActions,
                                     _dialogButtonService,
@@ -69,6 +102,7 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface ILockerDialogFactory
     {
-        LockerDialog Create();
+        IXNADialog Create();
     }
 }
+

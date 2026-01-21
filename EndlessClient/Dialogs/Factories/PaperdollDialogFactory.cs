@@ -1,13 +1,18 @@
 ﻿using AutomaticTypeMapper;
 using EndlessClient.Audio;
+using EndlessClient.Content;
 using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.GameExecution;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.UI.Styles;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -23,6 +28,10 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IPubFileProvider _pubFileProvider;
         private readonly IHudControlProvider _hudControlProvider;
         private readonly INativeGraphicsManager _nativeGraphicsManager;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IUIStyleProviderFactory _styleProviderFactory;
+        private readonly IGameStateProvider _gameStateProvider;
+        private readonly IContentProvider _contentProvider;
         private IInventoryController _inventoryController;
 
         public PaperdollDialogFactory(INativeGraphicsManager nativeGraphicsManager,
@@ -33,7 +42,11 @@ namespace EndlessClient.Dialogs.Factories
             IInventorySpaceValidator inventorySpaceValidator,
             IEOMessageBoxFactory eoMessageBoxFactory,
             IStatusLabelSetter statusLabelSetter,
-            ISfxPlayer sfxPlayer)
+            ISfxPlayer sfxPlayer,
+            IConfigurationProvider configProvider,
+            IUIStyleProviderFactory styleProviderFactory,
+            IGameStateProvider gameStateProvider,
+            IContentProvider contentProvider)
         {
             _paperdollProvider = paperdollProvider;
             _pubFileProvider = pubFileProvider;
@@ -44,10 +57,33 @@ namespace EndlessClient.Dialogs.Factories
             _eoMessageBoxFactory = eoMessageBoxFactory;
             _statusLabelSetter = statusLabelSetter;
             _sfxPlayer = sfxPlayer;
+            _configProvider = configProvider;
+            _styleProviderFactory = styleProviderFactory;
+            _gameStateProvider = gameStateProvider;
+            _contentProvider = contentProvider;
         }
 
-        public PaperdollDialog Create(Character character, bool isMainCharacter)
+        public IXNADialog Create(Character character, bool isMainCharacter)
         {
+            if (_configProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnPaperdollDialog(
+                    _styleProviderFactory.Create(),
+                    _gameStateProvider,
+                    _nativeGraphicsManager,
+                    _inventoryController,
+                    _paperdollProvider,
+                    _pubFileProvider,
+                    _hudControlProvider,
+                    _inventorySpaceValidator,
+                    _eoMessageBoxFactory,
+                    _statusLabelSetter,
+                    _sfxPlayer,
+                    _contentProvider,
+                    character,
+                    isMainCharacter);
+            }
+
             return new PaperdollDialog(_nativeGraphicsManager,
                 _inventoryController,
                 _paperdollProvider,
@@ -70,8 +106,9 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IPaperdollDialogFactory
     {
-        PaperdollDialog Create(Character character, bool isMainCharacter);
+        IXNADialog Create(Character character, bool isMainCharacter);
 
         void InjectInventoryController(IInventoryController inventoryController);
     }
 }
+

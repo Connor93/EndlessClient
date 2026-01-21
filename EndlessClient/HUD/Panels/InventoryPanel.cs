@@ -468,6 +468,7 @@ namespace EndlessClient.HUD.Panels
                         switch (activeDialog)
                         {
                             case PaperdollDialog:
+                            case CodeDrawnPaperdollDialog:
                                 if (item.Data.GetEquipLocation() != EquipLocation.PAPERDOLL_MAX)
                                     _inventoryController.EquipItem(item.Data);
                                 break;
@@ -477,7 +478,8 @@ namespace EndlessClient.HUD.Panels
                                 if (item.Data.ID == 1)
                                     _inventoryController.DropItemInBank(item.Data, item.InventoryItem);
                                 break;
-                            case TradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
+                            case TradeDialog:
+                            case CodeDrawnTradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
                             default: return false;
                         }
                         ;

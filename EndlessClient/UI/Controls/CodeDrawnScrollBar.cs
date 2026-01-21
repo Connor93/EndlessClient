@@ -1,6 +1,7 @@
 using System;
 using EndlessClient.UI.Styles;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
 
@@ -15,6 +16,9 @@ namespace EndlessClient.UI.Controls
 
         private Rectangle _scrollArea;
         private int _totalHeight;
+        private bool _isDragging;
+        private int _dragStartY;
+        private int _dragStartOffset;
 
         public int ScrollOffset { get; private set; }
         public int LinesToRender { get; set; }
@@ -71,13 +75,64 @@ namespace EndlessClient.UI.Controls
             ScrollOffset = Math.Clamp(offset, 0, Math.Max(0, _totalHeight - LinesToRender));
         }
 
+        /// <summary>
+        /// Scroll up by specified number of lines (called by parent dialog for mouse wheel).
+        /// </summary>
+        public void ScrollUp(int lines = 1)
+        {
+            if (_totalHeight <= LinesToRender) return;
+            ScrollOffset = Math.Max(0, ScrollOffset - lines);
+        }
+
+        /// <summary>
+        /// Scroll down by specified number of lines (called by parent dialog for mouse wheel).
+        /// </summary>
+        public void ScrollDown(int lines = 1)
+        {
+            if (_totalHeight <= LinesToRender) return;
+            ScrollOffset = Math.Min(_totalHeight - LinesToRender, ScrollOffset + lines);
+        }
+
+        protected override void OnUpdateControl(GameTime gameTime)
+        {
+            // Handle thumb dragging
+            if (_isDragging)
+            {
+                var mouseState = Mouse.GetState();
+                if (mouseState.LeftButton == ButtonState.Released)
+                {
+                    _isDragging = false;
+                }
+                else
+                {
+                    var drawPos = DrawAreaWithParentOffset;
+                    var localY = mouseState.Y - drawPos.Y;
+
+                    var trackHeight = DrawArea.Height - 32;
+                    var thumbHeight = Math.Max(20, (int)(trackHeight * ((float)LinesToRender / _totalHeight)));
+                    var maxOffset = _totalHeight - LinesToRender;
+
+                    // Calculate new offset based on thumb position
+                    var usableTrack = trackHeight - thumbHeight;
+                    if (usableTrack > 0 && maxOffset > 0)
+                    {
+                        var dragDelta = localY - _dragStartY;
+                        var offsetDelta = (int)((dragDelta / (float)usableTrack) * maxOffset);
+                        ScrollOffset = Math.Clamp(_dragStartOffset + offsetDelta, 0, maxOffset);
+                    }
+                }
+            }
+
+            base.OnUpdateControl(gameTime);
+        }
+
         protected override void OnDrawControl(GameTime gameTime)
         {
             var drawPos = DrawAreaWithParentOffset;
             var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
 
             var trackColor = _styleProvider.PanelBackground;
-            var thumbColor = _styleProvider.ButtonNormal;
+            var thumbColor = _isDragging ? _styleProvider.ButtonPressed : _styleProvider.ButtonNormal;
             var arrowColor = _styleProvider.ButtonText;
             var borderColor = _styleProvider.PanelBorder;
 
@@ -102,7 +157,7 @@ namespace EndlessClient.UI.Controls
             if (_totalHeight > LinesToRender)
             {
                 var thumbBounds = ThumbBounds;
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, thumbBounds, _styleProvider.ButtonHover);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, thumbBounds, _isDragging ? _styleProvider.ButtonPressed : _styleProvider.ButtonHover);
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbBounds, borderColor, 1);
             }
 
@@ -131,8 +186,17 @@ namespace EndlessClient.UI.Controls
                 return true;
             }
 
-            // Track clicked (page up/down)
+            // Thumb clicked - start dragging
             var thumbBounds = ThumbBounds;
+            if (localY >= thumbBounds.Y && localY <= thumbBounds.Y + thumbBounds.Height)
+            {
+                _isDragging = true;
+                _dragStartY = (int)localY;
+                _dragStartOffset = ScrollOffset;
+                return true;
+            }
+
+            // Track clicked (page up/down)
             if (localY < thumbBounds.Y)
             {
                 ScrollOffset = Math.Max(0, ScrollOffset - LinesToRender);
@@ -158,3 +222,4 @@ namespace EndlessClient.UI.Controls
         }
     }
 }
+

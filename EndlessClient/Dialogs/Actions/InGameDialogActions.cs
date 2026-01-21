@@ -165,7 +165,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.PaperdollDialog.MatchNone(() =>
             {
                 var dlg = _paperdollDialogFactory.Create(character, isMainCharacter);
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<PaperdollDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.PaperdollDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -229,7 +229,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.ChestDialog.MatchNone(() =>
             {
                 var dlg = _chestDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.ChestDialog = Option.None<ChestDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.ChestDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.ChestDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -244,7 +244,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.LockerDialog.MatchNone(() =>
             {
                 var dlg = _lockerDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.LockerDialog = Option.None<LockerDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.LockerDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.LockerDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -365,7 +365,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.TradeDialog.MatchNone(() =>
             {
                 var dlg = _tradeDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.TradeDialog = Option.None<TradeDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.TradeDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.TradeDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -376,7 +376,11 @@ namespace EndlessClient.Dialogs.Actions
 
         public void CloseTradeDialog()
         {
-            DispatcherGameComponent.Invoke(() => _activeDialogRepository.TradeDialog.MatchSome(dlg => dlg.Close()));
+            DispatcherGameComponent.Invoke(() => _activeDialogRepository.TradeDialog.MatchSome(dlg =>
+            {
+                if (dlg is BaseEODialog baseDialog) baseDialog.Close();
+                else if (dlg is CodeDrawnTradeDialog codeDrawn) codeDrawn.Close();
+            }));
         }
 
         public void ShowBoardDialog()

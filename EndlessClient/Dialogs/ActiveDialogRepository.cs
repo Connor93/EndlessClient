@@ -15,7 +15,7 @@ namespace EndlessClient.Dialogs
 
         Option<QuestStatusDialog> QuestStatusDialog { get; }
 
-        Option<PaperdollDialog> PaperdollDialog { get; }
+        Option<IXNADialog> PaperdollDialog { get; }
 
         Option<BookDialog> BookDialog { get; }
 
@@ -23,9 +23,9 @@ namespace EndlessClient.Dialogs
 
         Option<IXNADialog> QuestDialog { get; }
 
-        Option<ChestDialog> ChestDialog { get; }
+        Option<IXNADialog> ChestDialog { get; }
 
-        Option<LockerDialog> LockerDialog { get; }
+        Option<IXNADialog> LockerDialog { get; }
 
         Option<BankAccountDialog> BankAccountDialog { get; }
 
@@ -35,7 +35,7 @@ namespace EndlessClient.Dialogs
 
         Option<ScrollingListDialog> MessageDialog { get; }
 
-        Option<TradeDialog> TradeDialog { get; }
+        Option<IXNADialog> TradeDialog { get; }
 
         Option<EOMessageBox> MessageBox { get; }
 
@@ -66,7 +66,7 @@ namespace EndlessClient.Dialogs
 
         Option<QuestStatusDialog> QuestStatusDialog { get; set; }
 
-        Option<PaperdollDialog> PaperdollDialog { get; set; }
+        Option<IXNADialog> PaperdollDialog { get; set; }
 
         Option<BookDialog> BookDialog { get; set; }
 
@@ -74,9 +74,9 @@ namespace EndlessClient.Dialogs
 
         Option<IXNADialog> QuestDialog { get; set; }
 
-        Option<ChestDialog> ChestDialog { get; set; }
+        Option<IXNADialog> ChestDialog { get; set; }
 
-        Option<LockerDialog> LockerDialog { get; set; }
+        Option<IXNADialog> LockerDialog { get; set; }
 
         Option<BankAccountDialog> BankAccountDialog { get; set; }
 
@@ -86,7 +86,7 @@ namespace EndlessClient.Dialogs
 
         Option<ScrollingListDialog> MessageDialog { get; set; }
 
-        Option<TradeDialog> TradeDialog { get; set; }
+        Option<IXNADialog> TradeDialog { get; set; }
 
         Option<EOMessageBox> MessageBox { get; set; }
 
@@ -120,7 +120,7 @@ namespace EndlessClient.Dialogs
 
         public Option<QuestStatusDialog> QuestStatusDialog { get; set; }
 
-        public Option<PaperdollDialog> PaperdollDialog { get; set; }
+        public Option<IXNADialog> PaperdollDialog { get; set; }
 
         public Option<BookDialog> BookDialog { get; set; }
 
@@ -128,9 +128,9 @@ namespace EndlessClient.Dialogs
 
         public Option<IXNADialog> QuestDialog { get; set; }
 
-        public Option<ChestDialog> ChestDialog { get; set; }
+        public Option<IXNADialog> ChestDialog { get; set; }
 
-        public Option<LockerDialog> LockerDialog { get; set; }
+        public Option<IXNADialog> LockerDialog { get; set; }
 
         public Option<BankAccountDialog> BankAccountDialog { get; set; }
 
@@ -140,7 +140,7 @@ namespace EndlessClient.Dialogs
 
         public Option<ScrollingListDialog> MessageDialog { get; set; }
 
-        public Option<TradeDialog> TradeDialog { get; set; }
+        public Option<IXNADialog> TradeDialog { get; set; }
 
         public Option<EOMessageBox> MessageBox { get; set; }
 
@@ -213,17 +213,17 @@ namespace EndlessClient.Dialogs
             FriendIgnoreDialog = Option.None<FriendIgnoreListDialog>();
             SessionExpDialog = Option.None<SessionExpDialog>();
             QuestStatusDialog = Option.None<QuestStatusDialog>();
-            PaperdollDialog = Option.None<PaperdollDialog>();
+            PaperdollDialog = Option.None<IXNADialog>();
             BookDialog = Option.None<BookDialog>();
             ShopDialog = Option.None<IXNADialog>();
             QuestDialog = Option.None<IXNADialog>();
-            ChestDialog = Option.None<ChestDialog>();
-            LockerDialog = Option.None<LockerDialog>();
+            ChestDialog = Option.None<IXNADialog>();
+            LockerDialog = Option.None<IXNADialog>();
             BankAccountDialog = Option.None<BankAccountDialog>();
             SkillmasterDialog = Option.None<SkillmasterDialog>();
             BardDialog = Option.None<BardDialog>();
             MessageDialog = Option.None<ScrollingListDialog>();
-            TradeDialog = Option.None<TradeDialog>();
+            TradeDialog = Option.None<IXNADialog>();
             MessageBox = Option.None<EOMessageBox>();
             BoardDialog = Option.None<BoardDialog>();
             JukeboxDialog = Option.None<JukeboxDialog>();

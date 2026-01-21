@@ -982,3 +982,66 @@ protected override void OnDrawControl(GameTime gameTime)
 **SpriteBatch Positioning**: Without transformation matrix, primitives draw at screen origin (0,0) instead of dialog position.
 
 **Child Controls**: Child controls (buttons, labels) auto-position via `SetParentControl()` but custom-drawn elements need manual transformation.
+
+**Dialog Close Method**: `IXNADialog` interface doesn't have `Close()`. When closing dialogs polymorphically, use pattern matching:
+```csharp
+if (x is BaseEODialog baseDialog) baseDialog.Close();
+else if (x is CodeDrawnScrollingListDialog codeDrawn) codeDrawn.Close();
+```
+
+### Migrated Dialogs
+The following dialogs have been migrated to code-drawn versions:
+
+| GFX Dialog | Code-Drawn Version | Notes |
+|------------|-------------------|-------|
+| `EOMessageBox` | `CodeDrawnDialog` | Simple OK/Cancel/Yes/No dialogs |
+| `QuestDialog` | `CodeDrawnQuestDialog` | Multi-page quest dialog with navigation |
+| `ShopDialog` | `CodeDrawnShopDialog` | Buy/sell/craft with item icons |
+| `ChestDialog` | `CodeDrawnChestDialog` | Map chest contents display |
+| `LockerDialog` | `CodeDrawnLockerDialog` | Personal locker with dynamic title |
+| `TradeDialog` | `CodeDrawnTradeDialog` | Dual-panel trade with anti-trick detection |
+| `PaperdollDialog` | `CodeDrawnPaperdollDialog` | Character info & equipment slots |
+
+### Scrolling List Dialog Pattern
+For dialogs with scrollable item lists, use `CodeDrawnScrollingListDialog` base class:
+
+```csharp
+public class CodeDrawnMyDialog : CodeDrawnScrollingListDialog
+{
+    public CodeDrawnMyDialog(
+        IUIStyleProvider styleProvider,
+        IGameStateProvider gameStateProvider,
+        IContentProvider contentProvider)
+        : base(styleProvider, gameStateProvider, contentProvider.Fonts[Constants.FontSize08pt5])
+    {
+        // Configure dimensions
+        DialogWidth = 320;
+        DialogHeight = 340;
+        ListAreaTop = 45;
+        ListAreaHeight = 240;
+        ItemHeight = 36;  // Use 36 for icons, 20 for text only
+        
+        UpdateScrollBarLayout();
+        CenterInGameView();
+    }
+}
+```
+
+**Adding Items with Icons**:
+```csharp
+var itemIcon = _graphicsManager.TextureFromResource(GFXTypes.Items, 2 * itemData.Graphic - 1, transparent: true);
+AddItem(itemData.Name, subText: "x5", data: data, onClick: _ => DoSomething(), isLink: true, icon: itemIcon);
+```
+
+### Known Issues / TODO
+
+- **Scrollbar Thumb Dragging**: Click-and-drag on the scrollbar thumb is implemented but not working properly. Mouse wheel scrolling works correctly.
+
+- **InventoryPanel Drag-Drop Pattern Matching**: When adding new code-drawn dialogs that accept item drops (like TradeDialog), you MUST also update `InventoryPanel.HandleItemDoneDragging()` to include the new dialog type in the switch statement:
+```csharp
+case TradeDialog:
+case CodeDrawnTradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
+```
+Similar updates needed for: ChestDialog, LockerDialog, BankAccountDialog, PaperdollDialog.
+
+
