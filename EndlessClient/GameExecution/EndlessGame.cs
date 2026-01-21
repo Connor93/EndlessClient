@@ -143,6 +143,25 @@ namespace EndlessClient.GameExecution
 
                 if (_windowSizeRepository.Height < ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT)
                     _windowSizeRepository.Height = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+
+                // Recreate the game render target if we're in scaled mode and dimensions changed
+                if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
+                {
+                    var newWidth = _windowSizeRepository.GameWidth;
+                    var newHeight = _windowSizeRepository.GameHeight;
+                    if (_gameRenderTarget.Width != newWidth || _gameRenderTarget.Height != newHeight)
+                    {
+                        System.Console.WriteLine($"[SCALED MODE] Recreating render target: {_gameRenderTarget.Width}x{_gameRenderTarget.Height} -> {newWidth}x{newHeight}");
+                        _gameRenderTarget.Dispose();
+                        _gameRenderTarget = new Microsoft.Xna.Framework.Graphics.RenderTarget2D(
+                            GraphicsDevice,
+                            newWidth,
+                            newHeight,
+                            false,
+                            Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color,
+                            Microsoft.Xna.Framework.Graphics.DepthFormat.None);
+                    }
+                }
             };
 
             Exiting += (_, _) => _mfxPlayer.StopBackgroundMusic();
@@ -171,13 +190,26 @@ namespace EndlessClient.GameExecution
             if (_configurationProvider.ScaledClient)
             {
                 _windowSizeRepository.IsScaledMode = true;
-                // Enable window resizing directly without triggering floating UI layout mode
-                // Don't use _windowSizeRepository.Resizable as that triggers floating windows
+
+                // Set configured game dimensions for when player logs in (0 = use default 640x480)
+                _windowSizeRepository.ConfiguredGameWidth = _configurationProvider.InGameWidth;
+                _windowSizeRepository.ConfiguredGameHeight = _configurationProvider.InGameHeight;
+
+                // Enable window resizing for scaling
                 Window.AllowUserResizing = true;
+
+                // Start at 640x480 for pre-login screens (IsInGame is false)
+                // Game dimensions will switch when player enters the game world
+                var startWidth = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
+                var startHeight = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+
+                System.Console.WriteLine($"[SCALED MODE] Config InGameWidth={_configurationProvider.InGameWidth}, InGameHeight={_configurationProvider.InGameHeight}");
+                System.Console.WriteLine($"[SCALED MODE] Starting at {startWidth}x{startHeight} (pre-login)");
+
                 _gameRenderTarget = new RenderTarget2D(
                     GraphicsDevice,
-                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH,
-                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT,
+                    startWidth,
+                    startHeight,
                     false,
                     SurfaceFormat.Color,
                     DepthFormat.None);
@@ -245,6 +277,8 @@ namespace EndlessClient.GameExecution
         {
             var isTestMode = _controlSetRepository.CurrentControlSet.GameState == GameStates.TestMode;
 
+            // Use render target scaling when in scaled mode (both pre-login and in-game)
+            // XNAControls InputManager now supports coordinate transformation for correct hit detection
             if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
             {
                 // Render the game to the fixed-size render target
@@ -263,8 +297,8 @@ namespace EndlessClient.GameExecution
                 var destRect = new Rectangle(
                     offset.X,
                     offset.Y,
-                    (int)(ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH * scale),
-                    (int)(ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT * scale));
+                    (int)(_windowSizeRepository.GameWidth * scale),
+                    (int)(_windowSizeRepository.GameHeight * scale));
 
                 // Draw scaled using point sampling for crisp pixels
                 _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
@@ -273,7 +307,7 @@ namespace EndlessClient.GameExecution
             }
             else
             {
-                // Normal rendering path (no scaling)
+                // Normal rendering path (no scaling) - used for in-game floating layout
                 GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
                 base.Draw(gameTime);
             }

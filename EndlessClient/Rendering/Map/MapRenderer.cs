@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.GameExecution;
+using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.Effects;
 using EndlessClient.Rendering.Factories;
@@ -15,7 +16,6 @@ using EOLib.Domain.Map;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 using Optional;
 
@@ -43,6 +43,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly IFixedTimeStepRepository _fixedTimeStepRepository;
+        private readonly IUserInputProvider _userInputProvider;
 
         private RenderTarget2D _mapBaseTarget, _mapObjectTarget;
         private SpriteBatch _sb;
@@ -58,16 +59,15 @@ namespace EndlessClient.Rendering.Map
         {
             get
             {
-                var ms = Mouse.GetState();
-                // In scaled mode, the mouse coordinates are already transformed to game-space
-                // So we compare against game dimensions, not window dimensions
+                // Use transformed coordinates from IUserInputProvider (already game-space in scaled mode)
+                var mousePos = _userInputProvider.CurrentMouseState.Position;
                 var maxWidth = _clientWindowSizeRepository.GameWidth;
                 var maxHeight = _clientWindowSizeRepository.Resizable
                     ? _clientWindowSizeRepository.GameHeight
                     : _clientWindowSizeRepository.GameHeight * 2 / 3;
 
-                return Game.IsActive && ms.X > 0 && ms.Y > 0 &&
-                    ms.X < maxWidth && ms.Y < maxHeight;
+                return Game.IsActive && mousePos.X > 0 && mousePos.Y > 0 &&
+                    mousePos.X < maxWidth && mousePos.Y < maxHeight;
             }
         }
 
@@ -89,7 +89,8 @@ namespace EndlessClient.Rendering.Map
                            IMouseCursorRenderer mouseCursorRenderer,
                            IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                            IClientWindowSizeRepository clientWindowSizeRepository,
-                           IFixedTimeStepRepository fixedTimeStepRepository)
+                           IFixedTimeStepRepository fixedTimeStepRepository,
+                           IUserInputProvider userInputProvider)
             : base((Game)endlessGame)
         {
             _renderTargetFactory = renderTargetFactory;
@@ -108,6 +109,7 @@ namespace EndlessClient.Rendering.Map
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _fixedTimeStepRepository = fixedTimeStepRepository;
+            _userInputProvider = userInputProvider;
             _mapGridEffectRenderers = new Dictionary<MapCoordinate, IEffectRenderer>();
         }
 

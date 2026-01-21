@@ -23,7 +23,7 @@ namespace EndlessClient.GameExecution
         private readonly IControlSetFactory _controlSetFactory;
         private readonly IEndlessGameProvider _endlessGameProvider;
         private readonly IPlayerInfoRepository _playerInfoRepository;
-        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IMfxPlayer _mfxPlayer;
 
@@ -32,7 +32,7 @@ namespace EndlessClient.GameExecution
                                 IControlSetFactory controlSetFactory,
                                 IEndlessGameProvider endlessGameProvider,
                                 IPlayerInfoRepository playerInfoRepository,
-                                IClientWindowSizeProvider clientWindowSizeProvider,
+                                IClientWindowSizeRepository clientWindowSizeRepository,
                                 ISfxPlayer sfxPlayer,
                                 IMfxPlayer mfxPlayer)
         {
@@ -41,7 +41,7 @@ namespace EndlessClient.GameExecution
             _controlSetFactory = controlSetFactory;
             _endlessGameProvider = endlessGameProvider;
             _playerInfoRepository = playerInfoRepository;
-            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _clientWindowSizeRepository = clientWindowSizeRepository;
             _sfxPlayer = sfxPlayer;
             _mfxPlayer = mfxPlayer;
         }
@@ -54,12 +54,22 @@ namespace EndlessClient.GameExecution
             if (_gameStateRepository.CurrentState == GameStates.PlayingTheGame)
             {
                 _playerInfoRepository.PlayerIsInGame = false;
+                _clientWindowSizeRepository.IsInGame = false;
 
                 StorePanelLayout(Game, new ExitingEventArgs());
                 Game.Exiting -= StorePanelLayout;
             }
 
             var currentSet = _controlSetRepository.CurrentControlSet;
+
+            // For PlayingTheGame state, set IsInGame BEFORE creating controls
+            // so they initialize with the correct Resizable state (floating layout)
+            // Note: Window resize is deferred to after controls are added
+            if (newState == GameStates.PlayingTheGame)
+            {
+                _clientWindowSizeRepository.IsInGame = true;
+            }
+
             var nextSet = _controlSetFactory.CreateControlsForState(newState, currentSet);
 
             RemoveOldComponents(currentSet, nextSet);
@@ -83,6 +93,7 @@ namespace EndlessClient.GameExecution
                 case GameStates.LoggedIn: _sfxPlayer.PlaySfx(SoundEffectID.Login); break;
                 case GameStates.PlayingTheGame:
                     {
+                        // IsInGame and window resize already handled above before control set creation
                         Game.Exiting += StorePanelLayout;
                     }
                     break;
@@ -90,6 +101,18 @@ namespace EndlessClient.GameExecution
 
             _gameStateRepository.CurrentState = newState;
             _controlSetRepository.CurrentControlSet = nextSet;
+
+            // Deferred window resize for PlayingTheGame (after controls fully added)
+            if (newState == GameStates.PlayingTheGame &&
+                _clientWindowSizeRepository.IsScaledMode &&
+                (_clientWindowSizeRepository.ConfiguredGameWidth > 0 || _clientWindowSizeRepository.ConfiguredGameHeight > 0))
+            {
+                var newWidth = _clientWindowSizeRepository.GameWidth;
+                var newHeight = _clientWindowSizeRepository.GameHeight;
+                System.Console.WriteLine($"[SCALED MODE] Switching to in-game: {newWidth}x{newHeight}");
+                _clientWindowSizeRepository.Width = newWidth;
+                _clientWindowSizeRepository.Height = newHeight;
+            }
         }
 
         public void RefreshCurrentState()
@@ -139,7 +162,7 @@ namespace EndlessClient.GameExecution
 
         private void StorePanelLayout(object sender, ExitingEventArgs e)
         {
-            if (!_clientWindowSizeProvider.Resizable) return;
+            if (!_clientWindowSizeRepository.Resizable) return;
 
             var panelConfig = new IniReader(Constants.PanelLayoutFile);
             panelConfig.Sections["PANELS"] = new SortedList<string, string>();
@@ -154,8 +177,8 @@ namespace EndlessClient.GameExecution
             }
 
             panelConfig.Sections["DISPLAY"] = new SortedList<string, string>();
-            panelConfig.Sections["DISPLAY"]["Width"] = _clientWindowSizeProvider.Width.ToString();
-            panelConfig.Sections["DISPLAY"]["Height"] = _clientWindowSizeProvider.Height.ToString();
+            panelConfig.Sections["DISPLAY"]["Width"] = _clientWindowSizeRepository.Width.ToString();
+            panelConfig.Sections["DISPLAY"]["Height"] = _clientWindowSizeRepository.Height.ToString();
 
             panelConfig.Save();
         }

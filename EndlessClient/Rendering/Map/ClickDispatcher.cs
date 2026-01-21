@@ -5,6 +5,7 @@ using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Spells;
+using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.NPC;
 using EOLib.Domain.Character;
@@ -38,6 +39,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IMapInteractionController _mapInteractionController;
         private readonly INPCInteractionController _npcInteractionController;
+        private readonly IUserInputProvider _userInputProvider;
 
         public override Rectangle EventArea => new(0, 0, _clientWindowSizeProvider.Width, _clientWindowSizeProvider.Height);
 
@@ -56,7 +58,8 @@ namespace EndlessClient.Rendering.Map
                                IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
 
                                IMapInteractionController mapInteractionController,
-                               INPCInteractionController npcInteractionController)
+                               INPCInteractionController npcInteractionController,
+                               IUserInputProvider userInputProvider)
         {
             _hudControlProvider = hudControlProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -73,6 +76,7 @@ namespace EndlessClient.Rendering.Map
 
             _mapInteractionController = mapInteractionController;
             _npcInteractionController = npcInteractionController;
+            _userInputProvider = userInputProvider;
         }
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
@@ -123,11 +127,14 @@ namespace EndlessClient.Rendering.Map
                     .CompareTo(b.Y * _currentMapProvider.CurrentMap.Properties.Width + b.X) * -1;
             });
 
+            // Use CurrentMouseState.Position which is already transformed for scaled mode
+            var transformedPosition = _userInputProvider.CurrentMouseState.Position;
+
             foreach (var entity in entities)
             {
                 var bounds = GetEntityBounds(entity);
 
-                if (bounds.Contains(eventArgs.Position))
+                if (bounds.Contains(transformedPosition))
                 {
                     if (DispatchClickToEntity(entity, eventArgs))
                     {
@@ -157,7 +164,7 @@ namespace EndlessClient.Rendering.Map
             return entity switch
             {
                 DomainCharacter c => HandleCharacterClick(c, eventArgs.Button),
-                DomainNPC n => eventArgs.Button == MouseButton.Left && HandleNPCClick(n, eventArgs.Position),
+                DomainNPC n => eventArgs.Button == MouseButton.Left && HandleNPCClick(n, _userInputProvider.CurrentMouseState.Position),
                 SignMapEntity s => eventArgs.Button == MouseButton.Left && HandleSignClick(s),
                 TileSpecMapEntity ts => eventArgs.Button == MouseButton.Left && HandleTileSpecClick(ts),
                 _ => throw new ArgumentException()

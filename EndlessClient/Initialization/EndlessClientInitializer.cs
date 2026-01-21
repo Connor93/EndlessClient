@@ -6,6 +6,7 @@ using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Controls;
+using EndlessClient.Input;
 using EndlessClient.Network;
 using EndlessClient.Rendering;
 using EndlessClient.UIControls;
@@ -34,6 +35,7 @@ namespace EndlessClient.Initialization
         private readonly ICharacterInfoPanelFactory _characterInfoPanelFactory;
         private readonly IHudControlsFactory _hudControlsFactory;
         private readonly IPaperdollDialogFactory _paperdollDialogFactory;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly DispatcherGameComponent _dispatcherGameComponent;
         private readonly PacketHandlerGameComponent _packetHandlerGameComponent;
 
@@ -54,6 +56,7 @@ namespace EndlessClient.Initialization
                                         ICharacterInfoPanelFactory characterInfoPanelFactory,
                                         IHudControlsFactory hudControlsFactory,
                                         IPaperdollDialogFactory paperdollDialogFactory,
+                                        IClientWindowSizeProvider clientWindowSizeProvider,
                                         // Persistent game components (required for macOS manual registration)
                                         DispatcherGameComponent dispatcherGameComponent,
                                         PacketHandlerGameComponent packetHandlerGameComponent)
@@ -73,6 +76,7 @@ namespace EndlessClient.Initialization
             _characterInfoPanelFactory = characterInfoPanelFactory;
             _hudControlsFactory = hudControlsFactory;
             _paperdollDialogFactory = paperdollDialogFactory;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _dispatcherGameComponent = dispatcherGameComponent;
             _packetHandlerGameComponent = packetHandlerGameComponent;
         }
@@ -80,6 +84,9 @@ namespace EndlessClient.Initialization
         public void Initialize()
         {
             GameRepository.SetGame(_game as Game);
+
+            // Set the game viewport provider for dialog centering in scaled mode
+            XNADialog.GameViewportProvider = _clientWindowSizeProvider as IGameViewportProvider;
 
             foreach (var component in _persistentComponents)
                 _game.Components.Add(component);
@@ -93,7 +100,9 @@ namespace EndlessClient.Initialization
                 DoubleClickMilliseconds = 150,
                 DragThreshold = 1
             };
-            _game.Components.Add(new InputManager(GameRepository.GetGame(), mouseListenerSettings));
+            // Pass MouseCoordinateTransformer for scaled rendering support
+            var mouseCoordinateTransformer = new MouseCoordinateTransformer(_clientWindowSizeProvider);
+            _game.Components.Add(new InputManager(GameRepository.GetGame(), mouseListenerSettings, mouseCoordinateTransformer));
 
             _endlessGameRepository.Game = _game;
 

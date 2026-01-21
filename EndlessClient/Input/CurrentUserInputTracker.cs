@@ -39,9 +39,9 @@ namespace EndlessClient.Input
                 int gameX = (int)((rawMouseState.X - offset.X) / scale);
                 int gameY = (int)((rawMouseState.Y - offset.Y) / scale);
 
-                // Clamp to game bounds
-                gameX = Math.Clamp(gameX, 0, ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH - 1);
-                gameY = Math.Clamp(gameY, 0, ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT - 1);
+                // Clamp to game bounds (use configured dimensions, not hardcoded defaults)
+                gameX = Math.Clamp(gameX, 0, _windowSizeProvider.GameWidth - 1);
+                gameY = Math.Clamp(gameY, 0, _windowSizeProvider.GameHeight - 1);
 
                 _userInputRepository.CurrentMouseState = new MouseState(
                     gameX,
