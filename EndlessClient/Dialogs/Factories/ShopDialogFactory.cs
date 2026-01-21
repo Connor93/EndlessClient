@@ -1,12 +1,16 @@
 ﻿using AutomaticTypeMapper;
+using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.UI.Styles;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Shop;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -25,6 +29,10 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly ICharacterProvider _characterProvider;
         private readonly IInventorySpaceValidator _inventorySpaceValidator;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IUIStyleProviderFactory _styleProviderFactory;
+        private readonly IGameStateProvider _gameStateProvider;
+        private readonly IContentProvider _contentProvider;
 
         public ShopDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                  IShopActions shopActions,
@@ -37,7 +45,11 @@ namespace EndlessClient.Dialogs.Factories
                                  ICharacterInventoryProvider characterInventoryProvider,
                                  IEIFFileProvider eifFileProvider,
                                  ICharacterProvider characterProvider,
-                                 IInventorySpaceValidator inventorySpaceValidator)
+                                 IInventorySpaceValidator inventorySpaceValidator,
+                                 IConfigurationProvider configProvider,
+                                 IUIStyleProviderFactory styleProviderFactory,
+                                 IGameStateProvider gameStateProvider,
+                                 IContentProvider contentProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _shopActions = shopActions;
@@ -51,10 +63,31 @@ namespace EndlessClient.Dialogs.Factories
             _eifFileProvider = eifFileProvider;
             _characterProvider = characterProvider;
             _inventorySpaceValidator = inventorySpaceValidator;
+            _configProvider = configProvider;
+            _styleProviderFactory = styleProviderFactory;
+            _gameStateProvider = gameStateProvider;
+            _contentProvider = contentProvider;
         }
 
-        public ShopDialog Create()
+        public IXNADialog Create()
         {
+            if (_configProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnShopDialog(_styleProviderFactory.Create(),
+                    _gameStateProvider,
+                    _nativeGraphicsManager,
+                    _shopActions,
+                    _messageBoxFactory,
+                    _itemTransferDialogFactory,
+                    _localizedStringFinder,
+                    _shopDataProvider,
+                    _characterInventoryProvider,
+                    _eifFileProvider,
+                    _characterProvider,
+                    _inventorySpaceValidator,
+                    _contentProvider);
+            }
+
             return new ShopDialog(_nativeGraphicsManager,
                 _shopActions,
                 _messageBoxFactory,
@@ -72,6 +105,7 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IShopDialogFactory
     {
-        ShopDialog Create();
+        IXNADialog Create();
     }
 }
+

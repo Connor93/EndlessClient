@@ -7,6 +7,7 @@ using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
@@ -92,6 +93,14 @@ namespace EndlessClient.Dialogs
             DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
         }
 
+        /// <summary>
+        /// Closes the dialog with Cancel result. This is a public wrapper around the protected Close method.
+        /// </summary>
+        public void Close()
+        {
+            Close(XNADialogResult.Cancel);
+        }
+
         public void SetupButtons(bool showOk = true, bool showCancel = true, bool showBack = false)
         {
             var buttonWidth = 72;
@@ -138,7 +147,7 @@ namespace EndlessClient.Dialogs
             return button;
         }
 
-        public void AddItem(string primaryText, string subText = "", object data = null, Action<CodeDrawnListItem> onClick = null, bool isLink = false)
+        public void AddItem(string primaryText, string subText = "", object data = null, Action<CodeDrawnListItem> onClick = null, bool isLink = false, Texture2D icon = null)
         {
             // Calculate max width for text (with some padding)
             var maxTextWidth = DialogWidth - 56;
@@ -177,7 +186,8 @@ namespace EndlessClient.Dialogs
                     SubText = i == 0 ? subText : "",
                     Data = data,
                     Index = _listItems.Count,
-                    IsLink = isLink && (i == 0) // Only first line is clickable for links
+                    IsLink = isLink && (i == 0), // Only first line is clickable for links
+                    IconGraphic = i == 0 ? icon : null // Only first line shows icon
                 };
 
                 // Only attach click handler to first line for links, or to all items if not a link
@@ -206,8 +216,10 @@ namespace EndlessClient.Dialogs
         {
             base.CenterInGameView();
 
-            if (_isInGame() && !Game.Window.AllowUserResizing)
-                DrawPosition = new Vector2(DrawPosition.X, 15);
+            // Fully center the dialog on screen
+            var centerX = (Game.GraphicsDevice.Viewport.Width - DialogWidth) / 2;
+            var centerY = (Game.GraphicsDevice.Viewport.Height - DialogHeight) / 2;
+            DrawPosition = new Vector2(centerX, centerY);
         }
 
         public override void Initialize()
@@ -295,6 +307,7 @@ namespace EndlessClient.Dialogs
         public string SubText { get; set; } = string.Empty;
         public object Data { get; set; }
         public bool IsLink { get; set; }
+        public Texture2D IconGraphic { get; set; }
 
         public event EventHandler<MouseEventArgs> LeftClick;
         public event EventHandler<MouseEventArgs> RightClick;
@@ -333,6 +346,17 @@ namespace EndlessClient.Dialogs
                     new Color(255, 255, 255, 30));
             }
 
+            // Calculate text offset (shifted right if icon present)
+            var textOffsetX = IconGraphic != null ? 40 : 4;
+
+            // Icon (if present)
+            if (IconGraphic != null)
+            {
+                var iconSize = Math.Min(32, DrawArea.Height - 2);
+                var iconY = (DrawArea.Height - iconSize) / 2;
+                _spriteBatch.Draw(IconGraphic, new Rectangle(4, iconY, iconSize, iconSize), Color.White);
+            }
+
             // Primary text
             if (!string.IsNullOrEmpty(PrimaryText))
             {
@@ -347,7 +371,7 @@ namespace EndlessClient.Dialogs
                     // Normal text always uses primary color (no hover effect)
                     textColor = _styleProvider.TextPrimary;
                 }
-                _spriteBatch.DrawString(_font, PrimaryText, new Vector2(4, 2), textColor);
+                _spriteBatch.DrawString(_font, PrimaryText, new Vector2(textOffsetX, 2), textColor);
             }
 
             // Sub text (right aligned)

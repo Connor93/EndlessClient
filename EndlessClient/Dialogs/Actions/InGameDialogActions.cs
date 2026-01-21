@@ -195,7 +195,7 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _shopDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.ShopDialog = Option.None<ShopDialog>();
+                    _activeDialogRepository.ShopDialog = Option.None<IXNADialog>();
                     _shopDataRepository.ResetState();
                 };
                 _activeDialogRepository.ShopDialog = Option.Some(dlg);
@@ -485,6 +485,15 @@ namespace EndlessClient.Dialogs.Actions
 
                 dlg.Show();
             });
+        }
+
+        private void UseDefaultDialogSounds(IXNADialog dialog)
+        {
+            dialog.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
+
+            // Also hook up button sounds for any child buttons
+            foreach (var button in dialog.ChildControls.OfType<IXNAButton>())
+                button.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
         }
 
         private void UseDefaultDialogSounds(ScrollingListDialog dialog)
