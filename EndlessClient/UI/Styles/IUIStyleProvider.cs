@@ -26,6 +26,7 @@ namespace EndlessClient.UI.Styles
         // Text
         Color TextPrimary { get; }
         Color TextSecondary { get; }
+        Color TextHighlight { get; }
 
         // Metrics
         int CornerRadius { get; }

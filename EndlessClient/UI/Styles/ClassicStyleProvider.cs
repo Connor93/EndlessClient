@@ -29,6 +29,7 @@ namespace EndlessClient.UI.Styles
         // Text
         public Color TextPrimary => Color.Black;
         public Color TextSecondary => new Color(64, 64, 64);
+        public Color TextHighlight => new Color(0, 0, 128);
 
         // Metrics
         public int CornerRadius => 0;
