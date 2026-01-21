@@ -896,3 +896,89 @@ The local fork must be restored before building:
 dotnet restore XNAControls/XNAControls/XNAControls.csproj
 dotnet build EndlessClient/EndlessClient.csproj
 ```
+
+## 17. Code-Based UI System
+
+### Overview
+The client supports an alternative UI rendering mode that replaces GFX texture-based dialogs with procedurally drawn elements. This allows for resolution-independent, themeable dialogs.
+
+### Configuration
+Settings in `settings.ini` under `[CUSTOM]`:
+
+| Setting | Values | Default | Description |
+|---------|--------|---------|-------------|
+| `UIMode` | `code`, `gfx` | `gfx` | Switch between code-drawn and GFX-based UI |
+| `UIStyle` | `glass`, `flat`, `classic` | `glass` | Visual style for code-drawn UI |
+
+```ini
+[CUSTOM]
+UIMode=code
+UIStyle=glass
+```
+
+### Architecture
+
+**Style System**:
+- `IUIStyleProvider` interface defines colors, borders, corner radius, etc.
+- Three implementations:
+  - `GlassmorphismStyleProvider` - Semi-transparent dark with subtle borders
+  - `FlatStyleProvider` - Solid colors, clean modern look
+  - `ClassicStyleProvider` - Windows 95/2000 beveled 3D borders
+- `UIStyleProviderFactory` selects provider based on config
+
+**Drawing Primitives** (`DrawingPrimitives.cs`):
+- `DrawFilledRect()` - Solid rectangles
+- `DrawRectBorder()` - Rectangle outlines
+- `DrawRoundedRect()` - Filled rounded rectangles
+- `DrawRoundedRectBorder()` - Rounded rectangle outlines
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `EOLib.Config/UIMode.cs` | Enum for UI rendering mode |
+| `EOLib.Config/UIStyle.cs` | Enum for visual style |
+| `EndlessClient/UI/Styles/IUIStyleProvider.cs` | Style property interface |
+| `EndlessClient/UI/Styles/*StyleProvider.cs` | Style implementations |
+| `EndlessClient/UI/Controls/DrawingPrimitives.cs` | Low-level drawing utilities |
+| `EndlessClient/UI/Controls/CodeDrawnPanel.cs` | Base panel control |
+| `EndlessClient/UI/Controls/CodeDrawnButton.cs` | Button with hover/pressed states |
+| `EndlessClient/Dialogs/CodeDrawnDialog.cs` | Dialog base class |
+
+### Factory Pattern for UI Switching
+`EOMessageBoxFactory.CreateMessageBox()` checks `UIMode` config:
+
+```csharp
+if (_configProvider.UIMode == UIMode.Code)
+{
+    var codeDialog = new CodeDrawnDialog(_styleProviderFactory.Create(), _gameStateProvider);
+    // ... configure and return
+}
+else
+{
+    return new EOMessageBox(...);  // GFX-based
+}
+```
+
+### Coordinate Transformation for SpriteBatch
+Code-drawn controls must use transformation matrix for correct positioning:
+
+```csharp
+protected override void OnDrawControl(GameTime gameTime)
+{
+    var drawPos = DrawAreaWithParentOffset;
+    var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
+    
+    _spriteBatch.Begin(transformMatrix: transform);
+    // Draw at (0,0) relative coordinates
+    _spriteBatch.End();
+}
+```
+
+### Gotchas
+
+**Font Loading**: `ContentProvider.Fonts` only contains `FontSize08`, `FontSize08pt5`, `FontSize09`. Do NOT use `FontSize10` - it's not loaded.
+
+**SpriteBatch Positioning**: Without transformation matrix, primitives draw at screen origin (0,0) instead of dialog position.
+
+**Child Controls**: Child controls (buttons, labels) auto-position via `SetParentControl()` but custom-drawn elements need manual transformation.
