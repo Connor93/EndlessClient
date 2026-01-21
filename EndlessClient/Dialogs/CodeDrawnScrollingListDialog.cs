@@ -81,6 +81,17 @@ namespace EndlessClient.Dialogs
             _scrollBar.SetParentControl(this);
         }
 
+        /// <summary>
+        /// Updates the scrollbar position and size after dialog dimensions change.
+        /// Call this after modifying DialogWidth, DialogHeight, ListAreaTop, ListAreaHeight, or ItemHeight.
+        /// </summary>
+        protected void UpdateScrollBarLayout()
+        {
+            _scrollBar.DrawArea = new Rectangle(DialogWidth - 24, ListAreaTop, 16, ListAreaHeight);
+            _scrollBar.LinesToRender = ItemsToShow;
+            DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
+        }
+
         public void SetupButtons(bool showOk = true, bool showCancel = true, bool showBack = false)
         {
             var buttonWidth = 72;
@@ -127,20 +138,55 @@ namespace EndlessClient.Dialogs
             return button;
         }
 
-        public void AddItem(string primaryText, string subText = "", object data = null, Action<CodeDrawnListItem> onClick = null)
+        public void AddItem(string primaryText, string subText = "", object data = null, Action<CodeDrawnListItem> onClick = null, bool isLink = false)
         {
-            var item = new CodeDrawnListItem(_styleProvider, _font, this)
+            // Calculate max width for text (with some padding)
+            var maxTextWidth = DialogWidth - 56;
+
+            // Split text into lines if it's too long
+            var words = primaryText.Split(' ');
+            var currentLine = "";
+            var lines = new System.Collections.Generic.List<string>();
+
+            foreach (var word in words)
             {
-                PrimaryText = primaryText,
-                SubText = subText,
-                Data = data,
-                Index = _listItems.Count
-            };
+                var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+                var size = _font.MeasureString(testLine);
 
-            if (onClick != null)
-                item.LeftClick += (_, _) => onClick(item);
+                if (size.Width > maxTextWidth && !string.IsNullOrEmpty(currentLine))
+                {
+                    lines.Add(currentLine);
+                    currentLine = word;
+                }
+                else
+                {
+                    currentLine = testLine;
+                }
+            }
 
-            _listItems.Add(item);
+            if (!string.IsNullOrEmpty(currentLine))
+                lines.Add(currentLine);
+
+            // Add each line as a separate item
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var lineText = lines[i];
+                var item = new CodeDrawnListItem(_styleProvider, _font, this)
+                {
+                    PrimaryText = lineText,
+                    SubText = i == 0 ? subText : "",
+                    Data = data,
+                    Index = _listItems.Count,
+                    IsLink = isLink && (i == 0) // Only first line is clickable for links
+                };
+
+                // Only attach click handler to first line for links, or to all items if not a link
+                if (onClick != null && (i == 0 || !isLink))
+                    item.LeftClick += (_, _) => onClick(item);
+
+                _listItems.Add(item);
+            }
+
             _scrollBar.UpdateDimensions(_listItems.Count);
         }
 
@@ -248,6 +294,7 @@ namespace EndlessClient.Dialogs
         public string PrimaryText { get; set; } = string.Empty;
         public string SubText { get; set; } = string.Empty;
         public object Data { get; set; }
+        public bool IsLink { get; set; }
 
         public event EventHandler<MouseEventArgs> LeftClick;
         public event EventHandler<MouseEventArgs> RightClick;
@@ -267,7 +314,7 @@ namespace EndlessClient.Dialogs
 
         public override Rectangle DrawArea
         {
-            get => new Rectangle(8, _parentDialog.ListAreaTop + (VisualIndex * 20), base.DrawArea.Width, base.DrawArea.Height);
+            get => new Rectangle(8, _parentDialog.ListAreaTop + (VisualIndex * _parentDialog.ItemHeight), base.DrawArea.Width, base.DrawArea.Height);
             set => base.DrawArea = value;
         }
 
@@ -278,8 +325,8 @@ namespace EndlessClient.Dialogs
 
             _spriteBatch.Begin(transformMatrix: transform);
 
-            // Hover background
-            if (_isHovered)
+            // Hover background (only for links)
+            if (_isHovered && IsLink)
             {
                 DrawingPrimitives.DrawFilledRect(_spriteBatch,
                     new Rectangle(0, 0, DrawArea.Width, DrawArea.Height),
@@ -289,7 +336,17 @@ namespace EndlessClient.Dialogs
             // Primary text
             if (!string.IsNullOrEmpty(PrimaryText))
             {
-                var textColor = _isHovered ? _styleProvider.TextHighlight : _styleProvider.TextPrimary;
+                Color textColor;
+                if (IsLink)
+                {
+                    // Links always use highlight color, brighter when hovered
+                    textColor = _isHovered ? new Color(150, 230, 255) : _styleProvider.TextHighlight;
+                }
+                else
+                {
+                    // Normal text always uses primary color (no hover effect)
+                    textColor = _styleProvider.TextPrimary;
+                }
                 _spriteBatch.DrawString(_font, PrimaryText, new Vector2(4, 2), textColor);
             }
 

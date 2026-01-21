@@ -21,7 +21,7 @@ namespace EndlessClient.Dialogs
 
         Option<ShopDialog> ShopDialog { get; }
 
-        Option<QuestDialog> QuestDialog { get; }
+        Option<IXNADialog> QuestDialog { get; }
 
         Option<ChestDialog> ChestDialog { get; }
 
@@ -72,7 +72,7 @@ namespace EndlessClient.Dialogs
 
         Option<ShopDialog> ShopDialog { get; set; }
 
-        Option<QuestDialog> QuestDialog { get; set; }
+        Option<IXNADialog> QuestDialog { get; set; }
 
         Option<ChestDialog> ChestDialog { get; set; }
 
@@ -126,7 +126,7 @@ namespace EndlessClient.Dialogs
 
         public Option<ShopDialog> ShopDialog { get; set; }
 
-        public Option<QuestDialog> QuestDialog { get; set; }
+        public Option<IXNADialog> QuestDialog { get; set; }
 
         public Option<ChestDialog> ChestDialog { get; set; }
 
@@ -216,7 +216,7 @@ namespace EndlessClient.Dialogs
             PaperdollDialog = Option.None<PaperdollDialog>();
             BookDialog = Option.None<BookDialog>();
             ShopDialog = Option.None<ShopDialog>();
-            QuestDialog = Option.None<QuestDialog>();
+            QuestDialog = Option.None<IXNADialog>();
             ChestDialog = Option.None<ChestDialog>();
             LockerDialog = Option.None<LockerDialog>();
             BankAccountDialog = Option.None<BankAccountDialog>();

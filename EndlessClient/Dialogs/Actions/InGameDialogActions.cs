@@ -213,7 +213,7 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _questDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.QuestDialog = Option.None<QuestDialog>();
+                    _activeDialogRepository.QuestDialog = Option.None<IXNADialog>();
                     _questDataRepository.ResetState();
                 };
                 _activeDialogRepository.QuestDialog = Option.Some(dlg);
@@ -505,12 +505,20 @@ namespace EndlessClient.Dialogs.Actions
                 textbox.OnGotFocus += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
         }
 
-        private void UseQuestDialogSounds(QuestDialog dialog)
+        private void UseQuestDialogSounds(IXNADialog dialog)
         {
             dialog.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
-            dialog.BackAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
-            dialog.NextAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
-            dialog.ClickSoundEffect += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+
+            if (dialog is QuestDialog questDialog)
+            {
+                questDialog.BackAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
+                questDialog.NextAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
+                questDialog.ClickSoundEffect += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+            }
+            else if (dialog is CodeDrawnQuestDialog codeDrawnDialog)
+            {
+                codeDrawnDialog.ClickSoundEffect += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+            }
         }
     }
 
