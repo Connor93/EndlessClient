@@ -214,11 +214,21 @@ namespace EndlessClient.Dialogs
 
         public override void CenterInGameView()
         {
-            base.CenterInGameView();
+            // Use logical game dimensions (640x480 equivalent) for proper centering in scaled mode
+            int centerWidth, centerHeight;
+            if (XNADialog.GameViewportProvider != null)
+            {
+                centerWidth = XNADialog.GameViewportProvider.GameWidth;
+                centerHeight = XNADialog.GameViewportProvider.GameHeight;
+            }
+            else
+            {
+                centerWidth = Game.GraphicsDevice.Viewport.Width;
+                centerHeight = Game.GraphicsDevice.Viewport.Height;
+            }
 
-            // Fully center the dialog on screen
-            var centerX = (Game.GraphicsDevice.Viewport.Width - DialogWidth) / 2;
-            var centerY = (Game.GraphicsDevice.Viewport.Height - DialogHeight) / 2;
+            var centerX = (centerWidth - DialogWidth) / 2;
+            var centerY = (centerHeight - DialogHeight) / 2;
             DrawPosition = new Vector2(centerX, centerY);
         }
 
@@ -236,6 +246,9 @@ namespace EndlessClient.Dialogs
                 item.Initialize();
 
             base.Initialize();
+
+            // Ensure proper centering after initialization (Game reference now available)
+            CenterInGameView();
         }
 
         protected override void OnUpdateControl(GameTime gameTime)

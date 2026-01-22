@@ -51,9 +51,9 @@ namespace EndlessClient.Dialogs
 
         Option<ScrollingListDialog> HelpDialog { get; }
 
-        Option<ItemInfoDialog> ItemInfoDialog { get; }
+        Option<IXNADialog> ItemInfoDialog { get; }
 
-        Option<NpcInfoDialog> NpcInfoDialog { get; }
+        Option<IXNADialog> NpcInfoDialog { get; }
 
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs { get; }
     }
@@ -104,9 +104,9 @@ namespace EndlessClient.Dialogs
 
         Option<ScrollingListDialog> HelpDialog { get; set; }
 
-        Option<ItemInfoDialog> ItemInfoDialog { get; set; }
+        Option<IXNADialog> ItemInfoDialog { get; set; }
 
-        Option<NpcInfoDialog> NpcInfoDialog { get; set; }
+        Option<IXNADialog> NpcInfoDialog { get; set; }
 
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs { get; }
     }
@@ -158,9 +158,9 @@ namespace EndlessClient.Dialogs
 
         public Option<ScrollingListDialog> HelpDialog { get; set; }
 
-        public Option<ItemInfoDialog> ItemInfoDialog { get; set; }
+        public Option<IXNADialog> ItemInfoDialog { get; set; }
 
-        public Option<NpcInfoDialog> NpcInfoDialog { get; set; }
+        public Option<IXNADialog> NpcInfoDialog { get; set; }
 
         IReadOnlyList<Option<IXNADialog>> ActiveDialogs
         {
@@ -232,8 +232,8 @@ namespace EndlessClient.Dialogs
             BarberDialog = Option.None<BarberDialog>();
             GuildDialog = Option.None<GuildDialog>();
             HelpDialog = Option.None<ScrollingListDialog>();
-            ItemInfoDialog = Option.None<ItemInfoDialog>();
-            NpcInfoDialog = Option.None<NpcInfoDialog>();
+            ItemInfoDialog = Option.None<IXNADialog>();
+            NpcInfoDialog = Option.None<IXNADialog>();
         }
     }
 }

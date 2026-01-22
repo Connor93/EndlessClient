@@ -50,10 +50,14 @@ namespace EndlessClient.Dialogs.Actions
                 return;
 
             // Close any existing item info dialog
-            _activeDialogRepository.ItemInfoDialog.MatchSome(dlg => dlg.Close());
+            _activeDialogRepository.ItemInfoDialog.MatchSome(dlg =>
+            {
+                if (dlg is BaseEODialog baseDialog) baseDialog.Close();
+                else if (dlg is CodeDrawnScrollingListDialog codeDrawn) codeDrawn.Close();
+            });
 
             var dlg = _dialogFactory.Create(item);
-            dlg.DialogClosed += (_, _) => _activeDialogRepository.ItemInfoDialog = Option.None<ItemInfoDialog>();
+            dlg.DialogClosed += (_, _) => _activeDialogRepository.ItemInfoDialog = Option.None<XNAControls.IXNADialog>();
             _activeDialogRepository.ItemInfoDialog = Option.Some(dlg);
 
             dlg.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);

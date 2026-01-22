@@ -50,10 +50,14 @@ namespace EndlessClient.Dialogs.Actions
                 return;
 
             // Close any existing NPC info dialog
-            _activeDialogRepository.NpcInfoDialog.MatchSome(dlg => dlg.Close());
+            _activeDialogRepository.NpcInfoDialog.MatchSome(dlg =>
+            {
+                if (dlg is BaseEODialog baseDialog) baseDialog.Close();
+                else if (dlg is CodeDrawnScrollingListDialog codeDrawn) codeDrawn.Close();
+            });
 
             var dlg = _dialogFactory.Create(npc);
-            dlg.DialogClosed += (_, _) => _activeDialogRepository.NpcInfoDialog = Option.None<NpcInfoDialog>();
+            dlg.DialogClosed += (_, _) => _activeDialogRepository.NpcInfoDialog = Option.None<XNAControls.IXNADialog>();
             _activeDialogRepository.NpcInfoDialog = Option.Some(dlg);
 
             dlg.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
