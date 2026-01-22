@@ -80,7 +80,7 @@ namespace EndlessClient.HUD
                 case InGameStates.OnlineList: return hudPanel is OnlineListPanel;
                 case InGameStates.Party: return hudPanel is PartyPanel;
                 case InGameStates.Macro: return hudPanel is MacroPanel;
-                case InGameStates.Settings: return hudPanel is SettingsPanel;
+                case InGameStates.Settings: return hudPanel is SettingsPanel or CodeDrawnSettingsPanel;
                 case InGameStates.Help: return hudPanel is HelpPanel;
                 default: throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
             }

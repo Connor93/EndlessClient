@@ -254,18 +254,36 @@ namespace EndlessClient.HUD.Panels
             return new PartyPanel(_nativeGraphicsManager, _partyActions, _contentProvider, _partyDataProvider, _characterProvider, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
         }
 
-        public SettingsPanel CreateSettingsPanel()
+        public DraggableHudPanel CreateSettingsPanel()
         {
-            return new SettingsPanel(_nativeGraphicsManager,
-                _chatActions,
-                _audioActions,
-                _statusLabelSetter,
-                _localizedStringFinder,
-                _messageBoxFactory,
-                _configurationRepository,
-                _sfxPlayer,
-                _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnSettingsPanel(_chatActions,
+                    _audioActions,
+                    _statusLabelSetter,
+                    _localizedStringFinder,
+                    _messageBoxFactory,
+                    _configurationRepository,
+                    _sfxPlayer,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new SettingsPanel(_nativeGraphicsManager,
+                    _chatActions,
+                    _audioActions,
+                    _statusLabelSetter,
+                    _localizedStringFinder,
+                    _messageBoxFactory,
+                    _configurationRepository,
+                    _sfxPlayer,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public MacroPanel CreateMacroPanel()

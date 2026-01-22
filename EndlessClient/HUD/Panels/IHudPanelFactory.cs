@@ -18,7 +18,7 @@
 
         PartyPanel CreatePartyPanel();
 
-        SettingsPanel CreateSettingsPanel();
+        DraggableHudPanel CreateSettingsPanel();
 
         MacroPanel CreateMacroPanel();
 
