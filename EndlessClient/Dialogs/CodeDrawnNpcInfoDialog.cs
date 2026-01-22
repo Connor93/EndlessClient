@@ -240,10 +240,26 @@ namespace EndlessClient.Dialogs
                 var drawPos = DrawAreaWithParentOffset;
                 var titleBarHeight = _styleProvider.TitleBarHeight;
 
+                // Scale to fit within max bounds while preserving aspect ratio
+                const int maxWidth = 120;
+                const int maxHeight = 90;
+
+                var scale = 1.0f;
+                if (_npcGraphic.Width > maxWidth || _npcGraphic.Height > maxHeight)
+                {
+                    var scaleX = (float)maxWidth / _npcGraphic.Width;
+                    var scaleY = (float)maxHeight / _npcGraphic.Height;
+                    scale = System.Math.Min(scaleX, scaleY);
+                }
+
+                var scaledWidth = (int)(_npcGraphic.Width * scale);
+                var scaledHeight = (int)(_npcGraphic.Height * scale);
+
                 _spriteBatch.Begin();
-                var npcX = drawPos.X + (DialogWidth - _npcGraphic.Width) / 2;
-                var npcY = drawPos.Y + titleBarHeight + 10;
-                _spriteBatch.Draw(_npcGraphic, new Vector2(npcX, npcY), Color.White);
+                var npcX = drawPos.X + (DialogWidth - scaledWidth) / 2;
+                var npcY = drawPos.Y + titleBarHeight + 10 + (maxHeight - scaledHeight) / 2; // Center vertically in header area
+                var destRect = new Rectangle((int)npcX, (int)npcY, scaledWidth, scaledHeight);
+                _spriteBatch.Draw(_npcGraphic, destRect, Color.White);
                 _spriteBatch.End();
             }
         }
