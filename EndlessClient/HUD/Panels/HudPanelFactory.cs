@@ -181,7 +181,8 @@ namespace EndlessClient.HUD.Panels
                     _styleProvider,
                     _graphicsDeviceProvider,
                     _contentProvider,
-                    _clientWindowSizeProvider)
+                    _clientWindowSizeProvider,
+                    _userInputProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else
@@ -201,7 +202,8 @@ namespace EndlessClient.HUD.Panels
                     _activeDialogProvider,
                     _sfxPlayer,
                     _configurationProvider,
-                    _clientWindowSizeProvider)
+                    _clientWindowSizeProvider,
+                    _userInputProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
         }

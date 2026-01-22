@@ -10,6 +10,7 @@ using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Map;
 using EOLib.Config;
@@ -55,6 +56,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IUserInputProvider _userInputProvider;
         private readonly List<InventoryPanelItem> _childItems = new List<InventoryPanelItem>();
 
         //private readonly IXNALabel _weightLabel;
@@ -81,7 +83,8 @@ namespace EndlessClient.HUD.Panels
                               IActiveDialogProvider activeDialogProvider,
                               ISfxPlayer sfxPlayer,
                               IConfigurationProvider configProvider,
-                              IClientWindowSizeProvider clientWindowSizeProvider)
+                              IClientWindowSizeProvider clientWindowSizeProvider,
+                              IUserInputProvider userInputProvider)
             : base(clientWindowSizeProvider.Resizable)
         {
             NativeGraphicsManager = nativeGraphicsManager;
@@ -100,6 +103,7 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _configProvider = configProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _userInputProvider = userInputProvider;
 
             /*_weightLabel = new XNALabel(Constants.FontSize08pt5)
             {
@@ -244,7 +248,7 @@ namespace EndlessClient.HUD.Panels
                     {
                         _inventoryService.SetSlots(_inventorySlotRepository.FilledSlots, slot, itemData.Size);
 
-                        var newItem = new InventoryPanelItem(_itemNameColorService, this, _activeDialogProvider, _sfxPlayer, slot, item, itemData);
+                        var newItem = new InventoryPanelItem(_itemNameColorService, this, _activeDialogProvider, _sfxPlayer, _userInputProvider, slot, item, itemData);
                         newItem.Initialize();
                         newItem.SetParentControl(this);
                         newItem.Text = _itemStringService.GetStringForInventoryDisplay(itemData, item.Amount);

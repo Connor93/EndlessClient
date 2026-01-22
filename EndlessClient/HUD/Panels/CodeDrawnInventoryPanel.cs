@@ -7,6 +7,7 @@ using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
@@ -55,11 +56,12 @@ namespace EndlessClient.HUD.Panels
                                        IUIStyleProvider styleProvider,
                                        IGraphicsDeviceProvider graphicsDeviceProvider,
                                        IContentProvider contentProvider,
-                                       IClientWindowSizeProvider clientWindowSizeProvider)
+                                       IClientWindowSizeProvider clientWindowSizeProvider,
+                                       IUserInputProvider userInputProvider)
             : base(nativeGraphicsManager, inventoryController, statusLabelSetter, itemStringService,
                    itemNameColorService, inventoryService, inventorySlotRepository, playerInfoProvider,
                    characterProvider, characterInventoryProvider, pubFileProvider, hudControlProvider,
-                   activeDialogProvider, sfxPlayer, configProvider, clientWindowSizeProvider)
+                   activeDialogProvider, sfxPlayer, configProvider, clientWindowSizeProvider, userInputProvider)
         {
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
