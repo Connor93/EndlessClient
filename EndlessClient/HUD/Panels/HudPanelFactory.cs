@@ -201,18 +201,34 @@ namespace EndlessClient.HUD.Panels
             return new PassiveSpellsPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
         }
 
-        public ChatPanel CreateChatPanel()
+        public DraggableHudPanel CreateChatPanel()
         {
             var chatFont = _contentProvider.Fonts[Constants.FontSize08];
 
-            return new ChatPanel(_nativeGraphicsManager,
-                                 _chatActions,
-                                 new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
-                                 _chatProvider,
-                                 _hudControlProvider,
-                                 chatFont,
-                                 _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnChatPanel(_nativeGraphicsManager,
+                                              _chatActions,
+                                              new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                              _chatProvider,
+                                              _hudControlProvider,
+                                              _styleProvider,
+                                              _graphicsDeviceProvider,
+                                              _contentProvider,
+                                              _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new ChatPanel(_nativeGraphicsManager,
+                                     _chatActions,
+                                     new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                     _chatProvider,
+                                     _hudControlProvider,
+                                     chatFont,
+                                     _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public DraggableHudPanel CreateStatsPanel()

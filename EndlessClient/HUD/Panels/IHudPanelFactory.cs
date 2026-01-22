@@ -10,7 +10,7 @@
 
         PassiveSpellsPanel CreatePassiveSpellsPanel();
 
-        ChatPanel CreateChatPanel();
+        DraggableHudPanel CreateChatPanel();
 
         DraggableHudPanel CreateStatsPanel();
 
