@@ -42,6 +42,8 @@ namespace EndlessClient.HUD.Panels
             CurseFilter,
             LogChat,
             Interaction,
+            MapZoom,
+            ScrollWheelZoom,
         }
 
         private readonly IChatActions _chatActions;
@@ -65,7 +67,7 @@ namespace EndlessClient.HUD.Panels
         private WhichSetting? _hoveredSetting;
 
         private const int PanelWidth = 476;
-        private const int PanelHeight = 120;
+        private const int PanelHeight = 140;
         private const int RowHeight = 20;
         private const int ColWidth = 238;
 
@@ -108,6 +110,8 @@ namespace EndlessClient.HUD.Panels
                 { WhichSetting.CurseFilter, "Filter" },
                 { WhichSetting.LogChat, "Log Chat" },
                 { WhichSetting.Interaction, "Interaction" },
+                { WhichSetting.MapZoom, "Map Zoom" },
+                { WhichSetting.ScrollWheelZoom, "Scroll Zoom" },
             };
 
             _settingValues = new Dictionary<WhichSetting, string>();
@@ -117,8 +121,8 @@ namespace EndlessClient.HUD.Panels
             foreach (var setting in values)
             {
                 var ndx = (int)setting;
-                var col = ndx / 5;
-                var row = ndx % 5;
+                var col = ndx / 6;
+                var row = ndx % 6;
 
                 _settingValues[setting] = "";
                 _settingHitAreas[setting] = new Rectangle(4 + col * ColWidth, 6 + row * RowHeight, ColWidth - 8, RowHeight - 2);
@@ -191,8 +195,8 @@ namespace EndlessClient.HUD.Panels
                 var setting = pair.Key;
                 var label = pair.Value;
                 var ndx = (int)setting;
-                var col = ndx / 5;
-                var row = ndx % 5;
+                var col = ndx / 6;
+                var row = ndx % 6;
 
                 var hitArea = _settingHitAreas[setting];
                 var rowRect = new Rectangle((int)pos.X + hitArea.X, (int)pos.Y + hitArea.Y, hitArea.Width, hitArea.Height);
@@ -346,6 +350,20 @@ namespace EndlessClient.HUD.Panels
                 case WhichSetting.Interaction:
                     _configurationRepository.Interaction = !_configurationRepository.Interaction;
                     break;
+                case WhichSetting.MapZoom:
+                    {
+                        // Cycle through zoom levels: 50%, 75%, 100%, 125%, 150%, 200%
+                        var zoomLevels = new[] { 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f };
+                        var currentZoom = _configurationRepository.MapZoom;
+                        var currentIndex = Array.FindIndex(zoomLevels, z => Math.Abs(z - currentZoom) < 0.01f);
+                        if (currentIndex == -1) currentIndex = 2; // Default to 100%
+                        var nextIndex = (currentIndex + 1) % zoomLevels.Length;
+                        _configurationRepository.MapZoom = zoomLevels[nextIndex];
+                    }
+                    break;
+                case WhichSetting.ScrollWheelZoom:
+                    _configurationRepository.ScrollWheelZoom = !_configurationRepository.ScrollWheelZoom;
+                    break;
             }
 
             UpdateDisplayText();
@@ -370,6 +388,8 @@ namespace EndlessClient.HUD.Panels
 
             _settingValues[WhichSetting.LogChat] = _localizedStringFinder.GetString(_configurationRepository.LogChatToFile ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
             _settingValues[WhichSetting.Interaction] = _localizedStringFinder.GetString(_configurationRepository.Interaction ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
+            _settingValues[WhichSetting.MapZoom] = $"{(int)(_configurationRepository.MapZoom * 100)}%";
+            _settingValues[WhichSetting.ScrollWheelZoom] = _localizedStringFinder.GetString(_configurationRepository.ScrollWheelZoom ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
         }
     }
 }

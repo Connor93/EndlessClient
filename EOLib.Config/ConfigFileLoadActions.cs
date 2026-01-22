@@ -79,6 +79,13 @@ namespace EOLib.Config
             string host;
             _configRepository.Host = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Host, out host) ? host : ConfigDefaults.Host;
             _configRepository.Port = configFile.GetValue(ConfigStrings.Connection, ConfigStrings.Port, out tempInt) ? tempInt : ConfigDefaults.Port;
+
+            // Camera zoom settings
+            float tempFloat;
+            _configRepository.MapZoom = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.MapZoom, out tempFloat)
+                ? Math.Max(0.5f, Math.Min(2.0f, tempFloat))
+                : 1.0f;
+            _configRepository.ScrollWheelZoom = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.ScrollWheelZoom, out tempBool) && tempBool;
         }
     }
 }

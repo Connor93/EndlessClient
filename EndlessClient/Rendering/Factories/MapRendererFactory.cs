@@ -29,7 +29,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly ICharacterRendererUpdater _characterRendererUpdater;
         private readonly INPCRendererUpdater _npcRendererUpdater;
         private readonly IDynamicMapObjectUpdater _dynamicMapObjectUpdater;
-        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IConfigurationRepository _configurationRepository;
         private readonly IMouseCursorRendererFactory _mouseCursorRendererFactory;
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
@@ -48,7 +48,7 @@ namespace EndlessClient.Rendering.Factories
             ICharacterRendererUpdater characterRendererUpdater,
             INPCRendererUpdater npcRendererUpdater,
             IDynamicMapObjectUpdater dynamicMapObjectUpdater,
-            IConfigurationProvider configurationProvider,
+            IConfigurationRepository configurationRepository,
             IMouseCursorRendererFactory mouseCursorRendererFactory,
             IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
             IClientWindowSizeRepository clientWindowSizeRepository,
@@ -67,7 +67,7 @@ namespace EndlessClient.Rendering.Factories
             _characterRendererUpdater = characterRendererUpdater;
             _npcRendererUpdater = npcRendererUpdater;
             _dynamicMapObjectUpdater = dynamicMapObjectUpdater;
-            _configurationProvider = configurationProvider;
+            _configurationRepository = configurationRepository;
             _mouseCursorRendererFactory = mouseCursorRendererFactory;
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _clientWindowSizeRepository = clientWindowSizeRepository;
@@ -89,7 +89,7 @@ namespace EndlessClient.Rendering.Factories
                                    _characterRendererUpdater,
                                    _npcRendererUpdater,
                                    _dynamicMapObjectUpdater,
-                                   _configurationProvider,
+                                   _configurationRepository,
                                    _mouseCursorRendererFactory.Create(),
                                    _gridDrawCoordinateCalculator,
                                    _clientWindowSizeRepository,

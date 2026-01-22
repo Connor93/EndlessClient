@@ -47,5 +47,8 @@ namespace EOLib.Config
 
         public const string UIMode = nameof(UIMode);
         public const string UIStyle = nameof(UIStyle);
+
+        public const string MapZoom = nameof(MapZoom);
+        public const string ScrollWheelZoom = nameof(ScrollWheelZoom);
     }
 }

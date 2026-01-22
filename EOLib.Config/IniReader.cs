@@ -160,6 +160,26 @@ namespace EOLib.Config
             return true;
         }
 
+        public bool GetValue(string section, string key, out float value)
+        {
+            value = float.MaxValue;
+            if (!_sections.ContainsKey(section))
+                return false;
+            if (!_sections[section].ContainsKey(key))
+                return false;
+
+            try
+            {
+                value = Convert.ToSingle(_sections[section][key], System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         #endregion
 
         #region Private Helpers

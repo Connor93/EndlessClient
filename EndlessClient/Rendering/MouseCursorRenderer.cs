@@ -4,6 +4,7 @@ using System.Linq;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD;
 using EndlessClient.Input;
+using EOLib.Config;
 using EOLib.Domain.Item;
 using EOLib.Domain.Map;
 using EOLib.Graphics;
@@ -41,6 +42,8 @@ namespace EndlessClient.Rendering
         private readonly IUserInputProvider _userInputProvider;
         private readonly IActiveDialogProvider _activeDialogProvider;
         private readonly IContextMenuProvider _contextMenuProvider;
+        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         private readonly XNALabel _mapItemText;
 
@@ -64,7 +67,9 @@ namespace EndlessClient.Rendering
                                    ICurrentMapProvider currentMapProvider,
                                    IUserInputProvider userInputProvider,
                                    IActiveDialogProvider activeDialogProvider,
-                                   IContextMenuProvider contextMenuProvider)
+                                   IContextMenuProvider contextMenuProvider,
+                                   IConfigurationProvider configurationProvider,
+                                   IClientWindowSizeProvider clientWindowSizeProvider)
         {
             _mouseCursorTexture = nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 24, true);
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
@@ -76,6 +81,8 @@ namespace EndlessClient.Rendering
             _userInputProvider = userInputProvider;
             _activeDialogProvider = activeDialogProvider;
             _contextMenuProvider = contextMenuProvider;
+            _configurationProvider = configurationProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
 
             SingleCursorFrameArea = new Rectangle(0, 0,
                                                   _mouseCursorTexture.Width / (int)CursorIndex.NumberOfFramesInSheet,
@@ -108,7 +115,20 @@ namespace EndlessClient.Rendering
                 _contextMenuProvider.ContextMenu.HasValue)
                 return;
 
-            var gridPosition = _gridDrawCoordinateCalculator.CalculateGridCoordinatesFromDrawLocation(_userInputProvider.CurrentMouseState.Position.ToVector2());
+            // Apply inverse zoom transform to mouse position for accurate grid detection
+            var mousePos = _userInputProvider.CurrentMouseState.Position.ToVector2();
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f)
+            {
+                // Transform mouse position from screen space to zoomed map space
+                var centerX = _clientWindowSizeProvider.Width / 2f;
+                var centerY = _clientWindowSizeProvider.Height / 2f;
+                mousePos = new Vector2(
+                    (mousePos.X - centerX) / zoom + centerX,
+                    (mousePos.Y - centerY) / zoom + centerY);
+            }
+
+            var gridPosition = _gridDrawCoordinateCalculator.CalculateGridCoordinatesFromDrawLocation(mousePos);
             _gridX = gridPosition.X;
             _gridY = gridPosition.Y;
 

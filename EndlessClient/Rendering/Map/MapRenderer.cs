@@ -38,12 +38,14 @@ namespace EndlessClient.Rendering.Map
         private readonly ICharacterRendererUpdater _characterRendererUpdater;
         private readonly INPCRendererUpdater _npcRendererUpdater;
         private readonly IDynamicMapObjectUpdater _dynamicMapObjectUpdater;
-        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IConfigurationRepository _configurationRepository;
         private readonly IMouseCursorRenderer _mouseCursorRenderer;
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly IFixedTimeStepRepository _fixedTimeStepRepository;
         private readonly IUserInputProvider _userInputProvider;
+
+        private int _lastScrollWheelValue;
 
         private RenderTarget2D _mapBaseTarget, _mapObjectTarget;
         private SpriteBatch _sb;
@@ -85,7 +87,7 @@ namespace EndlessClient.Rendering.Map
                            ICharacterRendererUpdater characterRendererUpdater,
                            INPCRendererUpdater npcRendererUpdater,
                            IDynamicMapObjectUpdater dynamicMapObjectUpdater,
-                           IConfigurationProvider configurationProvider,
+                           IConfigurationRepository configurationRepository,
                            IMouseCursorRenderer mouseCursorRenderer,
                            IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                            IClientWindowSizeRepository clientWindowSizeRepository,
@@ -104,7 +106,7 @@ namespace EndlessClient.Rendering.Map
             _characterRendererUpdater = characterRendererUpdater;
             _npcRendererUpdater = npcRendererUpdater;
             _dynamicMapObjectUpdater = dynamicMapObjectUpdater;
-            _configurationProvider = configurationProvider;
+            _configurationRepository = configurationRepository;
             _mouseCursorRenderer = mouseCursorRenderer;
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _clientWindowSizeRepository = clientWindowSizeRepository;
@@ -155,8 +157,10 @@ namespace EndlessClient.Rendering.Map
                 _dynamicMapObjectUpdater.UpdateMapObjects(gameTime);
 
                 if (MouseOver)
+                {
                     _mouseCursorRenderer.Update(gameTime);
-
+                    HandleScrollWheelZoom();
+                }
                 UpdateQuakeState();
 
                 foreach (var target in _mapGridEffectRenderers.Values)
@@ -405,7 +409,19 @@ namespace EndlessClient.Rendering.Map
 
         private void DrawToSpriteBatch(SpriteBatch spriteBatch, GameTime gameTime)
         {
-            spriteBatch.Begin();
+            // Calculate zoom transform matrix centered on screen
+            var zoom = _configurationRepository.MapZoom;
+            var centerX = _clientWindowSizeRepository.Width / 2f;
+            var centerY = _clientWindowSizeRepository.Height / 2f;
+
+            // Transform: translate to origin, scale, translate back
+            var transform = zoom != 1.0f
+                ? Matrix.CreateTranslation(-centerX, -centerY, 0) *
+                  Matrix.CreateScale(zoom, zoom, 1) *
+                  Matrix.CreateTranslation(centerX, centerY, 0)
+                : Matrix.Identity;
+
+            spriteBatch.Begin(transformMatrix: transform);
 
             var drawLoc = _gridDrawCoordinateCalculator.CalculateGroundLayerRenderTargetDrawCoordinates();
             var offset = _quakeState.Map(GetOffset).ValueOr(0);
@@ -457,7 +473,7 @@ namespace EndlessClient.Rendering.Map
 
         private int GetAlphaForCoordinates(int objX, int objY, EOLib.Domain.Character.Character character)
         {
-            if (!_configurationProvider.ShowTransition)
+            if (!_configurationRepository.ShowTransition)
             {
                 _mapTransitionState = new MapTransitionState(Option.None<DateTime>(), 0);
                 return 255;
@@ -520,6 +536,48 @@ namespace EndlessClient.Rendering.Map
             }
 
             base.Dispose(disposing);
+        }
+
+        private void HandleScrollWheelZoom()
+        {
+            if (!_configurationRepository.ScrollWheelZoom)
+                return;
+
+            var currentScrollValue = _userInputProvider.CurrentMouseState.ScrollWheelValue;
+            var scrollDelta = currentScrollValue - _lastScrollWheelValue;
+            _lastScrollWheelValue = currentScrollValue;
+
+            if (scrollDelta == 0)
+                return;
+
+            // Predefined zoom levels
+            var zoomLevels = new[] { 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f };
+            var currentZoom = _configurationRepository.MapZoom;
+
+            // Find current index
+            var currentIndex = Array.FindIndex(zoomLevels, z => Math.Abs(z - currentZoom) < 0.01f);
+            if (currentIndex == -1)
+            {
+                // Find nearest zoom level
+                currentIndex = 2; // Default to 100%
+                for (int i = 0; i < zoomLevels.Length; i++)
+                {
+                    if (Math.Abs(zoomLevels[i] - currentZoom) < Math.Abs(zoomLevels[currentIndex] - currentZoom))
+                        currentIndex = i;
+                }
+            }
+
+            // Scroll up = zoom in, scroll down = zoom out
+            int nextIndex;
+            if (scrollDelta > 0)
+                nextIndex = Math.Min(currentIndex + 1, zoomLevels.Length - 1);
+            else
+                nextIndex = Math.Max(currentIndex - 1, 0);
+
+            if (nextIndex != currentIndex)
+            {
+                _configurationRepository.MapZoom = zoomLevels[nextIndex];
+            }
         }
     }
 

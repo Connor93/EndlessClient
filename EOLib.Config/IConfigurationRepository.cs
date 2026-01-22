@@ -43,6 +43,9 @@ namespace EOLib.Config
 
         UIMode UIMode { get; set; }
         UIStyle UIStyle { get; set; }
+
+        float MapZoom { get; set; }
+        bool ScrollWheelZoom { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -85,6 +88,9 @@ namespace EOLib.Config
 
         UIMode UIMode { get; }
         UIStyle UIStyle { get; }
+
+        float MapZoom { get; }
+        bool ScrollWheelZoom { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -128,5 +134,8 @@ namespace EOLib.Config
 
         public UIMode UIMode { get; set; }
         public UIStyle UIStyle { get; set; }
+
+        public float MapZoom { get; set; } = 1.0f;
+        public bool ScrollWheelZoom { get; set; }
     }
 }

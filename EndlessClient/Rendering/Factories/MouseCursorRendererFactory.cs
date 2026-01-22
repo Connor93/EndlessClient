@@ -3,6 +3,7 @@ using EndlessClient.Controllers;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD;
 using EndlessClient.Input;
+using EOLib.Config;
 using EOLib.Domain.Item;
 using EOLib.Domain.Map;
 using EOLib.Graphics;
@@ -23,6 +24,9 @@ namespace EndlessClient.Rendering.Factories
         private readonly IUserInputProvider _userInputProvider;
         private readonly IActiveDialogProvider _activeDialogProvider;
         private readonly IContextMenuProvider _contextMenuProvider;
+        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+
         public MouseCursorRendererFactory(INativeGraphicsManager nativeGraphicsManager,
                                           IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                           IMapCellStateProvider mapCellStateProvider,
@@ -32,7 +36,9 @@ namespace EndlessClient.Rendering.Factories
                                           ICurrentMapProvider currentMapProvider,
                                           IUserInputProvider userInputProvider,
                                           IActiveDialogProvider activeDialogProvider,
-                                          IContextMenuProvider contextMenuProvider)
+                                          IContextMenuProvider contextMenuProvider,
+                                          IConfigurationProvider configurationProvider,
+                                          IClientWindowSizeProvider clientWindowSizeProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
@@ -44,6 +50,8 @@ namespace EndlessClient.Rendering.Factories
             _userInputProvider = userInputProvider;
             _activeDialogProvider = activeDialogProvider;
             _contextMenuProvider = contextMenuProvider;
+            _configurationProvider = configurationProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
         }
 
         public IMouseCursorRenderer Create()
@@ -57,7 +65,9 @@ namespace EndlessClient.Rendering.Factories
                                            _currentMapProvider,
                                            _userInputProvider,
                                            _activeDialogProvider,
-                                           _contextMenuProvider);
+                                           _contextMenuProvider,
+                                           _configurationProvider,
+                                           _clientWindowSizeProvider);
         }
     }
 
