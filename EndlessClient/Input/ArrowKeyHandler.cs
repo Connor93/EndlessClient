@@ -2,6 +2,7 @@
 using EndlessClient.ControlSets;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD;
+using EndlessClient.HUD.Chat;
 using EndlessClient.HUD.Controls;
 using EndlessClient.UIControls;
 using EOLib.Config;
@@ -15,7 +16,7 @@ namespace EndlessClient.Input
     {
         private readonly IArrowKeyController _arrowKeyController;
         private readonly IConfigurationProvider _configurationProvider;
-        private readonly IHudControlProvider _hudControlProvider;
+        private readonly IChatTextBoxActions _chatTextBoxActions;
 
         public ArrowKeyHandler(IEndlessGameProvider endlessGameProvider,
                                IUserInputProvider userInputProvider,
@@ -23,12 +24,12 @@ namespace EndlessClient.Input
                                IArrowKeyController arrowKeyController,
                                ICurrentMapStateRepository currentMapStateRepository,
                                IConfigurationProvider configurationProvider,
-                               IHudControlProvider hudControlProvider)
+                               IChatTextBoxActions chatTextBoxActions)
             : base(endlessGameProvider, userInputProvider, userInputTimeRepository, currentMapStateRepository)
         {
             _arrowKeyController = arrowKeyController;
             _configurationProvider = configurationProvider;
-            _hudControlProvider = hudControlProvider;
+            _chatTextBoxActions = chatTextBoxActions;
         }
 
         protected override Option<Keys> HandleInput()
@@ -73,8 +74,7 @@ namespace EndlessClient.Input
 
         private bool IsChatActive()
         {
-            return _hudControlProvider.IsInGame &&
-                   _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox).Text.Length > 0;
+            return _chatTextBoxActions.GetChatText().Length > 0;
         }
     }
 }

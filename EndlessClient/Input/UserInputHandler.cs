@@ -6,6 +6,7 @@ using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD;
+using EndlessClient.HUD.Chat;
 using EndlessClient.HUD.Controls;
 using EndlessClient.Rendering;
 using EOLib.Config;
@@ -32,7 +33,7 @@ namespace EndlessClient.Input
                                 IActiveDialogProvider activeDialogProvider,
                                 IClientWindowSizeProvider clientWindowSizeProvider,
                                 IConfigurationProvider configurationProvider,
-                                IHudControlProvider hudControlProvider)
+                                IChatTextBoxActions chatTextBoxActions)
         {
             _handlers = new List<IInputHandler>
             {
@@ -42,14 +43,14 @@ namespace EndlessClient.Input
                     arrowKeyController,
                     currentMapStateRepository,
                     configurationProvider,
-                    hudControlProvider),
+                    chatTextBoxActions),
                 new ControlKeyHandler(endlessGameProvider,
                     userInputProvider,
                     userInputTimeRepository,
                     controlKeyController,
                     currentMapStateRepository,
                     configurationProvider,
-                    hudControlProvider),
+                    chatTextBoxActions),
                 new FunctionKeyHandler(endlessGameProvider,
                     userInputProvider,
                     userInputTimeRepository,

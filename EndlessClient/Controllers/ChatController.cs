@@ -49,7 +49,12 @@ namespace EndlessClient.Controllers
 
         public void SendChatAndClearTextBox()
         {
-            var localTypedText = ChatTextBox.Text;
+            var localTypedText = _chatTextBoxActions.GetChatText();
+
+            // Don't send empty messages
+            if (string.IsNullOrWhiteSpace(localTypedText))
+                return;
+
             var (pmCheckOk, targetCharacter) = _privateMessageActions.GetTargetCharacter(localTypedText);
 
             if (pmCheckOk)
@@ -98,13 +103,13 @@ namespace EndlessClient.Controllers
 
         public void ClearAndWarnIfJailAndGlobal()
         {
-            if (!_currentMapStateProvider.IsJail || _chatTypeCalculator.CalculateChatType(ChatTextBox.Text) != ChatType.Global) return;
+            if (!_currentMapStateProvider.IsJail || _chatTypeCalculator.CalculateChatType(_chatTextBoxActions.GetChatText()) != ChatType.Global) return;
 
             _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.JAIL_WARNING_CANNOT_USE_GLOBAL);
             _chatTextBoxActions.ClearChatText();
         }
 
-        private ChatTextBox ChatTextBox => _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox);
+
     }
 
     public interface IChatController

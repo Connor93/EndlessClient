@@ -9,10 +9,12 @@ using EndlessClient.Rendering.Chat;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EndlessClient.UIControls;
+using EOLib.Config;
 using EOLib.Domain.Chat;
 using EOLib.Graphics;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Input;
 using MonoGame.Extended.Input.InputListeners;
@@ -37,9 +39,32 @@ namespace EndlessClient.HUD.Panels
         private readonly Dictionary<ChatTab, CodeDrawnChatTabInfo> _tabs;
 
         private const int PanelWidth = 489;
-        private const int PanelHeight = 118;
+        private const int PanelHeight = 182; // 10 lines (130) + gaps + input bar (22) + tabs (14) + padding
+        private const int VisibleLines = 10;
+        private const int InputBarHeight = 22;
+
+        // Integrated text input
+        private ChatInputTextBox _inputTextBox;
 
         public ChatTab CurrentTab => _tabs.Single(x => x.Value.Active).Key;
+
+        // Properties to expose integrated text input for chat controller
+        public string InputText
+        {
+            get => _inputTextBox?.Text ?? "";
+            set { if (_inputTextBox != null) _inputTextBox.Text = value; }
+        }
+
+        public bool InputSelected
+        {
+            get => _inputTextBox?.Selected ?? false;
+            set { if (_inputTextBox != null) _inputTextBox.Selected = value; }
+        }
+
+        // Events for chat input
+        public event EventHandler OnEnterPressed;
+        public event EventHandler OnInputClicked;
+        public event EventHandler OnInputTextChanged;
 
         public CodeDrawnChatPanel(INativeGraphicsManager nativeGraphicsManager,
                                   IChatActions chatActions,
@@ -49,7 +74,8 @@ namespace EndlessClient.HUD.Panels
                                   IUIStyleProvider styleProvider,
                                   IGraphicsDeviceProvider graphicsDeviceProvider,
                                   IContentProvider contentProvider,
-                                  IClientWindowSizeProvider clientWindowSizeProvider)
+                                  IClientWindowSizeProvider clientWindowSizeProvider,
+                                  IConfigurationProvider configurationProvider)
             : base(clientWindowSizeProvider.Resizable)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
@@ -63,15 +89,31 @@ namespace EndlessClient.HUD.Panels
             _chatFont = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
-            DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
+            DrawArea = new Rectangle(102, 280, PanelWidth, PanelHeight); // Y position adjusted for taller panel
 
-            _scrollBar = new ScrollBar(new Vector2(467, 2), new Vector2(16, 97), ScrollBarColors.LightOnMed, _nativeGraphicsManager)
+            // Message area height: roughly 10 lines * 13px = 130px
+            _scrollBar = new ScrollBar(new Vector2(467, 2), new Vector2(16, 127), ScrollBarColors.LightOnMed, _nativeGraphicsManager)
             {
-                LinesToRender = 7,
+                LinesToRender = VisibleLines,
                 Visible = true
             };
             _scrollBar.SetParentControl(this);
             SetScrollWheelHandler(_scrollBar);
+
+            // Create integrated text input box with WASD filtering
+            // Position: below message area (130px) + gap (4) = 138, relative to panel
+            var inputY = 4 + VisibleLines * 13 + 4 + 3; // message area top + height + gap + padding inside input bar
+            _inputTextBox = new ChatInputTextBox(configurationProvider, Rectangle.Empty, Constants.FontSize08, caretTexture: contentProvider.Textures[ContentProvider.Cursor])
+            {
+                MaxChars = 140,
+                MaxWidth = PanelWidth - 40,
+                DrawArea = new Rectangle(18, inputY, PanelWidth - 40, InputBarHeight - 4), // 18px left for "> " prompt
+                Selected = true
+            };
+            _inputTextBox.SetParentControl(this);
+            _inputTextBox.OnEnterPressed += (_, _) => OnEnterPressed?.Invoke(this, EventArgs.Empty);
+            _inputTextBox.OnClicked += (_, _) => OnInputClicked?.Invoke(this, EventArgs.Empty);
+            _inputTextBox.OnTextChanged += (_, _) => OnInputTextChanged?.Invoke(this, EventArgs.Empty);
 
             _tabs = new Dictionary<ChatTab, CodeDrawnChatTabInfo>
             {
@@ -88,6 +130,10 @@ namespace EndlessClient.HUD.Panels
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
             _scrollBar.Initialize();
+            _inputTextBox.Initialize();
+
+            // Initialize max width after font is loaded
+            _inputTextBox.MaxWidth = PanelWidth - 30;
 
             base.Initialize();
         }
@@ -111,7 +157,7 @@ namespace EndlessClient.HUD.Panels
                     }
                     else
                     {
-                        info.CachedScrollOffset = Math.Max(0, info.Renderables.Count - 7);
+                        info.CachedScrollOffset = Math.Max(0, info.Renderables.Count - VisibleLines);
                     }
                 }
             }
@@ -173,7 +219,8 @@ namespace EndlessClient.HUD.Panels
                 var who = _chatProvider.AllChat[CurrentTab][_scrollBar.ScrollOffset + clickedChatRow].Who;
                 if (!string.IsNullOrEmpty(who))
                 {
-                    _hudControlProvider.GetComponent<UIControls.ChatTextBox>(HUD.Controls.HudControlIdentifier.ChatTextBox).Text = $"!{who} ";
+                    // Use integrated text input
+                    _inputTextBox.Text = $"!{who} ";
                 }
             }
         }
@@ -189,9 +236,19 @@ namespace EndlessClient.HUD.Panels
             DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
 
-            // Draw message area (medium gray for both dark and light text visibility)
-            var messageAreaRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 4, PanelWidth - 30, 94);
+            // Draw message area (10 lines * 13px = 130px height)
+            var messageAreaHeight = VisibleLines * 13;
+            var messageAreaRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 4, PanelWidth - 30, messageAreaHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, new Color(120, 110, 100, 255));
+
+            // Draw input bar area
+            var inputBarY = (int)pos.Y + 4 + messageAreaHeight + 4;
+            var inputBarRect = new Rectangle((int)pos.X + 4, inputBarY, PanelWidth - 12, InputBarHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, new Color(100, 90, 80, 255));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
+
+            // Draw ">" prompt
+            _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + 4, inputBarRect.Y + 3), Color.White);
 
             // Draw tabs
             DrawTabs(pos);
@@ -241,14 +298,16 @@ namespace EndlessClient.HUD.Panels
 
         private Rectangle GetTabRect(ChatTab tab)
         {
+            // Tabs positioned below input bar: message area (130) + gap (4) + input bar (22) + gap (4) = 160
+            var tabY = 4 + VisibleLines * 13 + 4 + InputBarHeight + 4;
             return tab switch
             {
-                ChatTab.Private1 => new Rectangle(23, 102, 110, 14),
-                ChatTab.Private2 => new Rectangle(136, 102, 110, 14),
-                ChatTab.Local => new Rectangle(249, 102, 50, 14),
-                ChatTab.Global => new Rectangle(302, 102, 50, 14),
-                ChatTab.Group => new Rectangle(355, 102, 50, 14),
-                ChatTab.System => new Rectangle(408, 102, 50, 14),
+                ChatTab.Private1 => new Rectangle(23, tabY, 110, 14),
+                ChatTab.Private2 => new Rectangle(136, tabY, 110, 14),
+                ChatTab.Local => new Rectangle(249, tabY, 50, 14),
+                ChatTab.Global => new Rectangle(302, tabY, 50, 14),
+                ChatTab.Group => new Rectangle(355, tabY, 50, 14),
+                ChatTab.System => new Rectangle(408, tabY, 50, 14),
                 _ => throw new ArgumentOutOfRangeException(nameof(tab), tab, null),
             };
         }

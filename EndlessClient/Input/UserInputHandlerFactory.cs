@@ -5,6 +5,7 @@ using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD;
+using EndlessClient.HUD.Chat;
 using EndlessClient.Rendering;
 
 using EOLib.Config;
@@ -27,7 +28,7 @@ namespace EndlessClient.Input
         private readonly IActiveDialogProvider _activeDialogProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IConfigurationProvider _configurationProvider;
-        private readonly IHudControlProvider _hudControlProvider;
+        private readonly IChatTextBoxActions _chatTextBoxActions;
 
         public UserInputHandlerFactory(IEndlessGameProvider endlessGameProvider,
                                        IUserInputProvider userInputProvider,
@@ -41,7 +42,7 @@ namespace EndlessClient.Input
                                        IActiveDialogProvider activeDialogProvider,
                                        IClientWindowSizeProvider clientWindowSizeProvider,
                                        IConfigurationProvider configurationProvider,
-                                       IHudControlProvider hudControlProvider)
+                                       IChatTextBoxActions chatTextBoxActions)
         {
             _endlessGameProvider = endlessGameProvider;
             _userInputProvider = userInputProvider;
@@ -55,7 +56,7 @@ namespace EndlessClient.Input
             _activeDialogProvider = activeDialogProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _configurationProvider = configurationProvider;
-            _hudControlProvider = hudControlProvider;
+            _chatTextBoxActions = chatTextBoxActions;
         }
 
         public IUserInputHandler CreateUserInputHandler()
@@ -72,7 +73,7 @@ namespace EndlessClient.Input
                                         _activeDialogProvider,
                                         _clientWindowSizeProvider,
                                         _configurationProvider,
-                                        _hudControlProvider);
+                                        _chatTextBoxActions);
         }
     }
 

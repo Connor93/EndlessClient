@@ -315,6 +315,13 @@ namespace EndlessClient.HUD.Controls
             retButton.OnMouseEnter += (_, _) => _statusLabelSetter.SetStatusLabel(
                 EOResourceID.STATUS_LABEL_TYPE_BUTTON,
                 EOResourceID.STATUS_LABEL_HUD_BUTTON_HOVER_FIRST + buttonIndex);
+
+            // Hide chat button in code UI mode (chat panel is always visible with integrated input)
+            if (whichState == InGameStates.Chat && _configurationProvider.UIMode == UIMode.Code)
+            {
+                ((XNAButton)retButton).Visible = false;
+            }
+
             return retButton;
         }
 
@@ -424,8 +431,25 @@ namespace EndlessClient.HUD.Controls
 
             retPanel.Activated += () => retPanel.DrawOrder = _hudControlProvider.HudPanels.Select(x => x.DrawOrder).Max() + 1;
 
-            retPanel.Visible = (_newsProvider.NewsText.Any() && whichState == InGameStates.News) ||
-                               (!_newsProvider.NewsText.Any() && whichState == InGameStates.Chat);
+            // For Code UI mode with integrated chat panel, chat is always visible
+            // Otherwise, show news if available, or chat if no news
+            if (_configurationProvider.UIMode == UIMode.Code && whichState == InGameStates.Chat)
+            {
+                retPanel.Visible = true;
+
+                // Wire up integrated chat panel events
+                if (retPanel is CodeDrawnChatPanel codeDrawnChatPanel)
+                {
+                    codeDrawnChatPanel.OnEnterPressed += (_, _) => _chatController.SendChatAndClearTextBox();
+                    codeDrawnChatPanel.OnInputClicked += (_, _) => _chatController.SelectChatTextBox();
+                    codeDrawnChatPanel.OnInputTextChanged += (_, _) => _chatController.ClearAndWarnIfJailAndGlobal();
+                }
+            }
+            else
+            {
+                retPanel.Visible = (_newsProvider.NewsText.Any() && whichState == InGameStates.News) ||
+                                   (!_newsProvider.NewsText.Any() && whichState == InGameStates.Chat);
+            }
 
             if (_clientWindowSizeRepository.Resizable)
             {
@@ -443,7 +467,10 @@ namespace EndlessClient.HUD.Controls
                         retPanel.DrawPosition = new Vector2(x, y);
                     }
 
-                    if (panelConfig.GetValue("PANELS", $"{retPanel.GetType().Name}:Visible", out bool visible))
+                    // Don't let config override chat panel visibility in code UI mode
+                    // (chat panel with integrated input should always be visible)
+                    if (panelConfig.GetValue("PANELS", $"{retPanel.GetType().Name}:Visible", out bool visible) &&
+                        !(_configurationProvider.UIMode == UIMode.Code && retPanel is CodeDrawnChatPanel))
                     {
                         retPanel.Visible = visible;
                     }
@@ -587,7 +614,8 @@ namespace EndlessClient.HUD.Controls
             {
                 Text = "",
                 Selected = true,
-                Visible = true,
+                // Hide standalone ChatTextBox when using code UI mode (integrated in chat panel)
+                Visible = _configurationProvider.UIMode != UIMode.Code,
                 DrawOrder = HUD_CONTROL_LAYER,
             };
             chatTextBox.OnEnterPressed += (_, _) => _chatController.SendChatAndClearTextBox();

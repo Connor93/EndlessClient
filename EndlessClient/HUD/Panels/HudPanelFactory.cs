@@ -282,7 +282,8 @@ namespace EndlessClient.HUD.Panels
                                               _styleProvider,
                                               _graphicsDeviceProvider,
                                               _contentProvider,
-                                              _clientWindowSizeProvider)
+                                              _clientWindowSizeProvider,
+                                              _configurationProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else

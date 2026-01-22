@@ -5,5 +5,7 @@
         void ClearChatText();
 
         void FocusChatTextBox();
+
+        string GetChatText();
     }
 }
