@@ -56,6 +56,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISpellSlotDataRepository _spellSlotDataRepository;
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IOnlinePlayerProvider _onlinePlayerProvider;
+        private readonly IOnlinePlayerActions _onlinePlayerActions;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly IAudioActions _audioActions;
         private readonly ISfxPlayer _sfxPlayer;
@@ -93,6 +94,7 @@ namespace EndlessClient.HUD.Panels
                                ISpellSlotDataRepository spellSlotDataRepository,
                                IConfigurationRepository configurationRepository,
                                IOnlinePlayerProvider onlinePlayerProvider,
+                               IOnlinePlayerActions onlinePlayerActions,
                                ILocalizedStringFinder localizedStringFinder,
                                IAudioActions audioActions,
                                ISfxPlayer sfxPlayer,
@@ -130,6 +132,7 @@ namespace EndlessClient.HUD.Panels
             _spellSlotDataRepository = spellSlotDataRepository;
             _configurationRepository = configurationRepository;
             _onlinePlayerProvider = onlinePlayerProvider;
+            _onlinePlayerActions = onlinePlayerActions;
             _localizedStringFinder = localizedStringFinder;
             _audioActions = audioActions;
             _sfxPlayer = sfxPlayer;
@@ -205,26 +208,62 @@ namespace EndlessClient.HUD.Panels
 
         public ActiveSpellsPanel CreateActiveSpellsPanel()
         {
-            return new ActiveSpellsPanel(_nativeGraphicsManager,
-                _trainingController,
-                _messageBoxFactory,
-                _statusLabelSetter,
-                _playerInfoProvider,
-                _characterProvider,
-                _characterInventoryProvider,
-                _pubFileProvider,
-                _spellSlotDataRepository,
-                _hudControlProvider,
-                _sfxPlayer,
-                _configurationProvider,
-                _clientWindowSizeProvider,
-                _userInputProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnActiveSpellsPanel(_nativeGraphicsManager,
+                    _trainingController,
+                    _messageBoxFactory,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _spellSlotDataRepository,
+                    _hudControlProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new ActiveSpellsPanel(_nativeGraphicsManager,
+                    _trainingController,
+                    _messageBoxFactory,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _spellSlotDataRepository,
+                    _hudControlProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public PassiveSpellsPanel CreatePassiveSpellsPanel()
         {
-            return new PassiveSpellsPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnPassiveSpellsPanel(_nativeGraphicsManager,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new PassiveSpellsPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public DraggableHudPanel CreateChatPanel()
@@ -291,6 +330,7 @@ namespace EndlessClient.HUD.Panels
             {
                 return new CodeDrawnOnlineListPanel(_hudControlProvider,
                     _onlinePlayerProvider,
+                    _onlinePlayerActions,
                     _partyDataProvider,
                     _friendIgnoreListService,
                     _sfxPlayer,

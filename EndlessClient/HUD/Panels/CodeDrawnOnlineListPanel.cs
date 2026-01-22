@@ -32,6 +32,7 @@ namespace EndlessClient.HUD.Panels
 
         private readonly IHudControlProvider _hudControlProvider;
         private readonly IOnlinePlayerProvider _onlinePlayerProvider;
+        private readonly IOnlinePlayerActions _onlinePlayerActions;
         private readonly IPartyDataProvider _partyDataProvider;
         private readonly IFriendIgnoreListService _friendIgnoreListService;
         private readonly ISfxPlayer _sfxPlayer;
@@ -68,6 +69,7 @@ namespace EndlessClient.HUD.Panels
 
         public CodeDrawnOnlineListPanel(IHudControlProvider hudControlProvider,
                                         IOnlinePlayerProvider onlinePlayerProvider,
+                                        IOnlinePlayerActions onlinePlayerActions,
                                         IPartyDataProvider partyDataProvider,
                                         IFriendIgnoreListService friendIgnoreListService,
                                         ISfxPlayer sfxPlayer,
@@ -79,6 +81,7 @@ namespace EndlessClient.HUD.Panels
         {
             _hudControlProvider = hudControlProvider;
             _onlinePlayerProvider = onlinePlayerProvider;
+            _onlinePlayerActions = onlinePlayerActions;
             _partyDataProvider = partyDataProvider;
             _friendIgnoreListService = friendIgnoreListService;
             _sfxPlayer = sfxPlayer;
@@ -100,6 +103,16 @@ namespace EndlessClient.HUD.Panels
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
             base.Initialize();
+        }
+
+        protected override void OnVisibleChanged(object sender, System.EventArgs args)
+        {
+            if (Visible)
+            {
+                // Request online players when panel becomes visible
+                _onlinePlayerActions.RequestOnlinePlayers(fullList: true);
+            }
+            base.OnVisibleChanged(sender, args);
         }
 
         protected override void OnUpdateControl(GameTime gameTime)

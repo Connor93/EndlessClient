@@ -79,7 +79,8 @@ namespace EndlessClient.Controllers
 
             var macroSlotIndex = index + (isAlternate ? MacroSlotDataRepository.MacroRowLength : 0);
 
-            // Check if there's a macro slot assigned for this F-key
+            // Only use macro slots for F-key spell casting
+            // The Active Spells panel is for managing spells, not binding them to F-keys
             if (macroSlotIndex < _macroSlotDataProvider.MacroSlots.Count)
             {
                 var macroSlotOption = _macroSlotDataProvider.MacroSlots[macroSlotIndex];
@@ -110,16 +111,8 @@ namespace EndlessClient.Controllers
                     return true;
             }
 
-            // Fall back to the spell slot system if no macro is assigned
-            _spellSelectActions.SelectSpellBySlot(index + (isAlternate ? ActiveSpellsPanel.SpellRowLength : 0));
-
-            _spellSlotDataRepository.SelectedSpellInfo.Match(
-                some: x =>
-                {
-                    HandleSpellCast(x.ID);
-                },
-                none: () => _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.SPELL_NOTHING_WAS_SELECTED)
-            );
+            // No macro assigned - show a helpful message
+            _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.SPELL_NOTHING_WAS_SELECTED);
 
             return true;
         }
