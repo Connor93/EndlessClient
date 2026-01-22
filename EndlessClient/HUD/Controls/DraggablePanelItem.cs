@@ -46,7 +46,9 @@ namespace EndlessClient.HUD.Controls
             _followMouse = _isChainedDrag = isChainedDrag;
 
             OldOffset = ImmediateParent.DrawPositionWithParentOffset;
-            DrawPosition = MouseExtended.GetState().Position.ToVector2();
+            var mousePos = MouseExtended.GetState().Position;
+            var transformedPos = _parentContainer.TransformMousePosition(mousePos);
+            DrawPosition = transformedPos.ToVector2();
 
             SetControlUnparented();
             Game.Components.Add(this);
@@ -59,7 +61,9 @@ namespace EndlessClient.HUD.Controls
         {
             if (_followMouse)
             {
-                DrawPosition = MouseExtended.GetState().Position.ToVector2() - new Vector2(DrawArea.Width / 2, DrawArea.Height / 2);
+                var mousePos = MouseExtended.GetState().Position;
+                var transformedPos = _parentContainer.TransformMousePosition(mousePos);
+                DrawPosition = transformedPos.ToVector2() - new Vector2(DrawArea.Width / 2, DrawArea.Height / 2);
             }
 
             base.OnUpdateControl(gameTime);

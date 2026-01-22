@@ -1048,5 +1048,65 @@ Similar updates needed for: ChestDialog, LockerDialog, BankAccountDialog, Paperd
   - `Graphic * 2` = **Inventory icon** (even-numbered, used in inventory/paperdoll)
   - `2 * Graphic - 1` = **Map drop icon** (odd-numbered, used when items drop on map)
 
+## 18. Code-Drawn HUD Panels
+
+### Factory Pattern
+`HudPanelFactory` checks `UIMode` configuration and returns appropriate panel type:
+
+```csharp
+if (_configurationProvider.UIMode == UIMode.Code)
+    return new CodeDrawnMacroPanel(..., _styleProvider, _graphicsDeviceProvider, _contentProvider);
+else
+    return new MacroPanel(...);
+```
+
+### Type Checking in HudStateActions
+Update `HudStateActions.MatchState()` to include both GFX and code-drawn types:
+
+```csharp
+case InGameStates.Macro: return hudPanel is MacroPanel or CodeDrawnMacroPanel;
+```
+
+### Extending Base Panels
+When possible, extend base to preserve functionality:
+
+```csharp
+public class CodeDrawnActiveSpellsPanel : ActiveSpellsPanel
+{
+    public CodeDrawnActiveSpellsPanel(...) : base(...)
+    {
+        BackgroundImage = null;  // Clear GFX background
+    }
+    
+    protected override void OnDrawControl(GameTime gameTime)
+    {
+        // Custom drawing...
+        base.OnDrawControl(gameTime);  // Let base draw spell icons
+    }
+}
+```
+
+### Hiding Base Class Controls
+Cast to `XNAControl` to access settable `Visible` property:
+
+```csharp
+if (_closeButton is XNAControls.XNAControl btn)
+    btn.Visible = false;
+```
+
+### OnVisibleChanged Pattern
+Request data when panel becomes visible:
+
+```csharp
+protected override void OnVisibleChanged(object sender, EventArgs args)
+{
+    if (Visible)
+        _onlinePlayerActions.RequestOnlinePlayers(fullList: true);
+    base.OnVisibleChanged(sender, args);
+}
+```
+
+### F-Key Binding
+F-key spell casting now only uses Macro panel (no fallback to Active Spells slots).
 
 

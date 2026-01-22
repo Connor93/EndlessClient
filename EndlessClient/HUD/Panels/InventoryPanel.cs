@@ -413,8 +413,9 @@ namespace EndlessClient.HUD.Panels
             var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(HudControlIdentifier.MacroPanel);
             if (macroPanel.Visible && macroPanel.MouseOver)
             {
-                var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position.ToVector2();
-                var targetSlot = macroPanel.GetSlotFromPosition(mousePos);
+                var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position;
+                var transformedPos = macroPanel.TransformMousePosition(mousePos).ToVector2();
+                var targetSlot = macroPanel.GetSlotFromPosition(transformedPos);
                 if (targetSlot >= 0)
                 {
                     macroPanel.AcceptItemDrop(item.InventoryItem.ItemID, targetSlot);
@@ -593,6 +594,21 @@ namespace EndlessClient.HUD.Panels
                     }
                 }
             }
+        }
+        public Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
         }
     }
 }

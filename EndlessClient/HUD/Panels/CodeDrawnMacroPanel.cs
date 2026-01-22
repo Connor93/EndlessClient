@@ -88,10 +88,20 @@ namespace EndlessClient.HUD.Panels
         {
             var mouseState = Mouse.GetState();
             var mousePos = new Point(mouseState.X, mouseState.Y);
+            var transformedPos = TransformMousePosition(mousePos);
             var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
 
+            // Recalculate button rect (to ensure it matches current position)
+            var pos = DrawPositionWithParentOffset;
+            var buttonWidth = 80;
+            var buttonHeight = 24;
+            _okButtonRect = new Rectangle(
+                (int)pos.X + (PanelWidth - buttonWidth) / 2,
+                (int)pos.Y + PanelHeight - buttonHeight - 8,
+                buttonWidth, buttonHeight);
+
             // Update button hover state
-            _okButtonHovered = _okButtonRect.Contains(mousePos);
+            _okButtonHovered = _okButtonRect.Contains(transformedPos);
 
             // Handle button click
             if (_wasMouseDown && !isMouseDown && _okButtonHovered)

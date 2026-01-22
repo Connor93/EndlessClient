@@ -46,6 +46,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         private readonly List<HUD.Macros.MacroPanelItem> _childItems;
         protected readonly IXNAButton _closeButton;
@@ -75,6 +76,7 @@ namespace EndlessClient.HUD.Panels
             _macroSlotDataRepository = macroSlotDataRepository;
             _sfxPlayer = sfxPlayer;
             _configProvider = configProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _userInputProvider = userInputProvider;
 
             _childItems = new List<HUD.Macros.MacroPanelItem>();
@@ -370,6 +372,21 @@ namespace EndlessClient.HUD.Panels
             }
 
             base.Dispose(disposing);
+        }
+        public Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
         }
     }
 }

@@ -105,8 +105,9 @@ namespace EndlessClient.HUD.Macros
             if (!IsDragging)
                 return Slot;
 
-            var mousePos = MouseExtended.GetState().Position.ToVector2();
-            return _macroPanel.GetSlotFromPosition(mousePos);
+            var mousePos = MouseExtended.GetState().Position;
+            var transformedPos = _macroPanel.TransformMousePosition(mousePos);
+            return _macroPanel.GetSlotFromPosition(transformedPos.ToVector2());
         }
 
         protected override void OnDrawControl(GameTime gameTime)
