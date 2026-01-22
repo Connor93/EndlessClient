@@ -158,23 +158,49 @@ namespace EndlessClient.HUD.Panels
 
         public InventoryPanel CreateInventoryPanel()
         {
-            return new InventoryPanel(_nativeGraphicsManager,
-                _inventoryController,
-                _statusLabelSetter,
-                _itemStringService,
-                _itemNameColorService,
-                _inventoryService,
-                _inventorySlotRepository,
-                _playerInfoProvider,
-                _characterProvider,
-                _characterInventoryProvider,
-                _pubFileProvider,
-                _hudControlProvider,
-                _activeDialogProvider,
-                _sfxPlayer,
-                _configurationProvider,
-                _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnInventoryPanel(_nativeGraphicsManager,
+                    _inventoryController,
+                    _statusLabelSetter,
+                    _itemStringService,
+                    _itemNameColorService,
+                    _inventoryService,
+                    _inventorySlotRepository,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _hudControlProvider,
+                    _activeDialogProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new InventoryPanel(_nativeGraphicsManager,
+                    _inventoryController,
+                    _statusLabelSetter,
+                    _itemStringService,
+                    _itemNameColorService,
+                    _inventoryService,
+                    _inventorySlotRepository,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _hudControlProvider,
+                    _activeDialogProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public ActiveSpellsPanel CreateActiveSpellsPanel()
