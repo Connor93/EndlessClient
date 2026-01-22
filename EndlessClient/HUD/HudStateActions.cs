@@ -76,7 +76,7 @@ namespace EndlessClient.HUD
                 case InGameStates.ActiveSpells: return hudPanel is ActiveSpellsPanel;
                 case InGameStates.PassiveSpells: return hudPanel is PassiveSpellsPanel;
                 case InGameStates.Chat: return hudPanel is ChatPanel;
-                case InGameStates.Stats: return hudPanel is StatsPanel;
+                case InGameStates.Stats: return hudPanel is StatsPanel or CodeDrawnStatsPanel;
                 case InGameStates.OnlineList: return hudPanel is OnlineListPanel;
                 case InGameStates.Party: return hudPanel is PartyPanel;
                 case InGameStates.Macro: return hudPanel is MacroPanel;

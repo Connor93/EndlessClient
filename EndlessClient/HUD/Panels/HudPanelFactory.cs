@@ -12,6 +12,7 @@ using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.Services;
+using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Chat;
@@ -65,6 +66,8 @@ namespace EndlessClient.HUD.Panels
         private readonly IUserInputProvider _userInputProvider;
         private readonly HUD.Macros.IMacroSlotDataRepository _macroSlotDataRepository;
         private readonly IEODialogButtonService _dialogButtonService;
+        private readonly IUIStyleProvider _styleProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
         public HudPanelFactory(INativeGraphicsManager nativeGraphicsManager,
                                IInventoryController inventoryController,
@@ -99,7 +102,9 @@ namespace EndlessClient.HUD.Panels
                                IClientWindowSizeProvider clientWindowSizeProvider,
                                IUserInputProvider userInputProvider,
                                HUD.Macros.IMacroSlotDataRepository macroSlotDataRepository,
-                               IEODialogButtonService dialogButtonService)
+                               IEODialogButtonService dialogButtonService,
+                               IUIStyleProvider styleProvider,
+                               IGraphicsDeviceProvider graphicsDeviceProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _inventoryController = inventoryController;
@@ -135,6 +140,8 @@ namespace EndlessClient.HUD.Panels
             _userInputProvider = userInputProvider;
             _macroSlotDataRepository = macroSlotDataRepository;
             _dialogButtonService = dialogButtonService;
+            _styleProvider = styleProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
         public NewsPanel CreateNewsPanel()
@@ -208,16 +215,32 @@ namespace EndlessClient.HUD.Panels
             { DrawOrder = HUD_CONTROL_LAYER };
         }
 
-        public StatsPanel CreateStatsPanel()
+        public DraggableHudPanel CreateStatsPanel()
         {
-            return new StatsPanel(_nativeGraphicsManager,
-                                  _characterProvider,
-                                  _characterInventoryProvider,
-                                  _experienceTableProvider,
-                                  _messageBoxFactory,
-                                  _trainingController,
-                                  _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnStatsPanel(_characterProvider,
+                                               _characterInventoryProvider,
+                                               _experienceTableProvider,
+                                               _messageBoxFactory,
+                                               _trainingController,
+                                               _styleProvider,
+                                               _graphicsDeviceProvider,
+                                               _contentProvider,
+                                               _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new StatsPanel(_nativeGraphicsManager,
+                                      _characterProvider,
+                                      _characterInventoryProvider,
+                                      _experienceTableProvider,
+                                      _messageBoxFactory,
+                                      _trainingController,
+                                      _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public OnlineListPanel CreateOnlineListPanel()

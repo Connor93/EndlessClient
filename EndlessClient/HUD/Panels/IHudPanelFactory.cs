@@ -12,7 +12,7 @@
 
         ChatPanel CreateChatPanel();
 
-        StatsPanel CreateStatsPanel();
+        DraggableHudPanel CreateStatsPanel();
 
         OnlineListPanel CreateOnlineListPanel();
 
