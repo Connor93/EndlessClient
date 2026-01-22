@@ -1044,4 +1044,9 @@ case CodeDrawnTradeDialog: _inventoryController.TradeItem(item.Data, item.Invent
 ```
 Similar updates needed for: ChestDialog, LockerDialog, BankAccountDialog, PaperdollDialog.
 
+- **Item Graphics Formula**:
+  - `Graphic * 2` = **Inventory icon** (even-numbered, used in inventory/paperdoll)
+  - `2 * Graphic - 1` = **Map drop icon** (odd-numbered, used when items drop on map)
+
+
 

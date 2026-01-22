@@ -28,6 +28,14 @@ namespace EndlessClient.UI.Styles
         Color TextSecondary { get; }
         Color TextHighlight { get; }
 
+        // Status Bars (HP, TP, SP, TNL)
+        Color StatusBarBackground { get; }
+        Color StatusBarBorder { get; }
+        Color HPBarFill { get; }
+        Color TPBarFill { get; }
+        Color SPBarFill { get; }
+        Color TNLBarFill { get; }
+
         // Metrics
         int CornerRadius { get; }
         int BorderThickness { get; }

@@ -31,6 +31,14 @@ namespace EndlessClient.UI.Styles
         public Color TextSecondary => new Color(64, 64, 64);
         public Color TextHighlight => new Color(0, 0, 128);
 
+        // Status Bars - classic Windows-style colors
+        public Color StatusBarBackground => new Color(128, 128, 128);
+        public Color StatusBarBorder => new Color(64, 64, 64);
+        public Color HPBarFill => new Color(255, 0, 0);     // Pure red
+        public Color TPBarFill => new Color(0, 192, 0);     // Pure green
+        public Color SPBarFill => new Color(0, 0, 255);     // Pure blue
+        public Color TNLBarFill => new Color(255, 255, 0);  // Pure yellow
+
         // Metrics
         public int CornerRadius => 0;
         public int BorderThickness => 2;

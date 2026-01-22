@@ -31,6 +31,14 @@ namespace EndlessClient.UI.Styles
         public Color TextSecondary => new Color(160, 170, 190);
         public Color TextHighlight => new Color(100, 200, 255); // Cyan for visibility
 
+        // Status Bars - vibrant colors with glass effect
+        public Color StatusBarBackground => new Color(15, 20, 30, 200);
+        public Color StatusBarBorder => new Color(80, 100, 130, 180);
+        public Color HPBarFill => new Color(220, 60, 80, 220);  // Red
+        public Color TPBarFill => new Color(100, 180, 80, 220); // Green
+        public Color SPBarFill => new Color(70, 130, 220, 220); // Blue
+        public Color TNLBarFill => new Color(220, 180, 60, 220); // Yellow/Gold
+
         // Metrics
         public int CornerRadius => 6;
         public int BorderThickness => 1;

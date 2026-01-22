@@ -20,6 +20,7 @@ using EndlessClient.Rendering.Map;
 using EndlessClient.Rendering.Metadata;
 using EndlessClient.Rendering.Metadata.Models;
 using EndlessClient.Rendering.NPC;
+using EndlessClient.UI.Styles;
 using EndlessClient.UIControls;
 using EOLib;
 using EOLib.Config;
@@ -77,6 +78,7 @@ namespace EndlessClient.HUD.Controls
         private readonly ICharacterRendererProvider _characterRendererProvider;
         private readonly INPCRendererProvider _npcRendererProvider;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IUIStyleProvider _styleProvider;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -115,7 +117,8 @@ namespace EndlessClient.HUD.Controls
                                   ILocalizedStringFinder localizedStringFinder,
                                   ICharacterRendererProvider characterRendererProvider,
                                   INPCRendererProvider npcRendererProvider,
-                                  IConfigurationProvider configurationProvider)
+                                  IConfigurationProvider configurationProvider,
+                                  IUIStyleProvider styleProvider)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -153,6 +156,7 @@ namespace EndlessClient.HUD.Controls
             _characterRendererProvider = characterRendererProvider;
             _npcRendererProvider = npcRendererProvider;
             _configurationProvider = configurationProvider;
+            _styleProvider = styleProvider;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -507,30 +511,66 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateHPStatusBar()
         {
-            var statusBar = new HPStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository) { DrawOrder = HUD_CONTROL_LAYER };
-            statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
-            return statusBar;
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                var statusBar = new CodeDrawnHPStatusBar(_clientWindowSizeRepository, (ICharacterProvider)_characterRepository, _styleProvider, _graphicsDeviceProvider, _contentProvider) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
+            else
+            {
+                var statusBar = new HPStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
         }
 
         private IGameComponent CreateTPStatusBar()
         {
-            var statusBar = new TPStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository) { DrawOrder = HUD_CONTROL_LAYER };
-            statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
-            return statusBar;
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                var statusBar = new CodeDrawnTPStatusBar(_clientWindowSizeRepository, (ICharacterProvider)_characterRepository, _styleProvider, _graphicsDeviceProvider, _contentProvider) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
+            else
+            {
+                var statusBar = new TPStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
         }
 
         private IGameComponent CreateSPStatusBar()
         {
-            var statusBar = new SPStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository) { DrawOrder = HUD_CONTROL_LAYER };
-            statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
-            return statusBar;
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                var statusBar = new CodeDrawnSPStatusBar(_clientWindowSizeRepository, (ICharacterProvider)_characterRepository, _styleProvider, _graphicsDeviceProvider, _contentProvider) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
+            else
+            {
+                var statusBar = new SPStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
         }
 
         private IGameComponent CreateTNLStatusBar()
         {
-            var statusBar = new TNLStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository, _experienceTableProvider) { DrawOrder = HUD_CONTROL_LAYER };
-            statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
-            return statusBar;
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                var statusBar = new CodeDrawnTNLStatusBar(_clientWindowSizeRepository, (ICharacterProvider)_characterRepository, _styleProvider, _graphicsDeviceProvider, _contentProvider, _experienceTableProvider) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
+            else
+            {
+                var statusBar = new TNLStatusBar(_nativeGraphicsManager, _clientWindowSizeRepository, (ICharacterProvider)_characterRepository, _experienceTableProvider) { DrawOrder = HUD_CONTROL_LAYER };
+                statusBar.StatusBarClicked += () => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+                return statusBar;
+            }
         }
 
         private ChatModePictureBox CreateChatModePictureBox()
