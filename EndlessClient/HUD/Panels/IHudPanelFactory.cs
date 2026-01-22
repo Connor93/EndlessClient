@@ -14,9 +14,9 @@
 
         DraggableHudPanel CreateStatsPanel();
 
-        OnlineListPanel CreateOnlineListPanel();
+        DraggableHudPanel CreateOnlineListPanel();
 
-        PartyPanel CreatePartyPanel();
+        DraggableHudPanel CreatePartyPanel();
 
         DraggableHudPanel CreateSettingsPanel();
 

@@ -285,15 +285,44 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public OnlineListPanel CreateOnlineListPanel()
+        public DraggableHudPanel CreateOnlineListPanel()
         {
-            var chatFont = _contentProvider.Fonts[Constants.FontSize08];
-            return new OnlineListPanel(_nativeGraphicsManager, _hudControlProvider, _onlinePlayerProvider, _partyDataProvider, _friendIgnoreListService, _sfxPlayer, chatFont, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnOnlineListPanel(_hudControlProvider,
+                    _onlinePlayerProvider,
+                    _partyDataProvider,
+                    _friendIgnoreListService,
+                    _sfxPlayer,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                var chatFont = _contentProvider.Fonts[Constants.FontSize08];
+                return new OnlineListPanel(_nativeGraphicsManager, _hudControlProvider, _onlinePlayerProvider, _partyDataProvider, _friendIgnoreListService, _sfxPlayer, chatFont, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
-        public PartyPanel CreatePartyPanel()
+        public DraggableHudPanel CreatePartyPanel()
         {
-            return new PartyPanel(_nativeGraphicsManager, _partyActions, _contentProvider, _partyDataProvider, _characterProvider, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnPartyPanel(_partyActions,
+                    _partyDataProvider,
+                    _characterProvider,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new PartyPanel(_nativeGraphicsManager, _partyActions, _contentProvider, _partyDataProvider, _characterProvider, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public DraggableHudPanel CreateSettingsPanel()
