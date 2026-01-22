@@ -111,9 +111,12 @@ namespace EndlessClient.HUD.Controls
 
         private void StopDragging(MouseEventArgs mouseEventArgs)
         {
+            // Transform the mouse position to game-space for proper bounds checking in scaled mode
+            var transformedPosition = _parentContainer.TransformMousePosition(mouseEventArgs.Position);
+
             var args = new DragCompletedEventArgs<TRecord>(Data, _isChainedDrag)
             {
-                DragOutOfBounds = !GridArea.Contains(mouseEventArgs.Position)
+                DragOutOfBounds = !GridArea.Contains(transformedPosition)
             };
 
             DraggingFinishing?.Invoke(this, args);
