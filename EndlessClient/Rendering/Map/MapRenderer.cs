@@ -551,7 +551,7 @@ namespace EndlessClient.Rendering.Map
                 return;
 
             // Predefined zoom levels
-            var zoomLevels = new[] { 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f };
+            var zoomLevels = new[] { 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
             var currentZoom = _configurationRepository.MapZoom;
 
             // Find current index
@@ -559,7 +559,7 @@ namespace EndlessClient.Rendering.Map
             if (currentIndex == -1)
             {
                 // Find nearest zoom level
-                currentIndex = 2; // Default to 100%
+                currentIndex = 0; // Default to 100%
                 for (int i = 0; i < zoomLevels.Length; i++)
                 {
                     if (Math.Abs(zoomLevels[i] - currentZoom) < Math.Abs(zoomLevels[currentIndex] - currentZoom))

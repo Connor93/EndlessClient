@@ -83,7 +83,7 @@ namespace EOLib.Config
             // Camera zoom settings
             float tempFloat;
             _configRepository.MapZoom = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.MapZoom, out tempFloat)
-                ? Math.Max(0.5f, Math.Min(2.0f, tempFloat))
+                ? Math.Max(1.0f, Math.Min(2.0f, tempFloat))
                 : 1.0f;
             _configRepository.ScrollWheelZoom = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.ScrollWheelZoom, out tempBool) && tempBool;
         }

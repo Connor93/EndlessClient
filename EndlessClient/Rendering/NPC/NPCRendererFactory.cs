@@ -5,6 +5,7 @@ using EndlessClient.Rendering.Chat;
 using EndlessClient.Rendering.Effects;
 using EndlessClient.Rendering.Factories;
 using EndlessClient.Rendering.Sprites;
+using EOLib.Config;
 using EOLib.IO.Repositories;
 
 namespace EndlessClient.Rendering.NPC
@@ -23,6 +24,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly IRenderTargetFactory _renderTargetFactory;
         private readonly IUserInputProvider _userInputProvider;
         private readonly IEffectRendererFactory _effectRendererFactory;
+        private readonly IConfigurationProvider _configurationProvider;
 
         public NPCRendererFactory(IEndlessGameProvider endlessGameProvider,
                                   IClientWindowSizeProvider clientWindowSizeProvider,
@@ -34,7 +36,8 @@ namespace EndlessClient.Rendering.NPC
                                   IChatBubbleFactory chatBubbleFactory,
                                   IRenderTargetFactory renderTargetFactory,
                                   IUserInputProvider userInputProvider,
-                                  IEffectRendererFactory effectRendererFactory)
+                                  IEffectRendererFactory effectRendererFactory,
+                                  IConfigurationProvider configurationProvider)
         {
             _endlessGameProvider = endlessGameProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -47,6 +50,7 @@ namespace EndlessClient.Rendering.NPC
             _renderTargetFactory = renderTargetFactory;
             _userInputProvider = userInputProvider;
             _effectRendererFactory = effectRendererFactory;
+            _configurationProvider = configurationProvider;
         }
 
         public INPCRenderer CreateRendererFor(EOLib.Domain.NPC.NPC npc)
@@ -62,6 +66,7 @@ namespace EndlessClient.Rendering.NPC
                                    _renderTargetFactory,
                                    _userInputProvider,
                                    _effectRendererFactory,
+                                   _configurationProvider,
                                    npc);
         }
     }

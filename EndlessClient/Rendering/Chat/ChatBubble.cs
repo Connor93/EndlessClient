@@ -15,6 +15,7 @@ namespace EndlessClient.Rendering.Chat
         private readonly IMapActor _parent;
         private readonly IChatBubbleTextureProvider _chatBubbleTextureProvider;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly SpriteBatch _spriteBatch;
 
         private readonly XNALabel _textLabel;
@@ -26,12 +27,14 @@ namespace EndlessClient.Rendering.Chat
         public ChatBubble(IMapActor referenceRenderer,
                           IChatBubbleTextureProvider chatBubbleTextureProvider,
                           IEndlessGameProvider gameProvider,
-                          IConfigurationProvider configurationProvider)
+                          IConfigurationProvider configurationProvider,
+                          IClientWindowSizeProvider clientWindowSizeProvider)
             : base((Game)gameProvider.Game)
         {
             _parent = referenceRenderer;
             _chatBubbleTextureProvider = chatBubbleTextureProvider;
             _configurationProvider = configurationProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _spriteBatch = new SpriteBatch(((Game)gameProvider.Game).GraphicsDevice);
 
             _textLabel = new XNALabel(Constants.FontSize08pt5)
@@ -90,6 +93,18 @@ namespace EndlessClient.Rendering.Chat
         public override void Update(GameTime gameTime)
         {
             SetLabelDrawPosition();
+
+            // Apply zoom to draw location
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f)
+            {
+                var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+                var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+                var zoomedX = (_textLabel.DrawPosition.X - centerX) * zoom + centerX;
+                var zoomedY = (_textLabel.DrawPosition.Y - centerY) * zoom + centerY;
+                _textLabel.DrawPosition = new Vector2(zoomedX, zoomedY);
+            }
+
             _drawLocation = _textLabel.DrawPosition - new Vector2(
                 _chatBubbleTextureProvider.ChatBubbleTextures[ChatBubbleTexture.TopLeft].Width,
                 _chatBubbleTextureProvider.ChatBubbleTextures[ChatBubbleTexture.TopLeft].Height);

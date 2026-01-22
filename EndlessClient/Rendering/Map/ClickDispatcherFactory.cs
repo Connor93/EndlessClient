@@ -5,6 +5,7 @@ using EndlessClient.HUD.Spells;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.NPC;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Map;
 
@@ -29,6 +30,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IMapInteractionController _mapInteractionController;
         private readonly INPCInteractionController _npcInteractionController;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IConfigurationProvider _configurationProvider;
 
         public ClickDispatcherFactory(IHudControlProvider hudControlProvider,
                                       IClientWindowSizeProvider clientWindowSizeProvider,
@@ -44,7 +46,8 @@ namespace EndlessClient.Rendering.Map
                                       IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                       IMapInteractionController mapInteractionController,
                                       INPCInteractionController npcInteractionController,
-                                      IUserInputProvider userInputProvider)
+                                      IUserInputProvider userInputProvider,
+                                      IConfigurationProvider configurationProvider)
         {
             _hudControlProvider = hudControlProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -61,6 +64,7 @@ namespace EndlessClient.Rendering.Map
             _mapInteractionController = mapInteractionController;
             _npcInteractionController = npcInteractionController;
             _userInputProvider = userInputProvider;
+            _configurationProvider = configurationProvider;
         }
 
         public IClickDispatcher Create()
@@ -79,7 +83,8 @@ namespace EndlessClient.Rendering.Map
                 _gridDrawCoordinateCalculator,
                 _mapInteractionController,
                 _npcInteractionController,
-                _userInputProvider);
+                _userInputProvider,
+                _configurationProvider);
         }
     }
 

@@ -14,6 +14,7 @@ using EOLib.Domain.Interact;
 using EOLib.Domain.Map;
 using EOLib.Domain.Party;
 using EOLib.Domain.Trade;
+using EOLib.Config;
 using EOLib.Graphics;
 using EOLib.Localization;
 using EOLib.Shared;
@@ -61,6 +62,7 @@ namespace EndlessClient.Rendering
         private readonly ICurrentMapStateProvider _currentMapStateProvider;
         private readonly IEOMessageBoxFactory _messageBoxFactory;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IConfigurationProvider _configurationProvider;
         private readonly ISfxPlayer _sfxPlayer;
 
         private static DateTime? _lastTradeRequestedTime;
@@ -81,6 +83,7 @@ namespace EndlessClient.Rendering
                                    ICurrentMapStateProvider currentMapStateProvider,
                                    IEOMessageBoxFactory messageBoxFactory,
                                    IClientWindowSizeProvider clientWindowSizeProvider,
+                                   IConfigurationProvider configurationProvider,
                                    ISfxPlayer sfxPlayer)
         {
             _menuActions = new Dictionary<Rectangle, Action>();
@@ -98,6 +101,7 @@ namespace EndlessClient.Rendering
             _currentMapStateProvider = currentMapStateProvider;
             _messageBoxFactory = messageBoxFactory;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _configurationProvider = configurationProvider;
             _sfxPlayer = sfxPlayer;
 
             //first, load up the images. split in half: the right half is the 'over' text
@@ -147,12 +151,27 @@ namespace EndlessClient.Rendering
 
             Rectangle rendRect = renderer.DrawArea;
 
-            DrawPosition = new Vector2(rendRect.Right + 20, rendRect.Y);
+            // Apply zoom transformation to the character's DrawArea position
+            var zoom = _configurationProvider.MapZoom;
+            var baseX = (float)rendRect.Right + 20;
+            var baseY = (float)rendRect.Y;
+            if (zoom != 1.0f)
+            {
+                var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+                var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+                baseX = (rendRect.Right + 20 - centerX) * zoom + centerX;
+                baseY = (rendRect.Y - centerY) * zoom + centerY;
+            }
+
+            DrawPosition = new Vector2(baseX, baseY);
 
             if (DrawArea.Right > _clientWindowSizeProvider.Width - 15)
             {
                 // case: goes off the right side of the screen, show on the left
-                DrawPosition = new Vector2(rendRect.X - DrawArea.Width - 20, DrawPosition.Y);
+                var leftX = zoom != 1.0f
+                    ? ((rendRect.X - DrawArea.Width - 20) - _clientWindowSizeProvider.GameWidth / 2f) * zoom + _clientWindowSizeProvider.GameWidth / 2f
+                    : rendRect.X - DrawArea.Width - 20;
+                DrawPosition = new Vector2(leftX, DrawPosition.Y);
             }
 
             // 308px is the bottom of the display area for map stuff

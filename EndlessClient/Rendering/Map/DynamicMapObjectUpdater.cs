@@ -24,6 +24,7 @@ namespace EndlessClient.Rendering.Map
         private readonly ICurrentMapStateRepository _currentMapStateRepository;
         private readonly ICurrentMapProvider _currentMapProvider;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IUserInputProvider _userInputProvider;
         private readonly ISfxPlayer _sfxPlayer;
 
@@ -36,6 +37,7 @@ namespace EndlessClient.Rendering.Map
                                        ICurrentMapStateRepository currentMapStateRepository,
                                        ICurrentMapProvider currentMapProvider,
                                        IConfigurationProvider configurationProvider,
+                                       IClientWindowSizeProvider clientWindowSizeProvider,
                                        IUserInputProvider userInputProvider,
                                        ISfxPlayer sfxPlayer)
         {
@@ -44,6 +46,7 @@ namespace EndlessClient.Rendering.Map
             _currentMapStateRepository = currentMapStateRepository;
             _currentMapProvider = currentMapProvider;
             _configurationProvider = configurationProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _userInputProvider = userInputProvider;
             _sfxPlayer = sfxPlayer;
 
@@ -115,8 +118,9 @@ namespace EndlessClient.Rendering.Map
 
         private void HideStackedCharacterNames()
         {
+            var mousePos = GetZoomAdjustedMousePosition();
             var characters = _characterRendererProvider.CharacterRenderers.Values
-                .Where(x => x.DrawArea.Contains(_userInputProvider.CurrentMouseState.Position))
+                .Where(x => x.DrawArea.Contains(mousePos))
                 .GroupBy(x => x.Character.RenderProperties.Coordinates());
 
             foreach (var grouping in characters)
@@ -144,6 +148,32 @@ namespace EndlessClient.Rendering.Map
                         character.ShowName();
                 }
             }
+        }
+
+        private Point GetZoomAdjustedMousePosition()
+        {
+            var mousePos = _userInputProvider.CurrentMouseState.Position;
+
+            // First: transform from window coords to game coords (scaled mode)
+            if (_clientWindowSizeProvider.IsScaledMode)
+            {
+                var offset = _clientWindowSizeProvider.RenderOffset;
+                var scale = _clientWindowSizeProvider.ScaleFactor;
+                mousePos = new Point(
+                    (int)((mousePos.X - offset.X) / scale),
+                    (int)((mousePos.Y - offset.Y) / scale));
+            }
+
+            // Second: apply inverse zoom transform
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom == 1.0f)
+                return mousePos;
+
+            var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+            var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+            return new Point(
+                (int)((mousePos.X - centerX) / zoom + centerX),
+                (int)((mousePos.Y - centerY) / zoom + centerY));
         }
     }
 

@@ -55,6 +55,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
 
@@ -93,6 +94,7 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
@@ -143,9 +145,9 @@ namespace EndlessClient.HUD.Panels
 
         protected override void OnUpdateControl(GameTime gameTime)
         {
-            // Detect hover
+            // Detect hover - transform mouse coords for scaled mode
             var mouseState = Mouse.GetState();
-            var mousePos = new Point(mouseState.X, mouseState.Y);
+            var mousePos = TransformMousePosition(new Point(mouseState.X, mouseState.Y));
             var panelPos = DrawAreaWithParentOffset;
 
             _hoveredSetting = null;
@@ -160,6 +162,22 @@ namespace EndlessClient.HUD.Panels
             }
 
             base.OnUpdateControl(gameTime);
+        }
+
+        private Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Max(0, Math.Min(gameX, _clientWindowSizeProvider.GameWidth - 1)),
+                Math.Max(0, Math.Min(gameY, _clientWindowSizeProvider.GameHeight - 1)));
         }
 
         protected override bool HandleClick(IXNAControl control, MonoGame.Extended.Input.InputListeners.MouseEventArgs eventArgs)
@@ -352,11 +370,11 @@ namespace EndlessClient.HUD.Panels
                     break;
                 case WhichSetting.MapZoom:
                     {
-                        // Cycle through zoom levels: 50%, 75%, 100%, 125%, 150%, 200%
-                        var zoomLevels = new[] { 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f };
+                        // Cycle through zoom levels: 100%, 125%, 150%, 175%, 200%
+                        var zoomLevels = new[] { 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
                         var currentZoom = _configurationRepository.MapZoom;
                         var currentIndex = Array.FindIndex(zoomLevels, z => Math.Abs(z - currentZoom) < 0.01f);
-                        if (currentIndex == -1) currentIndex = 2; // Default to 100%
+                        if (currentIndex == -1) currentIndex = 0; // Default to 100%
                         var nextIndex = (currentIndex + 1) % zoomLevels.Length;
                         _configurationRepository.MapZoom = zoomLevels[nextIndex];
                     }

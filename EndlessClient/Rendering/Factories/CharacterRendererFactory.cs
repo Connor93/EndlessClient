@@ -8,6 +8,7 @@ using EndlessClient.Rendering.Chat;
 using EndlessClient.Rendering.Effects;
 using EndlessClient.Rendering.Metadata;
 using EndlessClient.Rendering.Metadata.Models;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Map;
 using Microsoft.Xna.Framework;
@@ -32,6 +33,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly IMetadataProvider<WeaponMetadata> _weaponMetadataProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
+        private readonly IConfigurationProvider _configurationProvider;
 
         public CharacterRendererFactory(IEndlessGameProvider gameProvider,
                                         IRenderTargetFactory renderTargetFactory,
@@ -47,7 +49,8 @@ namespace EndlessClient.Rendering.Factories
                                         IMetadataProvider<HatMetadata> hatMetadataProvider,
                                         IMetadataProvider<WeaponMetadata> weaponMetadataProvider,
                                         ISfxPlayer sfxPlayer,
-                                        IClientWindowSizeRepository clientWindowSizeRepository)
+                                        IClientWindowSizeRepository clientWindowSizeRepository,
+                                        IConfigurationProvider configurationProvider)
         {
             _gameProvider = gameProvider;
             _renderTargetFactory = renderTargetFactory;
@@ -64,6 +67,7 @@ namespace EndlessClient.Rendering.Factories
             _weaponMetadataProvider = weaponMetadataProvider;
             _sfxPlayer = sfxPlayer;
             _clientWindowSizeRepository = clientWindowSizeRepository;
+            _configurationProvider = configurationProvider;
         }
 
         public ICharacterRenderer CreateCharacterRenderer(EOLib.Domain.Character.Character character, bool isUiControl)
@@ -84,6 +88,7 @@ namespace EndlessClient.Rendering.Factories
                 _weaponMetadataProvider,
                 _sfxPlayer,
                 _clientWindowSizeRepository,
+                _configurationProvider,
                 character,
                 isUiControl);
         }

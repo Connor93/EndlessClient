@@ -9,6 +9,7 @@ using EndlessClient.Rendering.Factories;
 using EndlessClient.Rendering.Metadata;
 using EndlessClient.Rendering.Metadata.Models;
 using EndlessClient.UIControls;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Extensions;
 using EOLib.Domain.Map;
@@ -39,6 +40,7 @@ namespace EndlessClient.Rendering.Character
         private readonly IMetadataProvider<WeaponMetadata> _weaponMetadataProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
+        private readonly IConfigurationProvider _configurationProvider;
         private readonly IEffectRenderer _effectRenderer;
 
         private readonly bool _isUiControl;
@@ -100,6 +102,7 @@ namespace EndlessClient.Rendering.Character
                                  IMetadataProvider<WeaponMetadata> weaponMetadataProvider,
                                  ISfxPlayer sfxPlayer,
                                  IClientWindowSizeRepository clientWindowSizeRepository,
+                                 IConfigurationProvider configurationProvider,
                                  EOLib.Domain.Character.Character character,
                                  bool isUiControl)
             : base(game)
@@ -118,6 +121,7 @@ namespace EndlessClient.Rendering.Character
             _effectRenderer = effectRendererFactory.Create();
             _sfxPlayer = sfxPlayer;
             _clientWindowSizeRepository = clientWindowSizeRepository;
+            _configurationProvider = configurationProvider;
             _character = character;
             _isUiControl = isUiControl;
 
@@ -217,6 +221,20 @@ namespace EndlessClient.Rendering.Character
             }
 
             base.Draw(gameTime);
+
+            // Debug: Draw hitbox outline when zoomed to visualize click detection areas
+            if (_configurationProvider.MapZoom != 1.0f && !_isUiControl && _outline != null)
+            {
+                _sb.Begin();
+                var hitboxColor = Color.Red * 0.5f;
+                var thickness = 2;
+                // Draw rectangle outline (top, bottom, left, right)
+                _sb.Draw(_outline, new Rectangle(DrawArea.X, DrawArea.Y, DrawArea.Width, thickness), hitboxColor);
+                _sb.Draw(_outline, new Rectangle(DrawArea.X, DrawArea.Bottom - thickness, DrawArea.Width, thickness), hitboxColor);
+                _sb.Draw(_outline, new Rectangle(DrawArea.X, DrawArea.Y, thickness, DrawArea.Height), hitboxColor);
+                _sb.Draw(_outline, new Rectangle(DrawArea.Right - thickness, DrawArea.Y, thickness, DrawArea.Height), hitboxColor);
+                _sb.End();
+            }
         }
 
         #endregion
@@ -357,7 +375,7 @@ namespace EndlessClient.Rendering.Character
             {
                 _nameLabel.Visible = false;
             }
-            else if (DrawArea.Contains(_userInputProvider.CurrentMouseState.Position) && _showName)
+            else if (DrawArea.Contains(GetZoomAdjustedMousePosition()) && _showName)
             {
                 _nameLabel.Visible = true;
                 _nameLabel.BlinkRate = null;
@@ -385,7 +403,46 @@ namespace EndlessClient.Rendering.Character
         private Vector2 GetNameLabelPosition()
         {
             NameLabelY = DrawArea.Y - 12 - (int)(_nameLabel?.ActualHeight ?? 0) + ((int)Character.RenderProperties.SitState) * 10;
-            return new Vector2(HorizontalCenter - (_nameLabel.ActualWidth / 2f), NameLabelY);
+            var baseX = HorizontalCenter - (_nameLabel.ActualWidth / 2f);
+            var baseY = (float)NameLabelY;
+
+            // Apply zoom transformation for labels drawn outside the zoomed map spritebatch
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f && !_isUiControl)
+            {
+                var centerX = _clientWindowSizeRepository.GameWidth / 2f;
+                var centerY = _clientWindowSizeRepository.GameHeight / 2f;
+                baseX = (baseX - centerX) * zoom + centerX;
+                baseY = (baseY - centerY) * zoom + centerY;
+            }
+
+            return new Vector2(baseX, baseY);
+        }
+
+        private Point GetZoomAdjustedMousePosition()
+        {
+            var mousePos = _userInputProvider.CurrentMouseState.Position;
+
+            // First: transform from window coords to game coords (scaled mode)
+            if (_clientWindowSizeRepository.IsScaledMode)
+            {
+                var offset = _clientWindowSizeRepository.RenderOffset;
+                var scale = _clientWindowSizeRepository.ScaleFactor;
+                mousePos = new Point(
+                    (int)((mousePos.X - offset.X) / scale),
+                    (int)((mousePos.Y - offset.Y) / scale));
+            }
+
+            // Second: apply inverse zoom transform
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom == 1.0f)
+                return mousePos;
+
+            var centerX = _clientWindowSizeRepository.GameWidth / 2f;
+            var centerY = _clientWindowSizeRepository.GameHeight / 2f;
+            return new Point(
+                (int)((mousePos.X - centerX) / zoom + centerX),
+                (int)((mousePos.Y - centerY) / zoom + centerY));
         }
 
         private bool GetIsSteppingStone(CharacterRenderProperties renderProps)

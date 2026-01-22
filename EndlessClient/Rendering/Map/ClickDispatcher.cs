@@ -8,6 +8,7 @@ using EndlessClient.HUD.Spells;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.NPC;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Extensions;
 using EOLib.Domain.Interact;
@@ -40,6 +41,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IMapInteractionController _mapInteractionController;
         private readonly INPCInteractionController _npcInteractionController;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IConfigurationProvider _configurationProvider;
 
         public override Rectangle EventArea => new(0, 0, _clientWindowSizeProvider.Width, _clientWindowSizeProvider.Height);
 
@@ -59,7 +61,8 @@ namespace EndlessClient.Rendering.Map
 
                                IMapInteractionController mapInteractionController,
                                INPCInteractionController npcInteractionController,
-                               IUserInputProvider userInputProvider)
+                               IUserInputProvider userInputProvider,
+                               IConfigurationProvider configurationProvider)
         {
             _hudControlProvider = hudControlProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -77,6 +80,7 @@ namespace EndlessClient.Rendering.Map
             _mapInteractionController = mapInteractionController;
             _npcInteractionController = npcInteractionController;
             _userInputProvider = userInputProvider;
+            _configurationProvider = configurationProvider;
         }
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
@@ -127,8 +131,8 @@ namespace EndlessClient.Rendering.Map
                     .CompareTo(b.Y * _currentMapProvider.CurrentMap.Properties.Width + b.X) * -1;
             });
 
-            // Use CurrentMouseState.Position which is already transformed for scaled mode
-            var transformedPosition = _userInputProvider.CurrentMouseState.Position;
+            // Transform mouse position for both scaled mode and zoom
+            var transformedPosition = GetZoomAdjustedMousePosition();
 
             foreach (var entity in entities)
             {
@@ -263,6 +267,32 @@ namespace EndlessClient.Rendering.Map
             _mapInteractionController.LeftClick(cellState);
 
             return false;
+        }
+
+        private Point GetZoomAdjustedMousePosition()
+        {
+            var mousePos = _userInputProvider.CurrentMouseState.Position;
+
+            // First: transform from window coords to game coords (scaled mode)
+            if (_clientWindowSizeProvider.IsScaledMode)
+            {
+                var offset = _clientWindowSizeProvider.RenderOffset;
+                var scale = _clientWindowSizeProvider.ScaleFactor;
+                mousePos = new Point(
+                    (int)((mousePos.X - offset.X) / scale),
+                    (int)((mousePos.Y - offset.Y) / scale));
+            }
+
+            // Second: apply inverse zoom transform
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom == 1.0f)
+                return mousePos;
+
+            var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+            var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+            return new Point(
+                (int)((mousePos.X - centerX) / zoom + centerX),
+                (int)((mousePos.Y - centerY) / zoom + centerY));
         }
     }
 

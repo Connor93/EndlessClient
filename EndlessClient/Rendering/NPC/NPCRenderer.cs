@@ -6,6 +6,7 @@ using EndlessClient.Rendering.Effects;
 using EndlessClient.Rendering.Factories;
 using EndlessClient.Rendering.Sprites;
 using EOLib;
+using EOLib.Config;
 using EOLib.Domain.Extensions;
 using EOLib.Domain.NPC;
 using EOLib.Domain.Spells;
@@ -32,6 +33,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly IChatBubbleFactory _chatBubbleFactory;
         private readonly IRenderTargetFactory _renderTargetFactory;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IConfigurationProvider _configurationProvider;
         private readonly IEffectRenderer _effectRenderer;
         private readonly IHealthBarRenderer _healthBarRenderer;
 
@@ -72,6 +74,7 @@ namespace EndlessClient.Rendering.NPC
                            IRenderTargetFactory renderTargetFactory,
                            IUserInputProvider userInputProvider,
                            IEffectRendererFactory effectRendererFactory,
+                           IConfigurationProvider configurationProvider,
                            EOLib.Domain.NPC.NPC initialNPC)
             : base((Game)endlessGameProvider.Game)
         {
@@ -85,6 +88,7 @@ namespace EndlessClient.Rendering.NPC
             _chatBubbleFactory = chatBubbleFactory;
             _renderTargetFactory = renderTargetFactory;
             _userInputProvider = userInputProvider;
+            _configurationProvider = configurationProvider;
             _effectRenderer = effectRendererFactory.Create();
 
             DrawArea = GetStandingFrameRectangle();
@@ -142,7 +146,7 @@ namespace EndlessClient.Rendering.NPC
             UpdateDeadState();
             DrawToRenderTarget();
 
-            var currentMousePosition = _userInputProvider.CurrentMouseState.Position;
+            var currentMousePosition = GetZoomAdjustedMousePosition();
 
             if (DrawArea.Contains(currentMousePosition))
             {
@@ -321,7 +325,46 @@ namespace EndlessClient.Rendering.NPC
 
         private Vector2 GetNameLabelPosition()
         {
-            return new Vector2(HorizontalCenter - (_nameLabel.ActualWidth / 2f), NameLabelY);
+            var baseX = HorizontalCenter - (_nameLabel.ActualWidth / 2f);
+            var baseY = (float)NameLabelY;
+
+            // Apply zoom transformation for labels drawn outside the zoomed map spritebatch
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f)
+            {
+                var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+                var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+                baseX = (baseX - centerX) * zoom + centerX;
+                baseY = (baseY - centerY) * zoom + centerY;
+            }
+
+            return new Vector2(baseX, baseY);
+        }
+
+        private Point GetZoomAdjustedMousePosition()
+        {
+            var mousePos = _userInputProvider.CurrentMouseState.Position;
+
+            // First: transform from window coords to game coords (scaled mode)
+            if (_clientWindowSizeProvider.IsScaledMode)
+            {
+                var offset = _clientWindowSizeProvider.RenderOffset;
+                var scale = _clientWindowSizeProvider.ScaleFactor;
+                mousePos = new Point(
+                    (int)((mousePos.X - offset.X) / scale),
+                    (int)((mousePos.Y - offset.Y) / scale));
+            }
+
+            // Second: apply inverse zoom transform
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom == 1.0f)
+                return mousePos;
+
+            var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+            var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+            return new Point(
+                (int)((mousePos.X - centerX) / zoom + centerX),
+                (int)((mousePos.Y - centerY) / zoom + centerY));
         }
 
         protected override void Dispose(bool disposing)

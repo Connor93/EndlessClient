@@ -10,19 +10,22 @@ namespace EndlessClient.Rendering.Chat
         private readonly IChatBubbleTextureProvider _chatBubbleTextureProvider;
         private readonly IEndlessGameProvider _endlessGameProvider;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         public ChatBubbleFactory(IChatBubbleTextureProvider chatBubbleTextureProvider,
                                  IEndlessGameProvider endlessGameProvider,
-                                 IConfigurationProvider configurationProvider)
+                                 IConfigurationProvider configurationProvider,
+                                 IClientWindowSizeProvider clientWindowSizeProvider)
         {
             _chatBubbleTextureProvider = chatBubbleTextureProvider;
             _endlessGameProvider = endlessGameProvider;
             _configurationProvider = configurationProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
         }
 
         public IChatBubble CreateChatBubble(IMapActor owner)
         {
-            var chatBubble = new ChatBubble(owner, _chatBubbleTextureProvider, _endlessGameProvider, _configurationProvider);
+            var chatBubble = new ChatBubble(owner, _chatBubbleTextureProvider, _endlessGameProvider, _configurationProvider, _clientWindowSizeProvider);
 
             if (!_endlessGameProvider.Game.Components.Contains(chatBubble))
                 _endlessGameProvider.Game.Components.Add(chatBubble);

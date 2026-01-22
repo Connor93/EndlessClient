@@ -7,6 +7,7 @@ using EndlessClient.HUD;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Services;
+using EOLib.Config;
 using EOLib.Domain.Interact;
 using EOLib.Domain.Map;
 using EOLib.Domain.Party;
@@ -32,6 +33,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly ICurrentMapStateProvider _currentMapStateProvider;
         private readonly IEOMessageBoxFactory _messageBoxFactory;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IConfigurationProvider _configurationProvider;
         private readonly ISfxPlayer _sfxPlayer;
 
         public ContextMenuRendererFactory(INativeGraphicsManager nativeGraphicsManager,
@@ -48,6 +50,7 @@ namespace EndlessClient.Rendering.Factories
             ICurrentMapStateProvider currentMapStateProvider,
             IEOMessageBoxFactory messageBoxFactory,
             IClientWindowSizeProvider clientWindowSizeProvider,
+            IConfigurationProvider configurationProvider,
             ISfxPlayer sfxPlayer)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
@@ -64,6 +67,7 @@ namespace EndlessClient.Rendering.Factories
             _currentMapStateProvider = currentMapStateProvider;
             _messageBoxFactory = messageBoxFactory;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _configurationProvider = configurationProvider;
             _sfxPlayer = sfxPlayer;
         }
 
@@ -84,6 +88,7 @@ namespace EndlessClient.Rendering.Factories
                 _currentMapStateProvider,
                 _messageBoxFactory,
                 _clientWindowSizeProvider,
+                _configurationProvider,
                 _sfxPlayer);
         }
     }
