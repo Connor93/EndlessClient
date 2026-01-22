@@ -399,19 +399,41 @@ namespace EndlessClient.HUD.Panels
 
         public MacroPanel CreateMacroPanel()
         {
-            return new MacroPanel(_nativeGraphicsManager,
-                _statusLabelSetter,
-                _playerInfoProvider,
-                _characterProvider,
-                _pubFileProvider,
-                _pubFileProvider,
-                _macroSlotDataRepository,
-                _sfxPlayer,
-                _configurationProvider,
-                _clientWindowSizeProvider,
-                _userInputProvider,
-                _dialogButtonService)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnMacroPanel(_nativeGraphicsManager,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _pubFileProvider,
+                    _pubFileProvider,
+                    _macroSlotDataRepository,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider,
+                    _dialogButtonService,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new MacroPanel(_nativeGraphicsManager,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _pubFileProvider,
+                    _pubFileProvider,
+                    _macroSlotDataRepository,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider,
+                    _dialogButtonService)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public HelpPanel CreateHelpPanel()

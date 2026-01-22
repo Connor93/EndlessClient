@@ -48,7 +48,7 @@ namespace EndlessClient.HUD.Panels
         private readonly IUserInputProvider _userInputProvider;
 
         private readonly List<HUD.Macros.MacroPanelItem> _childItems;
-        private readonly IXNAButton _closeButton;
+        protected readonly IXNAButton _closeButton;
 
         public INativeGraphicsManager NativeGraphicsManager => _nativeGraphicsManager;
 
