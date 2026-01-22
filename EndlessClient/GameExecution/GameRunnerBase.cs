@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -69,7 +70,33 @@ namespace EndlessClient.GameExecution
                 File.AppendAllText("debug_log.txt", $"Manual Registration failed: {ex}\n");
             }
 
-            var initializers = _registry.ResolveAll<IGameInitializer>();
+            IEnumerable<IGameInitializer> initializers;
+            try
+            {
+                initializers = _registry.ResolveAll<IGameInitializer>();
+            }
+            catch (Exception ex)
+            {
+                File.AppendAllText("debug_log.txt", $"ResolveAll<IGameInitializer> FAILED!\n");
+                File.AppendAllText("debug_log.txt", $"Exception Type: {ex.GetType().FullName}\n");
+                File.AppendAllText("debug_log.txt", $"Message: {ex.Message}\n");
+
+                // Log full exception chain
+                var inner = ex.InnerException;
+                int level = 1;
+                while (inner != null)
+                {
+                    File.AppendAllText("debug_log.txt", $"--- Inner Exception Level {level} ---\n");
+                    File.AppendAllText("debug_log.txt", $"Type: {inner.GetType().FullName}\n");
+                    File.AppendAllText("debug_log.txt", $"Message: {inner.Message}\n");
+                    File.AppendAllText("debug_log.txt", $"Stack: {inner.StackTrace}\n");
+                    inner = inner.InnerException;
+                    level++;
+                }
+
+                File.AppendAllText("debug_log.txt", $"Full Stack Trace:\n{ex}\n");
+                throw;
+            }
             try
             {
                 foreach (var initializer in initializers)

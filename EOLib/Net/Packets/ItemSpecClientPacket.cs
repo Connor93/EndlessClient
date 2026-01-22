@@ -5,12 +5,12 @@ namespace EOLib.Net.Packets
 {
     /// <summary>
     /// Client packet to request item source information (drops, shops, crafts)
-    /// Custom packet type: ITEM_SPEC (family=14, action=16)
+    /// Custom packet type: ITEM family with action 19 (unused in SDK)
     /// </summary>
-    public class ItemSpecClientPacket : IPacket
+    public class ItemSourceRequestPacket : IPacket
     {
         public PacketFamily Family => PacketFamily.Item;
-        public PacketAction Action => PacketAction.Spec;
+        public PacketAction Action => (PacketAction)19;  // Custom action not in SDK
 
         public int ItemId { get; set; }
 

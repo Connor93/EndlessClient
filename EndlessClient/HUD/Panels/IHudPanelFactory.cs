@@ -10,15 +10,17 @@
 
         PassiveSpellsPanel CreatePassiveSpellsPanel();
 
-        ChatPanel CreateChatPanel();
+        DraggableHudPanel CreateChatPanel();
 
-        StatsPanel CreateStatsPanel();
+        DraggableHudPanel CreateStatsPanel();
 
-        OnlineListPanel CreateOnlineListPanel();
+        DraggableHudPanel CreateOnlineListPanel();
 
-        PartyPanel CreatePartyPanel();
+        DraggableHudPanel CreatePartyPanel();
 
-        SettingsPanel CreateSettingsPanel();
+        DraggableHudPanel CreateSettingsPanel();
+
+        MacroPanel CreateMacroPanel();
 
         HelpPanel CreateHelpPanel();
     }

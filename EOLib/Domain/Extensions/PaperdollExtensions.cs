@@ -8,13 +8,19 @@ namespace EOLib.Domain.Extensions
     {
         public static IReadOnlyDictionary<EquipLocation, int> GetPaperdoll(this EquipmentWelcome equipment)
         {
+            // Note: The SDK's EquipmentWelcome deserializes bytes into properties with a different
+            // ordering than EquipLocation. The server sends data in EquipLocation order:
+            // Boots(0), Accessory(1), Gloves(2), Belt(3), Armor(4)...
+            // But SDK's EquipmentWelcome deserializes into:
+            // Boots(0), Gloves(1), Accessory(2), Armor(3), Belt(4)...
+            // We must map the SDK properties to their actual EquipLocation meaning.
             return new Dictionary<EquipLocation, int>
             {
                 [EquipLocation.Boots] = equipment.Boots,
-                [EquipLocation.Accessory] = equipment.Accessory,
-                [EquipLocation.Gloves] = equipment.Gloves,
-                [EquipLocation.Belt] = equipment.Belt,
-                [EquipLocation.Armor] = equipment.Armor,
+                [EquipLocation.Accessory] = equipment.Gloves,     // SDK's Gloves is at byte pos 1 = Accessory
+                [EquipLocation.Gloves] = equipment.Accessory,     // SDK's Accessory is at byte pos 2 = Gloves
+                [EquipLocation.Belt] = equipment.Armor,           // SDK's Armor is at byte pos 3 = Belt
+                [EquipLocation.Armor] = equipment.Belt,           // SDK's Belt is at byte pos 4 = Armor
                 [EquipLocation.Necklace] = equipment.Necklace,
                 [EquipLocation.Hat] = equipment.Hat,
                 [EquipLocation.Shield] = equipment.Shield,

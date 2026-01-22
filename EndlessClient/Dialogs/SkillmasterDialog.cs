@@ -6,6 +6,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD;
+using EndlessClient.Rendering;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Skill;
 using EOLib.Graphics;
@@ -109,17 +110,20 @@ namespace EndlessClient.Dialogs
 
         private void BackClicked(object sender, EventArgs e)
         {
-            ListItemType = ListDialogItem.ListItemStyle.Large;
+            DispatcherGameComponent.Invoke(() =>
+            {
+                ListItemType = ListDialogItem.ListItemStyle.Large;
 
-            if (_state == SkillState.Learn && _showingRequirements)
-            {
-                SetState(SkillState.Learn, regen: true);
-                _showingRequirements = false;
-            }
-            else
-            {
-                SetState(SkillState.Initial);
-            }
+                if (_state == SkillState.Learn && _showingRequirements)
+                {
+                    SetState(SkillState.Learn, regen: true);
+                    _showingRequirements = false;
+                }
+                else
+                {
+                    SetState(SkillState.Initial);
+                }
+            });
         }
 
         private void SetState(SkillState newState, bool regen = false)
@@ -157,8 +161,8 @@ namespace EndlessClient.Dialogs
                             ShowIconBackGround = false,
                             OffsetY = 45
                         };
-                        learn.LeftClick += (_, _) => SetState(SkillState.Learn);
-                        learn.RightClick += (_, _) => SetState(SkillState.Learn);
+                        learn.LeftClick += (_, _) => DispatcherGameComponent.Invoke(() => SetState(SkillState.Learn));
+                        learn.RightClick += (_, _) => DispatcherGameComponent.Invoke(() => SetState(SkillState.Learn));
                         learn.SetParentControl(this);
 
                         var forget = new ListDialogItem(this, ListDialogItem.ListItemStyle.Large, 1)
@@ -170,8 +174,8 @@ namespace EndlessClient.Dialogs
                             ShowIconBackGround = false,
                             OffsetY = 45
                         };
-                        forget.LeftClick += (_, _) => SetState(SkillState.Forget);
-                        forget.RightClick += (_, _) => SetState(SkillState.Forget);
+                        forget.LeftClick += (_, _) => DispatcherGameComponent.Invoke(() => SetState(SkillState.Forget));
+                        forget.RightClick += (_, _) => DispatcherGameComponent.Invoke(() => SetState(SkillState.Forget));
                         forget.SetParentControl(this);
 
                         var forgetAll = new ListDialogItem(this, ListDialogItem.ListItemStyle.Large, 2)
@@ -183,8 +187,8 @@ namespace EndlessClient.Dialogs
                             ShowIconBackGround = false,
                             OffsetY = 45
                         };
-                        forgetAll.LeftClick += (_, _) => SetState(SkillState.ForgetAll);
-                        forgetAll.RightClick += (_, _) => SetState(SkillState.ForgetAll);
+                        forgetAll.LeftClick += (_, _) => DispatcherGameComponent.Invoke(() => SetState(SkillState.ForgetAll));
+                        forgetAll.RightClick += (_, _) => DispatcherGameComponent.Invoke(() => SetState(SkillState.ForgetAll));
                         forgetAll.SetParentControl(this);
 
                         SetItemList(new List<ListDialogItem> { learn, forget, forgetAll });

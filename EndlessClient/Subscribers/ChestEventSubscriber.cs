@@ -8,6 +8,7 @@ using EOLib.Domain.Map;
 using EOLib.Domain.Notifiers;
 using EOLib.IO.Map;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Subscribers
 {
@@ -35,7 +36,11 @@ namespace EndlessClient.Subscribers
 
         public void NotifyChestBroken()
         {
-            DispatcherGameComponent.Invoke(() => _activeDialogRepository.ChestDialog.MatchSome(x => x.Close()));
+            DispatcherGameComponent.Invoke(() => _activeDialogRepository.ChestDialog.MatchSome(x =>
+            {
+                if (x is BaseEODialog baseDialog) baseDialog.Close();
+                else if (x is CodeDrawnScrollingListDialog codeDrawn) codeDrawn.Close();
+            }));
 
             var dlg = _messageBoxFactory.CreateMessageBox(DialogResourceID.CHEST_BROKEN);
             dlg.ShowDialog();
@@ -45,7 +50,11 @@ namespace EndlessClient.Subscribers
 
         public void NotifyChestLocked(ChestKey key)
         {
-            DispatcherGameComponent.Invoke(() => _activeDialogRepository.ChestDialog.MatchSome(x => x.Close()));
+            DispatcherGameComponent.Invoke(() => _activeDialogRepository.ChestDialog.MatchSome(x =>
+            {
+                if (x is BaseEODialog baseDialog) baseDialog.Close();
+                else if (x is CodeDrawnScrollingListDialog codeDrawn) codeDrawn.Close();
+            }));
 
             var dlg = _messageBoxFactory.CreateMessageBox(DialogResourceID.CHEST_LOCKED);
             dlg.ShowDialog();
@@ -57,3 +66,4 @@ namespace EndlessClient.Subscribers
         }
     }
 }
+

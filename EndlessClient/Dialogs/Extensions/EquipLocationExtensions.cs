@@ -11,10 +11,10 @@ namespace EndlessClient.Dialogs.Extensions
             switch (loc)
             {
                 case EquipLocation.Boots: return new Rectangle(87, 220, 56, 54);
-                case EquipLocation.Accessory: return new Rectangle(22, 188, 56, 54);
-                case EquipLocation.Gloves: return new Rectangle(55, 250, 23, 23);
-                case EquipLocation.Belt: return new Rectangle(86, 82, 56, 98);
-                case EquipLocation.Armor: return new Rectangle(87, 188, 56, 23);
+                case EquipLocation.Accessory: return new Rectangle(55, 250, 23, 23);
+                case EquipLocation.Gloves: return new Rectangle(22, 188, 56, 54);
+                case EquipLocation.Belt: return new Rectangle(87, 188, 56, 23);
+                case EquipLocation.Armor: return new Rectangle(86, 82, 56, 98);
                 case EquipLocation.Necklace: return new Rectangle(152, 51, 56, 23);
                 case EquipLocation.Hat: return new Rectangle(87, 21, 56, 54);
                 case EquipLocation.Shield: return new Rectangle(152, 82, 56, 98);

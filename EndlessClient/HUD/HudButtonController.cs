@@ -82,6 +82,11 @@ namespace EndlessClient.HUD
             _hudStateActions.SwitchToState(InGameStates.Party);
         }
 
+        public void ClickMacro()
+        {
+            _hudStateActions.SwitchToState(InGameStates.Macro);
+        }
+
         public void ClickSettings()
         {
             _hudStateActions.SwitchToState(InGameStates.Settings);

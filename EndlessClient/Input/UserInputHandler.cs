@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Controllers;
+using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD;
+using EndlessClient.HUD.Controls;
 using EndlessClient.Rendering;
+using EOLib.Config;
 using EOLib.Domain.Map;
 using Microsoft.Xna.Framework;
 using XNAControls;
@@ -27,7 +30,9 @@ namespace EndlessClient.Input
                                 IHudButtonController hudButtonController,
                                 ICurrentMapStateRepository currentMapStateRepository,
                                 IActiveDialogProvider activeDialogProvider,
-                                IClientWindowSizeProvider clientWindowSizeProvider)
+                                IClientWindowSizeProvider clientWindowSizeProvider,
+                                IConfigurationProvider configurationProvider,
+                                IHudControlProvider hudControlProvider)
         {
             _handlers = new List<IInputHandler>
             {
@@ -35,12 +40,16 @@ namespace EndlessClient.Input
                     userInputProvider,
                     userInputTimeRepository,
                     arrowKeyController,
-                    currentMapStateRepository),
+                    currentMapStateRepository,
+                    configurationProvider,
+                    hudControlProvider),
                 new ControlKeyHandler(endlessGameProvider,
                     userInputProvider,
                     userInputTimeRepository,
                     controlKeyController,
-                    currentMapStateRepository),
+                    currentMapStateRepository,
+                    configurationProvider,
+                    hudControlProvider),
                 new FunctionKeyHandler(endlessGameProvider,
                     userInputProvider,
                     userInputTimeRepository,

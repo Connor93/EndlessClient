@@ -5,11 +5,14 @@ using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.Dialogs.Factories;
+using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.HUD.Spells;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.Services;
+using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Chat;
@@ -53,6 +56,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISpellSlotDataRepository _spellSlotDataRepository;
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IOnlinePlayerProvider _onlinePlayerProvider;
+        private readonly IOnlinePlayerActions _onlinePlayerActions;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly IAudioActions _audioActions;
         private readonly ISfxPlayer _sfxPlayer;
@@ -60,6 +64,11 @@ namespace EndlessClient.HUD.Panels
         private readonly IPartyDataProvider _partyDataProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IUserInputProvider _userInputProvider;
+        private readonly HUD.Macros.IMacroSlotDataRepository _macroSlotDataRepository;
+        private readonly IEODialogButtonService _dialogButtonService;
+        private readonly IUIStyleProvider _styleProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
         public HudPanelFactory(INativeGraphicsManager nativeGraphicsManager,
                                IInventoryController inventoryController,
@@ -85,13 +94,19 @@ namespace EndlessClient.HUD.Panels
                                ISpellSlotDataRepository spellSlotDataRepository,
                                IConfigurationRepository configurationRepository,
                                IOnlinePlayerProvider onlinePlayerProvider,
+                               IOnlinePlayerActions onlinePlayerActions,
                                ILocalizedStringFinder localizedStringFinder,
                                IAudioActions audioActions,
                                ISfxPlayer sfxPlayer,
                                IPartyActions partyActions,
                                IPartyDataProvider partyDataProvider,
                                IConfigurationProvider configurationProvider,
-                               IClientWindowSizeProvider clientWindowSizeProvider)
+                               IClientWindowSizeProvider clientWindowSizeProvider,
+                               IUserInputProvider userInputProvider,
+                               HUD.Macros.IMacroSlotDataRepository macroSlotDataRepository,
+                               IEODialogButtonService dialogButtonService,
+                               IUIStyleProvider styleProvider,
+                               IGraphicsDeviceProvider graphicsDeviceProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _inventoryController = inventoryController;
@@ -117,6 +132,7 @@ namespace EndlessClient.HUD.Panels
             _spellSlotDataRepository = spellSlotDataRepository;
             _configurationRepository = configurationRepository;
             _onlinePlayerProvider = onlinePlayerProvider;
+            _onlinePlayerActions = onlinePlayerActions;
             _localizedStringFinder = localizedStringFinder;
             _audioActions = audioActions;
             _sfxPlayer = sfxPlayer;
@@ -124,6 +140,11 @@ namespace EndlessClient.HUD.Panels
             _partyDataProvider = partyDataProvider;
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _userInputProvider = userInputProvider;
+            _macroSlotDataRepository = macroSlotDataRepository;
+            _dialogButtonService = dialogButtonService;
+            _styleProvider = styleProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
         public NewsPanel CreateNewsPanel()
@@ -140,97 +161,281 @@ namespace EndlessClient.HUD.Panels
 
         public InventoryPanel CreateInventoryPanel()
         {
-            return new InventoryPanel(_nativeGraphicsManager,
-                _inventoryController,
-                _statusLabelSetter,
-                _itemStringService,
-                _itemNameColorService,
-                _inventoryService,
-                _inventorySlotRepository,
-                _playerInfoProvider,
-                _characterProvider,
-                _characterInventoryProvider,
-                _pubFileProvider,
-                _hudControlProvider,
-                _activeDialogProvider,
-                _sfxPlayer,
-                _configurationProvider,
-                _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnInventoryPanel(_nativeGraphicsManager,
+                    _inventoryController,
+                    _statusLabelSetter,
+                    _itemStringService,
+                    _itemNameColorService,
+                    _inventoryService,
+                    _inventorySlotRepository,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _hudControlProvider,
+                    _activeDialogProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new InventoryPanel(_nativeGraphicsManager,
+                    _inventoryController,
+                    _statusLabelSetter,
+                    _itemStringService,
+                    _itemNameColorService,
+                    _inventoryService,
+                    _inventorySlotRepository,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _hudControlProvider,
+                    _activeDialogProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public ActiveSpellsPanel CreateActiveSpellsPanel()
         {
-            return new ActiveSpellsPanel(_nativeGraphicsManager,
-                _trainingController,
-                _messageBoxFactory,
-                _statusLabelSetter,
-                _playerInfoProvider,
-                _characterProvider,
-                _characterInventoryProvider,
-                _pubFileProvider,
-                _spellSlotDataRepository,
-                _hudControlProvider,
-                _sfxPlayer,
-                _configurationProvider,
-                _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnActiveSpellsPanel(_nativeGraphicsManager,
+                    _trainingController,
+                    _messageBoxFactory,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _spellSlotDataRepository,
+                    _hudControlProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new ActiveSpellsPanel(_nativeGraphicsManager,
+                    _trainingController,
+                    _messageBoxFactory,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider,
+                    _spellSlotDataRepository,
+                    _hudControlProvider,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public PassiveSpellsPanel CreatePassiveSpellsPanel()
         {
-            return new PassiveSpellsPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnPassiveSpellsPanel(_nativeGraphicsManager,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new PassiveSpellsPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
-        public ChatPanel CreateChatPanel()
+        public DraggableHudPanel CreateChatPanel()
         {
             var chatFont = _contentProvider.Fonts[Constants.FontSize08];
 
-            return new ChatPanel(_nativeGraphicsManager,
-                                 _chatActions,
-                                 new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
-                                 _chatProvider,
-                                 _hudControlProvider,
-                                 chatFont,
-                                 _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnChatPanel(_nativeGraphicsManager,
+                                              _chatActions,
+                                              new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                              _chatProvider,
+                                              _hudControlProvider,
+                                              _styleProvider,
+                                              _graphicsDeviceProvider,
+                                              _contentProvider,
+                                              _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new ChatPanel(_nativeGraphicsManager,
+                                     _chatActions,
+                                     new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                     _chatProvider,
+                                     _hudControlProvider,
+                                     chatFont,
+                                     _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
-        public StatsPanel CreateStatsPanel()
+        public DraggableHudPanel CreateStatsPanel()
         {
-            return new StatsPanel(_nativeGraphicsManager,
-                                  _characterProvider,
-                                  _characterInventoryProvider,
-                                  _experienceTableProvider,
-                                  _messageBoxFactory,
-                                  _trainingController,
-                                  _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnStatsPanel(_characterProvider,
+                                               _characterInventoryProvider,
+                                               _experienceTableProvider,
+                                               _messageBoxFactory,
+                                               _trainingController,
+                                               _styleProvider,
+                                               _graphicsDeviceProvider,
+                                               _contentProvider,
+                                               _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new StatsPanel(_nativeGraphicsManager,
+                                      _characterProvider,
+                                      _characterInventoryProvider,
+                                      _experienceTableProvider,
+                                      _messageBoxFactory,
+                                      _trainingController,
+                                      _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
-        public OnlineListPanel CreateOnlineListPanel()
+        public DraggableHudPanel CreateOnlineListPanel()
         {
-            var chatFont = _contentProvider.Fonts[Constants.FontSize08];
-            return new OnlineListPanel(_nativeGraphicsManager, _hudControlProvider, _onlinePlayerProvider, _partyDataProvider, _friendIgnoreListService, _sfxPlayer, chatFont, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnOnlineListPanel(_hudControlProvider,
+                    _onlinePlayerProvider,
+                    _onlinePlayerActions,
+                    _partyDataProvider,
+                    _friendIgnoreListService,
+                    _sfxPlayer,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                var chatFont = _contentProvider.Fonts[Constants.FontSize08];
+                return new OnlineListPanel(_nativeGraphicsManager, _hudControlProvider, _onlinePlayerProvider, _partyDataProvider, _friendIgnoreListService, _sfxPlayer, chatFont, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
-        public PartyPanel CreatePartyPanel()
+        public DraggableHudPanel CreatePartyPanel()
         {
-            return new PartyPanel(_nativeGraphicsManager, _partyActions, _contentProvider, _partyDataProvider, _characterProvider, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnPartyPanel(_partyActions,
+                    _partyDataProvider,
+                    _characterProvider,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new PartyPanel(_nativeGraphicsManager, _partyActions, _contentProvider, _partyDataProvider, _characterProvider, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
-        public SettingsPanel CreateSettingsPanel()
+        public DraggableHudPanel CreateSettingsPanel()
         {
-            return new SettingsPanel(_nativeGraphicsManager,
-                _chatActions,
-                _audioActions,
-                _statusLabelSetter,
-                _localizedStringFinder,
-                _messageBoxFactory,
-                _configurationRepository,
-                _sfxPlayer,
-                _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnSettingsPanel(_chatActions,
+                    _audioActions,
+                    _statusLabelSetter,
+                    _localizedStringFinder,
+                    _messageBoxFactory,
+                    _configurationRepository,
+                    _sfxPlayer,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new SettingsPanel(_nativeGraphicsManager,
+                    _chatActions,
+                    _audioActions,
+                    _statusLabelSetter,
+                    _localizedStringFinder,
+                    _messageBoxFactory,
+                    _configurationRepository,
+                    _sfxPlayer,
+                    _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+        }
+
+        public MacroPanel CreateMacroPanel()
+        {
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new CodeDrawnMacroPanel(_nativeGraphicsManager,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _pubFileProvider,
+                    _pubFileProvider,
+                    _macroSlotDataRepository,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider,
+                    _dialogButtonService,
+                    _styleProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new MacroPanel(_nativeGraphicsManager,
+                    _statusLabelSetter,
+                    _playerInfoProvider,
+                    _characterProvider,
+                    _pubFileProvider,
+                    _pubFileProvider,
+                    _macroSlotDataRepository,
+                    _sfxPlayer,
+                    _configurationProvider,
+                    _clientWindowSizeProvider,
+                    _userInputProvider,
+                    _dialogButtonService)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public HelpPanel CreateHelpPanel()

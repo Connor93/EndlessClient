@@ -17,6 +17,7 @@ using EOLib.IO.Map;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
 using Moffat.EndlessOnline.SDK.Protocol.Net.Server;
+using XNAControls;
 
 namespace EndlessClient.Rendering.Map
 {
@@ -245,7 +246,13 @@ namespace EndlessClient.Rendering.Map
         {
             foreach (var dlg in _dialogProvider.ActiveDialogs)
             {
-                DispatcherGameComponent.Invoke(() => dlg.MatchSome(x => ((BaseEODialog)x).Close()));
+                DispatcherGameComponent.Invoke(() => dlg.MatchSome(x =>
+                {
+                    if (x is BaseEODialog baseDialog)
+                        baseDialog.Close();
+                    else if (x is CodeDrawnScrollingListDialog codeDrawnDialog)
+                        codeDrawnDialog.Close();
+                }));
             }
         }
     }

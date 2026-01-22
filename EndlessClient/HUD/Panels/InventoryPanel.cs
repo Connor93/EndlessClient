@@ -10,6 +10,7 @@ using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Map;
 using EOLib.Config;
@@ -55,6 +56,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IUserInputProvider _userInputProvider;
         private readonly List<InventoryPanelItem> _childItems = new List<InventoryPanelItem>();
 
         //private readonly IXNALabel _weightLabel;
@@ -81,7 +83,8 @@ namespace EndlessClient.HUD.Panels
                               IActiveDialogProvider activeDialogProvider,
                               ISfxPlayer sfxPlayer,
                               IConfigurationProvider configProvider,
-                              IClientWindowSizeProvider clientWindowSizeProvider)
+                              IClientWindowSizeProvider clientWindowSizeProvider,
+                              IUserInputProvider userInputProvider)
             : base(clientWindowSizeProvider.Resizable)
         {
             NativeGraphicsManager = nativeGraphicsManager;
@@ -100,6 +103,7 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _configProvider = configProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _userInputProvider = userInputProvider;
 
             /*_weightLabel = new XNALabel(Constants.FontSize08pt5)
             {
@@ -244,13 +248,14 @@ namespace EndlessClient.HUD.Panels
                     {
                         _inventoryService.SetSlots(_inventorySlotRepository.FilledSlots, slot, itemData.Size);
 
-                        var newItem = new InventoryPanelItem(_itemNameColorService, this, _activeDialogProvider, _sfxPlayer, slot, item, itemData);
+                        var newItem = new InventoryPanelItem(_itemNameColorService, this, _activeDialogProvider, _sfxPlayer, _userInputProvider, slot, item, itemData);
                         newItem.Initialize();
                         newItem.SetParentControl(this);
                         newItem.Text = _itemStringService.GetStringForInventoryDisplay(itemData, item.Amount);
 
                         newItem.OnMouseEnter += (_, _) => _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_ITEM, newItem.Text);
                         newItem.DoubleClick += HandleItemDoubleClick;
+                        newItem.RightClick += HandleItemDoubleClick;
                         newItem.DraggingFinishing += HandleItemDoneDragging;
                         newItem.DraggingFinished += (_, _) => ResetSlotMap(_childItems.Where(x => !x.IsDragging));
 
@@ -408,6 +413,21 @@ namespace EndlessClient.HUD.Panels
 
             ResetSlotMap(_childItems.Where(x => !x.IsDragging));
 
+            // Check if item was dropped onto the MacroPanel (check first, before other handlers)
+            var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(HudControlIdentifier.MacroPanel);
+            if (macroPanel.Visible && macroPanel.MouseOver)
+            {
+                var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position;
+                var transformedPos = macroPanel.TransformMousePosition(mousePos).ToVector2();
+                var targetSlot = macroPanel.GetSlotFromPosition(transformedPos);
+                if (targetSlot >= 0)
+                {
+                    macroPanel.AcceptItemDrop(item.InventoryItem.ItemID, targetSlot);
+                    e.RestoreOriginalSlot = true;  // Keep item in inventory
+                    return;
+                }
+            }
+
             var oldSlot = item.Slot;
             var fitsInOldSlot = _inventoryService.FitsInSlot(_inventorySlotRepository.FilledSlots, oldSlot, e.Data.Size);
 
@@ -453,6 +473,7 @@ namespace EndlessClient.HUD.Panels
                         switch (activeDialog)
                         {
                             case PaperdollDialog:
+                            case CodeDrawnPaperdollDialog:
                                 if (item.Data.GetEquipLocation() != EquipLocation.PAPERDOLL_MAX)
                                     _inventoryController.EquipItem(item.Data);
                                 break;
@@ -462,7 +483,8 @@ namespace EndlessClient.HUD.Panels
                                 if (item.Data.ID == 1)
                                     _inventoryController.DropItemInBank(item.Data, item.InventoryItem);
                                 break;
-                            case TradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
+                            case TradeDialog:
+                            case CodeDrawnTradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
                             default: return false;
                         }
                         ;
@@ -576,6 +598,21 @@ namespace EndlessClient.HUD.Panels
                     }
                 }
             }
+        }
+        public Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
         }
     }
 }

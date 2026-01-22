@@ -72,7 +72,9 @@
     <PackageReference Include="MonoGame.Extended.Input" Version="3.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.10" />
-    <PackageReference Include="XNAControls" Version="2.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XNAControls\XNAControls\XNAControls.csproj" />
   </ItemGroup>
 
   <!-- Custom etheos assets - these override the default package assets -->
@@ -83,6 +85,6 @@
 
     <Copy SourceFiles="@(_customAssets)"
           DestinationFiles="@(_customAssets->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+          SkipUnchangedFiles="false" />
   </Target>
 </Project>

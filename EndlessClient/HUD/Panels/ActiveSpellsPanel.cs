@@ -11,6 +11,7 @@ using EndlessClient.Dialogs;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Spells;
+using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.UIControls;
 using EOLib.Config;
@@ -48,6 +49,7 @@ namespace EndlessClient.HUD.Panels
         private readonly IHudControlProvider _hudControlProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
+        private readonly IUserInputProvider _userInputProvider;
 
         private readonly Dictionary<int, int> _spellSlotMap;
         private readonly List<SpellPanelItem> _childItems;
@@ -58,6 +60,7 @@ namespace EndlessClient.HUD.Panels
         private readonly XNALabel _selectedSpellName, _selectedSpellLevel, _totalSkillPoints;
         private readonly XNAButton _levelUpButton1, _levelUpButton2;
         private readonly ScrollBar _scrollBar;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         private HashSet<InventorySpell> _cachedSpells;
         private CharacterStats _cachedStats;
@@ -81,7 +84,8 @@ namespace EndlessClient.HUD.Panels
                                  IHudControlProvider hudControlProvider,
                                  ISfxPlayer sfxPlayer,
                                  IConfigurationProvider configProvider,
-                                 IClientWindowSizeProvider clientWindowSizeProvider)
+                                 IClientWindowSizeProvider clientWindowSizeProvider,
+                                 IUserInputProvider userInputProvider)
             : base(clientWindowSizeProvider.Resizable)
         {
             NativeGraphicsManager = nativeGraphicsManager;
@@ -96,6 +100,8 @@ namespace EndlessClient.HUD.Panels
             _hudControlProvider = hudControlProvider;
             _sfxPlayer = sfxPlayer;
             _configProvider = configProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _userInputProvider = userInputProvider;
 
             _spellSlotMap = GetSpellSlotMap(_playerInfoProvider.LoggedInAccountName, _characterProvider.MainCharacter.Name, _configProvider.Host);
             _childItems = new List<SpellPanelItem>();
@@ -241,7 +247,7 @@ namespace EndlessClient.HUD.Panels
 
                     actualSlot.MatchSome(slot =>
                     {
-                        var newChild = new SpellPanelItem(this, _sfxPlayer, slot, spell, spellData);
+                        var newChild = new SpellPanelItem(this, _sfxPlayer, _userInputProvider, slot, spell, spellData);
                         newChild.Initialize();
                         newChild.SetParentControl(this);
 
@@ -436,6 +442,21 @@ namespace EndlessClient.HUD.Panels
             if (item == null)
                 return;
 
+            // Check if spell was dropped onto the MacroPanel
+            var macroPanel = _hudControlProvider.GetComponent<MacroPanel>(HudControlIdentifier.MacroPanel);
+            if (macroPanel.MouseOver)
+            {
+                var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position;
+                var transformedPos = macroPanel.TransformMousePosition(mousePos).ToVector2();
+                var targetSlot = macroPanel.GetSlotFromPosition(transformedPos);
+                if (targetSlot >= 0)
+                {
+                    macroPanel.AcceptSpellDrop(item.InventorySpell.ID, targetSlot);
+                    e.RestoreOriginalSlot = true;  // Keep spell in spell panel
+                    return;
+                }
+            }
+
             if (e.DragOutOfBounds)
             {
                 e.RestoreOriginalSlot = true;
@@ -620,5 +641,20 @@ namespace EndlessClient.HUD.Panels
         }
 
         #endregion
+        public Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
+        }
     }
 }

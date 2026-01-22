@@ -14,12 +14,38 @@ namespace EndlessClient
                 System.IO.File.AppendAllText("debug_log.txt", "Starting Manual Registration...\n");
 
                 var containerType = containerObj.GetType();
-                // Look for RegisterType(Type from, Type to, ITypeLifetimeManager lifetimeManager, params InjectionMember[] injectionMembers)
-                // Note: Unity has many overloads. We want one that takes (Type, Type, ITypeLifetimeManager)
-                // In Unity 5+, it's ITypeLifetimeManager. In older Unity, LifetimeManager.
-
                 var containerRuntimeType = containerObj.GetType();
                 System.IO.File.AppendAllText("debug_log.txt", $"Container Runtime Type: {containerRuntimeType.FullName}\n");
+
+                // Add Diagnostic extension for better error messages
+                try
+                {
+                    Type diagnosticType = null;
+                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        diagnosticType = asm.GetType("Unity.Diagnostic");
+                        if (diagnosticType != null) break;
+                    }
+
+                    if (diagnosticType != null)
+                    {
+                        var addExtMethod = containerRuntimeType.GetMethod("AddExtension");
+                        if (addExtMethod != null)
+                        {
+                            var diagnostic = Activator.CreateInstance(diagnosticType);
+                            addExtMethod.Invoke(containerObj, new[] { diagnostic });
+                            System.IO.File.AppendAllText("debug_log.txt", "Added Unity Diagnostic extension.\n");
+                        }
+                    }
+                    else
+                    {
+                        System.IO.File.AppendAllText("debug_log.txt", "Diagnostic type not found.\n");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText("debug_log.txt", $"Failed to add Diagnostic: {ex.Message}\n");
+                }
 
                 // Inspect existing IGameInitializer registrations
                 try

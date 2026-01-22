@@ -20,6 +20,8 @@
 
         void ClickParty();
 
+        void ClickMacro();
+
         void ClickSettings();
 
         void ClickHelp();

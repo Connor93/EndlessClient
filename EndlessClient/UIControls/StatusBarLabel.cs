@@ -62,7 +62,7 @@ namespace EndlessClient.UIControls
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (_clientWindowSizeProvider.Resizable)
+            if (_clientWindowSizeProvider.Resizable && _hudBackground != null)
             {
                 var bgDrawArea = new Rectangle(0, _clientWindowSizeProvider.Height - 20, _clientWindowSizeProvider.Width, 20);
 

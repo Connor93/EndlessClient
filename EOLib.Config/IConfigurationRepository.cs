@@ -34,6 +34,15 @@ namespace EOLib.Config
         int InGameHeight { get; set; }
 
         string Theme { get; set; }
+
+        bool NPCGhosting { get; set; }
+
+        bool WASDMovement { get; set; }
+
+        bool ScaledClient { get; set; }
+
+        UIMode UIMode { get; set; }
+        UIStyle UIStyle { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -67,6 +76,15 @@ namespace EOLib.Config
         int InGameHeight { get; }
 
         string Theme { get; }
+
+        bool NPCGhosting { get; }
+
+        bool WASDMovement { get; }
+
+        bool ScaledClient { get; }
+
+        UIMode UIMode { get; }
+        UIStyle UIStyle { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -101,5 +119,14 @@ namespace EOLib.Config
         public int InGameHeight { get; set; }
 
         public string Theme { get; set; }
+
+        public bool NPCGhosting { get; set; }
+
+        public bool WASDMovement { get; set; }
+
+        public bool ScaledClient { get; set; }
+
+        public UIMode UIMode { get; set; }
+        public UIStyle UIStyle { get; set; }
     }
 }

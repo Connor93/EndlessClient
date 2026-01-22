@@ -1,0 +1,322 @@
+Registry Type: AutomaticTypeMapper.UnityRegistry
+Property: UnityContainer (Unity.IUnityContainer)
+Found container object. Registering...
+Starting Manual Registration...
+Container Runtime Type: Unity.UnityContainer
+Added Unity Diagnostic extension.
+Found 1 RegisterType methods:
+ - Unity.IUnityContainer RegisterType(System.Type, System.Type, System.String, Unity.Lifetime.ITypeLifetimeManager, Unity.Injection.InjectionMember[])
+   Params: Type, Type, String, ITypeLifetimeManager, InjectionMember[]
+Selected RegisterType with 5 params.
+Registered List<IGameComponent> instance.
+REGISTERED: EndlessClientInitializer as IGameInitializer
+Manual Registration Completed. Total: 674 registrations.
+ResolveAll<IGameInitializer> FAILED!
+Exception Type: Unity.ResolutionFailedException
+Message: Exception has been thrown by the target of an invocation.
+_____________________________________________________
+Exception occurred while:
+
+on constructor:  MfxPlayer(IConfigurationProvider configurationProvider)
+ ·resolving type:  'MfxPlayer'
+  •resolving type:  'IMfxPlayer' mapped to 'MfxPlayer'
+    for parameter:  'mfxPlayer'
+    on constructor:  AudioActions(IConfigurationProvider configurationProvider, ICurrentMapProvider currentMapProvider, IMfxPlayer mfxPlayer, ISfxPlayer sfxPlayer)
+     ·resolving type:  'AudioActions'
+      •resolving type:  'IAudioActions' mapped to 'AudioActions'
+        for parameter:  'audioActions'
+        on constructor:  HudPanelFactory(INativeGraphicsManager nativeGraphicsManager, IInventoryController inventoryController, IChatActions chatActions, IContentProvider contentProvider, IHudControlProvider hudControlProvider, INewsProvider newsProvider, IChatProvider chatProvider, IPlayerInfoProvider playerInfoProvider, ICharacterProvider characterProvider, ICharacterInventoryProvider characterInventoryProvider, IExperienceTableProvider experienceTableProvider, IPubFileProvider pubFileProvider, IInventorySlotRepository inventorySlotRepository, IEOMessageBoxFactory messageBoxFactory, ITrainingController trainingController, IFriendIgnoreListService friendIgnoreListService, IStatusLabelSetter statusLabelSetter, IItemStringService itemStringService, IItemNameColorService itemNameColorService, IInventoryService inventoryService, IActiveDialogProvider activeDialogProvider, ISpellSlotDataRepository spellSlotDataRepository, IConfigurationRepository configurationRepository, IOnlinePlayerProvider onlinePlayerProvider, ILocalizedStringFinder localizedStringFinder, IAudioActions audioActions, ISfxPlayer sfxPlayer, IPartyActions partyActions, IPartyDataProvider partyDataProvider, IConfigurationProvider configurationProvider, IClientWindowSizeProvider clientWindowSizeProvider, IUserInputProvider userInputProvider, IMacroSlotDataRepository macroSlotDataRepository, IEODialogButtonService dialogButtonService)
+         •resolving type:  'IHudPanelFactory' mapped to 'HudPanelFactory'
+           for parameter:  'hudPanelFactory'
+           on constructor:  HudControlsFactory(IHudButtonController hudButtonController, IHudPanelFactory hudPanelFactory, IMapRendererFactory mapRendererFactory, IUserInputHandlerFactory userInputHandlerFactory, INativeGraphicsManager nativeGraphicsManager, IGraphicsDeviceProvider graphicsDeviceProvider, IClientWindowSizeRepository clientWindowSizeRepository, IEndlessGameProvider endlessGameProvider, ICharacterRepository characterRepository, IPlayerInfoProvider playerInfoProvider, ICurrentMapStateRepository currentMapStateRepository, IUserInputRepository userInputRepository, IStatusLabelSetter statusLabelSetter, IStatusLabelTextProvider statusLabelTextProvider, IContentProvider contentProvider, IHudControlProvider hudControlProvider, ICurrentMapProvider currentMapProvider, IChatModeCalculator chatModeCalculator, IExperienceTableProvider experienceTableProvider, IPathFinder pathFinder, ICharacterActions characterActions, IWalkValidationActions walkValidationActions, IChatBubbleActions chatBubbleActions, IUnknownEntitiesRequestActions unknownEntitiesRequestActions, IUserInputTimeProvider userInputTimeProvider, ISpellSlotDataRepository spellSlotDataRepository, ISfxPlayer sfxPlayer, IMiniMapRendererFactory miniMapRendererFactory, INewsProvider newsProvider, IFixedTimeStepRepository fixedTimeStepRepository, IClickDispatcherFactory clickDispatcherFactory, IMetadataProvider`1 weaponMetadataProvider, ILocalizedStringFinder localizedStringFinder, ICharacterRendererProvider characterRendererProvider, INPCRendererProvider npcRendererProvider, IConfigurationProvider configurationProvider)
+            ·resolving type:  'HudControlsFactory'
+             •resolving type:  'IHudControlsFactory' mapped to 'HudControlsFactory'
+               for parameter:  'hudControlsFactory'
+               on constructor:  ControlSetFactory(INativeGraphicsManager nativeGraphicsManager, IEOMessageBoxFactory messageBoxFactory, IHudControlsFactory hudControlsFactory, IContentProvider contentProvider, IConfigurationProvider configProvider, ICharacterInfoPanelFactory characterInfoPanelFactory, ICharacterSelectorProvider characterSelectorProvider, IEndlessGameProvider endlessGameProvider, IUserInputRepository userInputRepository, IActiveDialogRepository activeDialogRepository, IClientWindowSizeRepository clientWindowSizeRepository)
+                ·resolving type:  'ControlSetFactory'
+                 •resolving type:  'IControlSetFactory' mapped to 'ControlSetFactory'
+                   for parameter:  'controlSetFactory'
+                   on constructor:  EndlessGame(IClientWindowSizeRepository windowSizeRepository, IContentProvider contentProvider, IGraphicsDeviceRepository graphicsDeviceRepository, IGameWindowRepository gameWindowRepository, IControlSetRepository controlSetRepository, IControlSetFactory controlSetFactory, ITestModeLauncher testModeLauncher, IPubFileLoadActions pubFileLoadActions, IChatBubbleTextureProvider chatBubbleTextureProvider, IConfigurationProvider configurationProvider, IMfxPlayer mfxPlayer, IXnaControlSoundMapper soundMapper, IFixedTimeStepRepository fixedTimeStepRepository, IMainButtonController mainButtonController, IScrollingListDialogFactory scrollingListDialogFactory)
+                    ·resolving type:  'EndlessGame'
+                     •resolving type:  'IEndlessGame' mapped to 'EndlessGame'
+                       for parameter:  'game'
+                       on constructor:  EndlessClientInitializer(IEndlessGame game, IEndlessGameRepository endlessGameRepository, IContentProvider contentProvider, List`1 persistentComponents, IMainButtonController mainButtonController, IAccountController accountController, ILoginController loginController, ICharacterManagementController characterManagementController, IChatController chatController, IInventoryController inventoryController, IControlSetFactory controlSetFactory, ICharacterInfoPanelFactory characterInfoPanelFactory, IHudControlsFactory hudControlsFactory, IPaperdollDialogFactory paperdollDialogFactory, DispatcherGameComponent dispatcherGameComponent, PacketHandlerGameComponent packetHandlerGameComponent)
+                        •resolving type:  'EndlessClientInitializer' registered with name: 'EndlessClientInitializer'
+                         •resolving type:  'IGameInitializer' mapped to 'EndlessClientInitializer' and registered with name: 'EndlessClientInitializer'
+                          ·resolving type:  'IGameInitializer[]'
+
+--- Inner Exception Level 1 ---
+Type: System.Reflection.TargetInvocationException
+Message: Exception has been thrown by the target of an invocation.
+Stack:    at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at System.Reflection.RuntimeConstructorInfo.Invoke(BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.UnityContainer.ResolveRegistrations[TElement](BuilderContext& context, RegistrationSet registrations)
+   at Unity.UnityContainer.ResolveArray[TElement](BuilderContext& context)
+   at Unity.Strategies.ArrayResolveStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ExecuteValidatingPlan(BuilderContext& context)
+--- Inner Exception Level 2 ---
+Type: System.IO.DirectoryNotFoundException
+Message: Could not find a part of the path '/Users/cfraser/Projects/EndlessClient/mfx'.
+Stack:    at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions enumerationOptions)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at EndlessClient.Audio.MfxPlayer..ctor(IConfigurationProvider configurationProvider) in /Users/cfraser/Projects/EndlessClient/EndlessClient/Audio/MfxPlayer.cs:line 27
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Constructor(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+Full Stack Trace:
+Unity.ResolutionFailedException: Exception has been thrown by the target of an invocation.
+_____________________________________________________
+Exception occurred while:
+
+on constructor:  MfxPlayer(IConfigurationProvider configurationProvider)
+ ·resolving type:  'MfxPlayer'
+  •resolving type:  'IMfxPlayer' mapped to 'MfxPlayer'
+    for parameter:  'mfxPlayer'
+    on constructor:  AudioActions(IConfigurationProvider configurationProvider, ICurrentMapProvider currentMapProvider, IMfxPlayer mfxPlayer, ISfxPlayer sfxPlayer)
+     ·resolving type:  'AudioActions'
+      •resolving type:  'IAudioActions' mapped to 'AudioActions'
+        for parameter:  'audioActions'
+        on constructor:  HudPanelFactory(INativeGraphicsManager nativeGraphicsManager, IInventoryController inventoryController, IChatActions chatActions, IContentProvider contentProvider, IHudControlProvider hudControlProvider, INewsProvider newsProvider, IChatProvider chatProvider, IPlayerInfoProvider playerInfoProvider, ICharacterProvider characterProvider, ICharacterInventoryProvider characterInventoryProvider, IExperienceTableProvider experienceTableProvider, IPubFileProvider pubFileProvider, IInventorySlotRepository inventorySlotRepository, IEOMessageBoxFactory messageBoxFactory, ITrainingController trainingController, IFriendIgnoreListService friendIgnoreListService, IStatusLabelSetter statusLabelSetter, IItemStringService itemStringService, IItemNameColorService itemNameColorService, IInventoryService inventoryService, IActiveDialogProvider activeDialogProvider, ISpellSlotDataRepository spellSlotDataRepository, IConfigurationRepository configurationRepository, IOnlinePlayerProvider onlinePlayerProvider, ILocalizedStringFinder localizedStringFinder, IAudioActions audioActions, ISfxPlayer sfxPlayer, IPartyActions partyActions, IPartyDataProvider partyDataProvider, IConfigurationProvider configurationProvider, IClientWindowSizeProvider clientWindowSizeProvider, IUserInputProvider userInputProvider, IMacroSlotDataRepository macroSlotDataRepository, IEODialogButtonService dialogButtonService)
+         •resolving type:  'IHudPanelFactory' mapped to 'HudPanelFactory'
+           for parameter:  'hudPanelFactory'
+           on constructor:  HudControlsFactory(IHudButtonController hudButtonController, IHudPanelFactory hudPanelFactory, IMapRendererFactory mapRendererFactory, IUserInputHandlerFactory userInputHandlerFactory, INativeGraphicsManager nativeGraphicsManager, IGraphicsDeviceProvider graphicsDeviceProvider, IClientWindowSizeRepository clientWindowSizeRepository, IEndlessGameProvider endlessGameProvider, ICharacterRepository characterRepository, IPlayerInfoProvider playerInfoProvider, ICurrentMapStateRepository currentMapStateRepository, IUserInputRepository userInputRepository, IStatusLabelSetter statusLabelSetter, IStatusLabelTextProvider statusLabelTextProvider, IContentProvider contentProvider, IHudControlProvider hudControlProvider, ICurrentMapProvider currentMapProvider, IChatModeCalculator chatModeCalculator, IExperienceTableProvider experienceTableProvider, IPathFinder pathFinder, ICharacterActions characterActions, IWalkValidationActions walkValidationActions, IChatBubbleActions chatBubbleActions, IUnknownEntitiesRequestActions unknownEntitiesRequestActions, IUserInputTimeProvider userInputTimeProvider, ISpellSlotDataRepository spellSlotDataRepository, ISfxPlayer sfxPlayer, IMiniMapRendererFactory miniMapRendererFactory, INewsProvider newsProvider, IFixedTimeStepRepository fixedTimeStepRepository, IClickDispatcherFactory clickDispatcherFactory, IMetadataProvider`1 weaponMetadataProvider, ILocalizedStringFinder localizedStringFinder, ICharacterRendererProvider characterRendererProvider, INPCRendererProvider npcRendererProvider, IConfigurationProvider configurationProvider)
+            ·resolving type:  'HudControlsFactory'
+             •resolving type:  'IHudControlsFactory' mapped to 'HudControlsFactory'
+               for parameter:  'hudControlsFactory'
+               on constructor:  ControlSetFactory(INativeGraphicsManager nativeGraphicsManager, IEOMessageBoxFactory messageBoxFactory, IHudControlsFactory hudControlsFactory, IContentProvider contentProvider, IConfigurationProvider configProvider, ICharacterInfoPanelFactory characterInfoPanelFactory, ICharacterSelectorProvider characterSelectorProvider, IEndlessGameProvider endlessGameProvider, IUserInputRepository userInputRepository, IActiveDialogRepository activeDialogRepository, IClientWindowSizeRepository clientWindowSizeRepository)
+                ·resolving type:  'ControlSetFactory'
+                 •resolving type:  'IControlSetFactory' mapped to 'ControlSetFactory'
+                   for parameter:  'controlSetFactory'
+                   on constructor:  EndlessGame(IClientWindowSizeRepository windowSizeRepository, IContentProvider contentProvider, IGraphicsDeviceRepository graphicsDeviceRepository, IGameWindowRepository gameWindowRepository, IControlSetRepository controlSetRepository, IControlSetFactory controlSetFactory, ITestModeLauncher testModeLauncher, IPubFileLoadActions pubFileLoadActions, IChatBubbleTextureProvider chatBubbleTextureProvider, IConfigurationProvider configurationProvider, IMfxPlayer mfxPlayer, IXnaControlSoundMapper soundMapper, IFixedTimeStepRepository fixedTimeStepRepository, IMainButtonController mainButtonController, IScrollingListDialogFactory scrollingListDialogFactory)
+                    ·resolving type:  'EndlessGame'
+                     •resolving type:  'IEndlessGame' mapped to 'EndlessGame'
+                       for parameter:  'game'
+                       on constructor:  EndlessClientInitializer(IEndlessGame game, IEndlessGameRepository endlessGameRepository, IContentProvider contentProvider, List`1 persistentComponents, IMainButtonController mainButtonController, IAccountController accountController, ILoginController loginController, ICharacterManagementController characterManagementController, IChatController chatController, IInventoryController inventoryController, IControlSetFactory controlSetFactory, ICharacterInfoPanelFactory characterInfoPanelFactory, IHudControlsFactory hudControlsFactory, IPaperdollDialogFactory paperdollDialogFactory, DispatcherGameComponent dispatcherGameComponent, PacketHandlerGameComponent packetHandlerGameComponent)
+                        •resolving type:  'EndlessClientInitializer' registered with name: 'EndlessClientInitializer'
+                         •resolving type:  'IGameInitializer' mapped to 'EndlessClientInitializer' and registered with name: 'EndlessClientInitializer'
+                          ·resolving type:  'IGameInitializer[]'
+
+ ---> System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.
+ ---> System.IO.DirectoryNotFoundException: Could not find a part of the path '/Users/cfraser/Projects/EndlessClient/mfx'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions enumerationOptions)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at EndlessClient.Audio.MfxPlayer..ctor(IConfigurationProvider configurationProvider) in /Users/cfraser/Projects/EndlessClient/EndlessClient/Audio/MfxPlayer.cs:line 27
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Constructor(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   --- End of inner exception stack trace ---
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at System.Reflection.RuntimeConstructorInfo.Invoke(BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Builder.BuilderContext.Resolve(ParameterInfo parameter, Object value)
+   at Unity.Processors.ParametersProcessor`1.<>c__DisplayClass1_0.<CreateDiagnosticParameterResolvers>b__0(BuilderContext& context)
+   at Unity.Processors.ConstructorDiagnostic.<>c__DisplayClass12_0.<GetResolverDelegate>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.Processors.MemberProcessor`2.<>c__DisplayClass8_0.<GetResolver>b__0(BuilderContext& c)
+   at Unity.UnityContainer.<>c__DisplayClass96_0.<OptimizingFactory>b__0(BuilderContext& c)
+   at Unity.Strategies.BuildPlanStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name)
+   at Unity.Strategies.BuildKeyMappingStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ContextValidatingPlan(BuilderStrategy[] chain, BuilderContext& context)
+   at Unity.Builder.BuilderContext.Resolve(Type type, String name, InternalRegistration registration)
+   at Unity.UnityContainer.ResolveRegistrations[TElement](BuilderContext& context, RegistrationSet registrations)
+   at Unity.UnityContainer.ResolveArray[TElement](BuilderContext& context)
+   at Unity.Strategies.ArrayResolveStrategy.PreBuildUp(BuilderContext& context)
+   at Unity.UnityContainer.ExecuteValidatingPlan(BuilderContext& context)
+   --- End of inner exception stack trace ---
+   at Unity.UnityContainer.ExecuteValidatingPlan(BuilderContext& context)
+   at Unity.UnityContainer.Unity.IUnityContainer.Resolve(Type type, String name, ResolverOverride[] overrides)
+   at AutomaticTypeMapper.UnityRegistry.ResolveAll[T]()
+   at EndlessClient.GameExecution.GameRunnerBase.SetupDependencies() in /Users/cfraser/Projects/EndlessClient/EndlessClient/GameExecution/GameRunnerBase.cs:line 76

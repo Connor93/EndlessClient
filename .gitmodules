@@ -1,0 +1,3 @@
+[submodule "XNAControls"]
+	path = XNAControls
+	url = https://github.com/Connor93/XNAControls.git

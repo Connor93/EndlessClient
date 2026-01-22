@@ -19,7 +19,8 @@ namespace EndlessClient.Rendering.Factories
 
         public RenderTarget2D CreateRenderTarget()
         {
-            return CreateRenderTarget(_clientWindowSizeProvider.Width, _clientWindowSizeProvider.Height);
+            // Use game dimensions (640x480) not window dimensions for proper scaling
+            return CreateRenderTarget(_clientWindowSizeProvider.GameWidth, _clientWindowSizeProvider.GameHeight);
         }
 
         public RenderTarget2D CreateRenderTarget(int width, int height)

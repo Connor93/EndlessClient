@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using EndlessClient.Dialogs.Services;
+using EOLib.Domain.Interact;
 using EOLib.Graphics;
 using EOLib.IO;
 using EOLib.IO.Pub;
-using EOLib.Shared;
+using EOLib.IO.Repositories;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -13,16 +15,27 @@ namespace EndlessClient.Dialogs
     {
         private readonly EIFRecord _item;
         private readonly Texture2D _itemGraphic;
+        private readonly IItemSourceProvider _itemSourceProvider;
+        private readonly IEIFFileProvider _eifFileProvider;
+        private readonly IENFFileProvider _enfFileProvider;
         private const int ItemImageY = 45;
+        private bool _sourcesChecked;
+        private int _lastSourceCount;
 
         public ItemInfoDialog(INativeGraphicsManager nativeGraphicsManager,
                               IEODialogButtonService dialogButtonService,
+                              IItemSourceProvider itemSourceProvider,
+                              IEIFFileProvider eifFileProvider,
+                              IENFFileProvider enfFileProvider,
                               EIFRecord item,
                               Texture2D itemGraphic)
-            : base(nativeGraphicsManager, dialogButtonService, DialogType.NpcQuestDialog)
+            : base(nativeGraphicsManager, dialogButtonService, DialogType.QuestProgressHistory) // Medium size dialog
         {
             _item = item;
             _itemGraphic = itemGraphic;
+            _itemSourceProvider = itemSourceProvider;
+            _eifFileProvider = eifFileProvider;
+            _enfFileProvider = enfFileProvider;
 
             Title = $"{_item.Name} (ID: {_item.ID})";
             Buttons = ScrollingListDialogButtons.Ok;
@@ -31,12 +44,113 @@ namespace EndlessClient.Dialogs
             AddItemInfoToList();
         }
 
+        protected override void OnUpdateControl(GameTime gameTime)
+        {
+            base.OnUpdateControl(gameTime);
+
+            // Poll for source data (server responds asynchronously)
+            if (!_sourcesChecked &&
+                _itemSourceProvider.ItemId == _item.ID &&
+                _itemSourceProvider.Sources.Count > 0 &&
+                _itemSourceProvider.Sources.Count != _lastSourceCount)
+            {
+                _sourcesChecked = true;
+                _lastSourceCount = _itemSourceProvider.Sources.Count;
+                AddSourcesSection();
+            }
+        }
+
+        private void AddSourcesSection()
+        {
+            if (_itemSourceProvider.Sources.Count == 0)
+                return;
+
+            var sources = _itemSourceProvider.Sources;
+
+            // Group sources by type
+            var shops = sources.Where(s => s.Type == ItemSourceType.Shop).ToList();
+            var crafts = sources.Where(s => s.Type == ItemSourceType.Craft).ToList();
+            var drops = sources.Where(s => s.Type == ItemSourceType.Drop).ToList();
+
+            // Add spacing before acquisition section
+            AddEmptyLine();
+
+            // Places to Purchase
+            if (shops.Any())
+            {
+                AddSectionHeader("--- Purchase From ---");
+                foreach (var source in shops)
+                {
+                    var npcName = GetNpcName(source.NpcId);
+                    AddInfoLine("", $"{npcName} - {source.Price}g");
+                }
+                AddEmptyLine();
+            }
+
+            // Places to Craft
+            if (crafts.Any())
+            {
+                AddSectionHeader("--- Craft At ---");
+                foreach (var source in crafts)
+                {
+                    var npcName = GetNpcName(source.NpcId);
+                    AddInfoLine("", npcName);
+                    if (source.Ingredients.Any())
+                    {
+                        var ingredientList = string.Join(", ",
+                            source.Ingredients.Select(i => $"{i.Amount}x {GetItemName(i.ItemId)}"));
+                        AddInfoLine("  Needs", ingredientList);
+                    }
+                }
+                AddEmptyLine();
+            }
+
+            // Dropped By
+            if (drops.Any())
+            {
+                AddSectionHeader("--- Dropped By ---");
+                foreach (var source in drops)
+                {
+                    var npcName = GetNpcName(source.NpcId);
+                    AddInfoLine("", $"{npcName} ({source.DropRate:F1}%)");
+                }
+            }
+        }
+
+        private void AddEmptyLine()
+        {
+            AddItemToList(new ListDialogItem(this, ListDialogItem.ListItemStyle.Small) { PrimaryText = " " }, sortList: false);
+        }
+
+        private void AddSectionHeader(string header)
+        {
+            var item = new ListDialogItem(this, ListDialogItem.ListItemStyle.Small)
+            {
+                PrimaryText = header
+            };
+            AddItemToList(item, sortList: false);
+        }
+
+        private string GetNpcName(int npcId)
+        {
+            if (npcId > 0 && npcId < _enfFileProvider.ENFFile.Length)
+                return _enfFileProvider.ENFFile[npcId].Name;
+            return $"NPC #{npcId}";
+        }
+
+        private string GetItemName(int itemId)
+        {
+            if (itemId > 0 && itemId < _eifFileProvider.EIFFile.Length)
+                return _eifFileProvider.EIFFile[itemId].Name;
+            return $"Item #{itemId}";
+        }
+
         private void AddItemInfoToList()
         {
             // Add empty line if we have an item graphic (for spacing)
             if (_itemGraphic != null)
             {
-                AddItemToList(new ListDialogItem(this, ListDialogItem.ListItemStyle.Small) { PrimaryText = " " }, sortList: false);
+                AddEmptyLine();
             }
 
             // Type
@@ -85,9 +199,10 @@ namespace EndlessClient.Dialogs
 
         private void AddInfoLine(string key, string value)
         {
+            var text = string.IsNullOrEmpty(key) ? value : $"{key}: {value}";
             var item = new ListDialogItem(this, ListDialogItem.ListItemStyle.Small)
             {
-                PrimaryText = $"{key}: {value}"
+                PrimaryText = text
             };
             AddItemToList(item, sortList: false);
         }

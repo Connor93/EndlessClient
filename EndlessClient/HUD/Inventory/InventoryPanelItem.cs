@@ -3,6 +3,7 @@ using EndlessClient.Audio;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Panels;
+using EndlessClient.Input;
 using EOLib.Domain.Character;
 using EOLib.Graphics;
 using EOLib.IO.Extensions;
@@ -21,6 +22,7 @@ namespace EndlessClient.HUD.Inventory
     {
         private readonly IActiveDialogProvider _activeDialogProvider;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IUserInputProvider _userInputProvider;
         private readonly Texture2D _itemGraphic;
         private readonly Texture2D _highlightBackground;
         private readonly XNALabel _nameLabel;
@@ -55,6 +57,8 @@ namespace EndlessClient.HUD.Inventory
 
         public event EventHandler<EIFRecord> DoubleClick;
 
+        public event EventHandler<EIFRecord> RightClick;
+
         public override Rectangle EventArea => IsDragging ? DrawArea : DrawAreaWithParentOffset;
 
         // uses absolute coordinates
@@ -66,6 +70,7 @@ namespace EndlessClient.HUD.Inventory
                                   InventoryPanel inventoryPanel,
                                   IActiveDialogProvider activeDialogProvider,
                                   ISfxPlayer sfxPlayer,
+                                  IUserInputProvider userInputProvider,
                                   int slot,
                                   InventoryItem inventoryItem,
                                   EIFRecord data)
@@ -73,6 +78,7 @@ namespace EndlessClient.HUD.Inventory
         {
             _activeDialogProvider = activeDialogProvider;
             _sfxPlayer = sfxPlayer;
+            _userInputProvider = userInputProvider;
 
             Slot = slot;
             InventoryItem = inventoryItem;
@@ -92,7 +98,7 @@ namespace EndlessClient.HUD.Inventory
                 Text = string.Empty
             };
 
-            OnMouseEnter += (_, _) => _nameLabel.Visible = _parentContainer.NoItemsDragging() && _activeDialogProvider.PaperdollDialog.Match(d => d.NoItemsDragging(), () => true);
+            OnMouseEnter += (_, _) => _nameLabel.Visible = _parentContainer.NoItemsDragging() && _activeDialogProvider.PaperdollDialog.Match(d => d switch { PaperdollDialog pd => pd.NoItemsDragging(), CodeDrawnPaperdollDialog cpd => cpd.NoItemsDragging(), _ => true }, () => true);
             OnMouseOver += InventoryPanelItem_OnMouseOver;
             OnMouseLeave += (_, _) =>
             {
@@ -115,7 +121,24 @@ namespace EndlessClient.HUD.Inventory
             if (!IsDragging)
                 return Slot;
 
-            return (int)((DrawPosition.X - OldOffset.X) / 26) + InventoryPanel.InventoryRowSlots * (int)((DrawPosition.Y - OldOffset.Y) / 26);
+            // Use transformed mouse coordinates for proper slot detection in scaled mode
+            // This matches the pattern used in MacroPanelItem.GetCurrentSlotBasedOnPosition()
+            var mousePos = MonoGame.Extended.Input.MouseExtended.GetState().Position;
+            var transformedPos = _parentContainer.TransformMousePosition(mousePos);
+
+            // Calculate slot from transformed position relative to the grid origin
+            var gridOrigin = _parentContainer.DrawPositionWithParentOffset + new Vector2(13, 9);
+            var relativeX = transformedPos.X - gridOrigin.X;
+            var relativeY = transformedPos.Y - gridOrigin.Y;
+
+            var col = (int)(relativeX / 26);
+            var row = (int)(relativeY / 26);
+
+            // Clamp to valid grid bounds
+            col = Math.Clamp(col, 0, InventoryPanel.InventoryRowSlots - 1);
+            row = Math.Clamp(row, 0, InventoryPanel.InventoryRows - 1);
+
+            return col + InventoryPanel.InventoryRowSlots * row;
         }
 
         public override void Initialize()
@@ -143,7 +166,17 @@ namespace EndlessClient.HUD.Inventory
 
             if (IsDragging)
             {
-                _spriteBatch.Draw(_itemGraphic, DrawPosition, Color.FromNonPremultiplied(255, 255, 255, 128));
+                // Use _userInputProvider which provides TRANSFORMED coordinates (game space)
+                // This is consistent with MacroPanelItem and SpellPanelItem behavior
+                var mousePos = _userInputProvider.CurrentMouseState.Position;
+                var sourceRect = new Rectangle(0, 0, _itemGraphic.Width, _itemGraphic.Height);
+                var targetRect = new Rectangle(
+                    mousePos.X - sourceRect.Width / 2,
+                    mousePos.Y - sourceRect.Height / 2,
+                    sourceRect.Width,
+                    sourceRect.Height);
+
+                _spriteBatch.Draw(_itemGraphic, targetRect, sourceRect, Color.FromNonPremultiplied(255, 255, 255, 128));
             }
             else
             {
@@ -156,7 +189,9 @@ namespace EndlessClient.HUD.Inventory
 
         private void InventoryPanelItem_OnMouseOver(object sender, MouseStateExtended e)
         {
-            if (!GridArea.Contains(e.Position))
+            // Use transformed coordinates for proper grid detection in scaled mode
+            var transformedPos = _parentContainer.TransformMousePosition(e.Position);
+            if (!GridArea.Contains(transformedPos))
                 return;
 
             var currentSlot = GetCurrentSlotBasedOnPosition();
@@ -174,6 +209,17 @@ namespace EndlessClient.HUD.Inventory
             DoubleClick?.Invoke(control, Data);
 
             return true;
+        }
+
+        protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
+        {
+            if (eventArgs.Button == MouseButton.Right && !IsDragging)
+            {
+                RightClick?.Invoke(control, Data);
+                return true;
+            }
+
+            return base.HandleClick(control, eventArgs);
         }
 
         protected override void Dispose(bool disposing)

@@ -38,10 +38,10 @@ namespace EndlessClient.Rendering
 
         public Vector2 CalculateDrawCoordinatesFromGridUnits(int gridX, int gridY)
         {
-            var widthFactor = _clientWindowSizeProvider.Width / 2; // 640 * (1/2) - 1
+            var widthFactor = _clientWindowSizeProvider.GameWidth / 2; // 640 * (1/2) - 1
             var heightFactor = _clientWindowSizeProvider.Resizable
-                ? _clientWindowSizeProvider.Height / 2
-                : _clientWindowSizeProvider.Height * 3 / 10 - 2; // 480 * (3/10) - 2
+                ? _clientWindowSizeProvider.GameHeight / 2
+                : _clientWindowSizeProvider.GameHeight * 3 / 10 - 2; // 480 * (3/10) - 2
 
             return new Vector2(widthFactor, heightFactor) + CalculateRawRenderCoordinatesFromGridUnits(gridX, gridY) - GetMainCharacterOffsets();
         }
@@ -64,10 +64,10 @@ namespace EndlessClient.Rendering
 
         public Vector2 CalculateGroundLayerRenderTargetDrawCoordinates(bool isMiniMap = false, int tileWidth = 64, int tileHeight = 32)
         {
-            var ViewportWidthFactor = _clientWindowSizeProvider.Width / 2 - 1; // 640 * (1/2) - 1
+            var ViewportWidthFactor = _clientWindowSizeProvider.GameWidth / 2 - 1; // 640 * (1/2) - 1
             var ViewportHeightFactor = _clientWindowSizeProvider.Resizable
-                ? _clientWindowSizeProvider.Height / 2
-                : _clientWindowSizeProvider.Height * 3 / 10 - 2; // 480 * (3/10) - 2
+                ? _clientWindowSizeProvider.GameHeight / 2
+                : _clientWindowSizeProvider.GameHeight * 3 / 10 - 2; // 480 * (3/10) - 2
 
             var rp = _characterProvider.MainCharacter.RenderProperties;
             var cx = isMiniMap ? _characterProvider.MainCharacter.X : rp.MapX;
@@ -87,10 +87,10 @@ namespace EndlessClient.Rendering
 
         public Vector2 CalculateDrawCoordinates(DomainNPC npc)
         {
-            var ViewportWidthFactor = _clientWindowSizeProvider.Width / 2 - 1; // 640 * (1/2) - 1
+            var ViewportWidthFactor = _clientWindowSizeProvider.GameWidth / 2 - 1; // 640 * (1/2) - 1
             var ViewportHeightFactor = _clientWindowSizeProvider.Resizable
-                ? _clientWindowSizeProvider.Height / 2
-                : _clientWindowSizeProvider.Height * 3 / 10 - 2; // 480 * (3/10) - 1 // ???
+                ? _clientWindowSizeProvider.GameHeight / 2
+                : _clientWindowSizeProvider.GameHeight * 3 / 10 - 2; // 480 * (3/10) - 1 // ???
 
             var npcOffsetX = _renderOffsetCalculator.CalculateOffsetX(npc);
             var npcOffsetY = _renderOffsetCalculator.CalculateOffsetY(npc);
@@ -118,8 +118,8 @@ namespace EndlessClient.Rendering
                 var msX = drawLocation.X;
                 var msY = drawLocation.Y - IGridDrawCoordinateCalculator.DefaultGridHeight / 2;
 
-                var widthFactor = _clientWindowSizeProvider.Width / 2;
-                var heightFactor = _clientWindowSizeProvider.Height / 2;
+                var widthFactor = _clientWindowSizeProvider.GameWidth / 2;
+                var heightFactor = _clientWindowSizeProvider.GameHeight / 2;
 
                 var offsetX = _renderOffsetCalculator.CalculateOffsetX(_characterProvider.MainCharacter.RenderProperties);
                 var offsetY = _renderOffsetCalculator.CalculateOffsetY(_characterProvider.MainCharacter.RenderProperties);

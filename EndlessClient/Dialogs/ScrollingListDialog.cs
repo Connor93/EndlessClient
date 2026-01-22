@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.Rendering;
 using EndlessClient.UIControls;
 using EOLib.Graphics;
 using EOLib.Shared;
@@ -369,7 +370,11 @@ namespace EndlessClient.Dialogs
             for (int i = 0; i < _listItems.Count; ++i)
                 _listItems[i].Index = i;
 
-            item.Dispose();
+            DispatcherGameComponent.Invoke(() =>
+            {
+                item.SetControlUnparented();
+                item.Dispose();
+            });
         }
 
         public void HighlightTextByLabel(IReadOnlyList<string> activeLabels)
@@ -389,13 +394,18 @@ namespace EndlessClient.Dialogs
 
         public void ClearItemList()
         {
-            foreach (var item in _listItems)
-            {
-                item.SetControlUnparented();
-                item.Dispose();
-            }
-
+            var itemsToDispose = _listItems.ToList();
             _listItems.Clear();
+
+            DispatcherGameComponent.Invoke(() =>
+            {
+                foreach (var item in itemsToDispose)
+                {
+                    item.SetControlUnparented();
+                    item.Dispose();
+                }
+            });
+
             _scrollBar.UpdateDimensions(0);
             _scrollBar.ScrollToTop();
         }
@@ -429,7 +439,7 @@ namespace EndlessClient.Dialogs
                 if (link && linkIndex < linkClickActions.Count)
                 {
                     var linkClickAction = linkClickActions[linkIndex++];
-                    nextItem.SetPrimaryClickAction((_, _) => linkClickAction());
+                    nextItem.SetPrimaryClickAction((_, _) => DispatcherGameComponent.Invoke(linkClickAction));
                 }
 
                 AddItemToList(nextItem, sortList: false);

@@ -57,7 +57,12 @@ namespace EndlessClient.GameExecution
         private Stopwatch _lastFrameRenderTime = Stopwatch.StartNew();
         private int _frames, _displayFrames;
         private Texture2D _black;
+#else
+        private SpriteBatch _spriteBatch;
 #endif
+
+        // Render target scaling fields
+        private RenderTarget2D _gameRenderTarget;
 
         public EndlessGame(IClientWindowSizeRepository windowSizeRepository,
                            IContentProvider contentProvider,
@@ -138,6 +143,25 @@ namespace EndlessClient.GameExecution
 
                 if (_windowSizeRepository.Height < ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT)
                     _windowSizeRepository.Height = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+
+                // Recreate the game render target if we're in scaled mode and dimensions changed
+                if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
+                {
+                    var newWidth = _windowSizeRepository.GameWidth;
+                    var newHeight = _windowSizeRepository.GameHeight;
+                    if (_gameRenderTarget.Width != newWidth || _gameRenderTarget.Height != newHeight)
+                    {
+                        System.Console.WriteLine($"[SCALED MODE] Recreating render target: {_gameRenderTarget.Width}x{_gameRenderTarget.Height} -> {newWidth}x{newHeight}");
+                        _gameRenderTarget.Dispose();
+                        _gameRenderTarget = new Microsoft.Xna.Framework.Graphics.RenderTarget2D(
+                            GraphicsDevice,
+                            newWidth,
+                            newHeight,
+                            false,
+                            Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color,
+                            Microsoft.Xna.Framework.Graphics.DepthFormat.None);
+                    }
+                }
             };
 
             Exiting += (_, _) => _mfxPlayer.StopBackgroundMusic();
@@ -145,8 +169,8 @@ namespace EndlessClient.GameExecution
 
         protected override void LoadContent()
         {
-#if DEBUG
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+#if DEBUG
             _black = new Texture2D(GraphicsDevice, 1, 1);
             _black.SetData(new[] { Color.Black });
 #endif
@@ -161,6 +185,35 @@ namespace EndlessClient.GameExecution
             _graphicsDeviceRepository.GraphicsDevice = GraphicsDevice;
             _graphicsDeviceRepository.GraphicsDeviceManager = _graphicsDeviceManager;
             _gameWindowRepository.Window = Window;
+
+            // Initialize scaled client mode if configured
+            if (_configurationProvider.ScaledClient)
+            {
+                _windowSizeRepository.IsScaledMode = true;
+
+                // Set configured game dimensions for when player logs in (0 = use default 640x480)
+                _windowSizeRepository.ConfiguredGameWidth = _configurationProvider.InGameWidth;
+                _windowSizeRepository.ConfiguredGameHeight = _configurationProvider.InGameHeight;
+
+                // Enable window resizing for scaling
+                Window.AllowUserResizing = true;
+
+                // Start at 640x480 for pre-login screens (IsInGame is false)
+                // Game dimensions will switch when player enters the game world
+                var startWidth = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
+                var startHeight = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+
+                System.Console.WriteLine($"[SCALED MODE] Config InGameWidth={_configurationProvider.InGameWidth}, InGameHeight={_configurationProvider.InGameHeight}");
+                System.Console.WriteLine($"[SCALED MODE] Starting at {startWidth}x{startHeight} (pre-login)");
+
+                _gameRenderTarget = new RenderTarget2D(
+                    GraphicsDevice,
+                    startWidth,
+                    startHeight,
+                    false,
+                    SurfaceFormat.Color,
+                    DepthFormat.None);
+            }
 
             SetUpInitialControlSet();
 
@@ -197,6 +250,12 @@ namespace EndlessClient.GameExecution
                 {
                     base.Update(gameTime);
                 }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("Collection was modified"))
+                {
+                    // XNAControls has a race condition where modifying controls during click event
+                    // enumeration causes a crash. Log and continue - the operation will retry next frame.
+                    System.Diagnostics.Debug.WriteLine($"[XNAControls] Collection modification during input: {ex.Message}");
+                }
 #if DEBUG
                 catch
                 {
@@ -217,9 +276,42 @@ namespace EndlessClient.GameExecution
         protected override void Draw(GameTime gameTime)
         {
             var isTestMode = _controlSetRepository.CurrentControlSet.GameState == GameStates.TestMode;
-            GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
 
-            base.Draw(gameTime);
+            // Use render target scaling when in scaled mode (both pre-login and in-game)
+            // XNAControls InputManager now supports coordinate transformation for correct hit detection
+            if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
+            {
+                // Render the game to the fixed-size render target
+                GraphicsDevice.SetRenderTarget(_gameRenderTarget);
+                GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
+
+                base.Draw(gameTime);
+
+                // Switch back to the main backbuffer and draw the scaled render target
+                GraphicsDevice.SetRenderTarget(null);
+                GraphicsDevice.Clear(Color.Black); // Letterbox/pillarbox color
+
+                // Calculate destination rectangle for scaled rendering
+                var scale = _windowSizeRepository.ScaleFactor;
+                var offset = _windowSizeRepository.RenderOffset;
+                var destRect = new Rectangle(
+                    offset.X,
+                    offset.Y,
+                    (int)(_windowSizeRepository.GameWidth * scale),
+                    (int)(_windowSizeRepository.GameHeight * scale));
+
+                // Draw scaled using point sampling for crisp pixels
+                _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+                _spriteBatch.Draw(_gameRenderTarget, destRect, Color.White);
+                _spriteBatch.End();
+            }
+            else
+            {
+                // Normal rendering path (no scaling) - used for in-game floating layout
+                GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
+                base.Draw(gameTime);
+            }
+
 #if DEBUG
             _frames++;
 

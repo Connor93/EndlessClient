@@ -176,6 +176,16 @@ namespace EndlessClient.Controllers
             }
         }
 
+        public bool UseItemById(int itemId)
+        {
+            var itemData = _eifFileProvider.EIFFile[itemId];
+            if (itemData == null)
+                return false;
+
+            UseItem(itemData);
+            return true;
+        }
+
         public void EquipItem(EIFRecord itemData)
         {
             var c = _characterProvider.MainCharacter;
@@ -403,6 +413,8 @@ namespace EndlessClient.Controllers
         void ShowPaperdollDialog();
 
         void UseItem(EIFRecord record);
+
+        bool UseItemById(int itemId);
 
         void EquipItem(EIFRecord itemData);
 

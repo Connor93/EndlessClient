@@ -50,7 +50,7 @@ namespace EndlessClient.ControlSets
             GetComponent<IHudPanel>(HudControlIdentifier.StatsPanel),
             GetComponent<IHudPanel>(HudControlIdentifier.OnlineListPanel),
             GetComponent<IHudPanel>(HudControlIdentifier.PartyPanel),
-            //macro panel
+            GetComponent<IHudPanel>(HudControlIdentifier.MacroPanel),
             GetComponent<IHudPanel>(HudControlIdentifier.SettingsPanel),
             GetComponent<IHudPanel>(HudControlIdentifier.HelpPanel)
         };

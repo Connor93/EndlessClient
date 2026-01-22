@@ -234,10 +234,10 @@ namespace EndlessClient.Rendering.Character
             var skinRect = _characterTextures.Skin.SourceRectangle;
 
             var xCoord = _clientWindowSizeRepository.Resizable
-                ? (_clientWindowSizeRepository.Width - skinRect.Width) / 2
+                ? (_clientWindowSizeRepository.GameWidth - skinRect.Width) / 2
                 : 310;
             var yCoord = _clientWindowSizeRepository.Resizable
-                ? (_clientWindowSizeRepository.Height - skinRect.Height) / 2 - 11
+                ? (_clientWindowSizeRepository.GameHeight - skinRect.Height) / 2 - 11
                 : (298 - skinRect.Height) / 2 - skinRect.Height / 4 - 3;
 
             SetAbsoluteScreenPosition(xCoord, yCoord);
@@ -268,34 +268,39 @@ namespace EndlessClient.Rendering.Character
 
         private void DrawToRenderTarget()
         {
+            // Guard against being called before fully initialized (can happen during window resize events)
+            if (_sb == null || _sb.IsDisposed ||
+                _charRenderTarget == null || _charRenderTarget.IsDisposed ||
+                GraphicsDevice == null || GraphicsDevice.IsDisposed)
+                return;
+
             var weaponMetadata = _weaponMetadataProvider.GetValueOrDefault(Character.RenderProperties.WeaponGraphic);
 
-            lock (_rt_locker_)
+            try
             {
-                GraphicsDevice.SetRenderTarget(_charRenderTarget);
-                GraphicsDevice.Clear(ClearOptions.Target, Color.Transparent, 0, 0);
-                _sb.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend);
+                lock (_rt_locker_)
+                {
+                    GraphicsDevice.SetRenderTarget(_charRenderTarget);
+                    GraphicsDevice.Clear(ClearOptions.Target, Color.Transparent, 0, 0);
+                    _sb.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend);
 
-                var characterPropertyRenderers = _characterPropertyRendererBuilder
-                    .BuildList(_characterTextures, _character.RenderProperties)
-                    .Where(x => x.CanRender);
-                foreach (var renderer in characterPropertyRenderers)
-                    renderer.Render(_sb, DrawArea, weaponMetadata);
+                    var characterPropertyRenderers = _characterPropertyRendererBuilder
+                        .BuildList(_characterTextures, _character.RenderProperties)
+                        .Where(x => x.CanRender);
+                    foreach (var renderer in characterPropertyRenderers)
+                        renderer.Render(_sb, DrawArea, weaponMetadata);
 
-                //if (_gameStateProvider.CurrentState == GameStates.None)
-                //{
-                //    _sb.Draw(_outline, DrawArea.WithSize(DrawArea.Width, 1), Color.Black);
-                //    _sb.Draw(_outline, DrawArea.WithPosition(new Vector2(DrawArea.X + DrawArea.Width, DrawArea.Y)).WithSize(1, DrawArea.Height), Color.Black);
-                //    _sb.Draw(_outline, DrawArea.WithPosition(new Vector2(DrawArea.X, DrawArea.Y + DrawArea.Height)).WithSize(DrawArea.Width, 1), Color.Black);
-                //    _sb.Draw(_outline, DrawArea.WithSize(1, DrawArea.Height), Color.Black);
+                    _sb.End();
+                    GraphicsDevice.SetRenderTarget(null);
 
-                //    _sb.Draw(_outline, DrawArea, Color.FromNonPremultiplied(255, 0, 0, 64));
-                //}
-
-                _sb.End();
-                GraphicsDevice.SetRenderTarget(null);
-
-                ClipHair();
+                    ClipHair();
+                }
+            }
+            catch (NullReferenceException)
+            {
+                // Graphics device may be in an invalid state during resize - defer to next frame
+                _textureUpdateRequired = true;
+                try { GraphicsDevice?.SetRenderTarget(null); } catch { }
             }
         }
 
@@ -313,8 +318,8 @@ namespace EndlessClient.Rendering.Character
 
         private void SetGridCoordinatePosition()
         {
-            var centerX = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.Width - DrawArea.Width) / 2 : 310;
-            var centerY = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.Height - DrawArea.Height) / 2 - 8 : 104;
+            var centerX = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.GameWidth - DrawArea.Width) / 2 : 310;
+            var centerY = _clientWindowSizeRepository.Resizable ? (_clientWindowSizeRepository.GameHeight - DrawArea.Height) / 2 - 8 : 104;
 
             var screenX = _renderOffsetCalculator.CalculateOffsetX(_character.RenderProperties) + centerX - GetMainCharacterOffsetX();
             var screenY = _renderOffsetCalculator.CalculateOffsetY(_character.RenderProperties) + centerY - GetMainCharacterOffsetY();
@@ -515,7 +520,18 @@ namespace EndlessClient.Rendering.Character
 
         private void RecreateRenderTargetEvent(object sender, EventArgs e)
         {
+            // Guard: Don't process if Initialize() hasn't completed yet
+            if (_sb == null)
+                return;
+
             RecreateRenderTarget();
+
+            // Recreate SpriteBatch as it may be invalid after graphics device operations
+            _sb?.Dispose();
+            _sb = new SpriteBatch(Game.GraphicsDevice);
+
+            // Force texture update for all characters when window is resized
+            _textureUpdateRequired = true;
 
             if (_character == _characterProvider.MainCharacter)
                 SetToCenterScreenPosition();

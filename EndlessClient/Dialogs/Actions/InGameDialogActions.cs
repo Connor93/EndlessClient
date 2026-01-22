@@ -165,7 +165,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.PaperdollDialog.MatchNone(() =>
             {
                 var dlg = _paperdollDialogFactory.Create(character, isMainCharacter);
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<PaperdollDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.PaperdollDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -195,7 +195,7 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _shopDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.ShopDialog = Option.None<ShopDialog>();
+                    _activeDialogRepository.ShopDialog = Option.None<IXNADialog>();
                     _shopDataRepository.ResetState();
                 };
                 _activeDialogRepository.ShopDialog = Option.Some(dlg);
@@ -213,7 +213,7 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _questDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.QuestDialog = Option.None<QuestDialog>();
+                    _activeDialogRepository.QuestDialog = Option.None<IXNADialog>();
                     _questDataRepository.ResetState();
                 };
                 _activeDialogRepository.QuestDialog = Option.Some(dlg);
@@ -229,7 +229,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.ChestDialog.MatchNone(() =>
             {
                 var dlg = _chestDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.ChestDialog = Option.None<ChestDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.ChestDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.ChestDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -244,7 +244,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.LockerDialog.MatchNone(() =>
             {
                 var dlg = _lockerDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.LockerDialog = Option.None<LockerDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.LockerDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.LockerDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -365,7 +365,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.TradeDialog.MatchNone(() =>
             {
                 var dlg = _tradeDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.TradeDialog = Option.None<TradeDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.TradeDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.TradeDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -376,7 +376,11 @@ namespace EndlessClient.Dialogs.Actions
 
         public void CloseTradeDialog()
         {
-            DispatcherGameComponent.Invoke(() => _activeDialogRepository.TradeDialog.MatchSome(dlg => dlg.Close()));
+            DispatcherGameComponent.Invoke(() => _activeDialogRepository.TradeDialog.MatchSome(dlg =>
+            {
+                if (dlg is BaseEODialog baseDialog) baseDialog.Close();
+                else if (dlg is CodeDrawnTradeDialog codeDrawn) codeDrawn.Close();
+            }));
         }
 
         public void ShowBoardDialog()
@@ -487,6 +491,15 @@ namespace EndlessClient.Dialogs.Actions
             });
         }
 
+        private void UseDefaultDialogSounds(IXNADialog dialog)
+        {
+            dialog.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
+
+            // Also hook up button sounds for any child buttons
+            foreach (var button in dialog.ChildControls.OfType<IXNAButton>())
+                button.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
+        }
+
         private void UseDefaultDialogSounds(ScrollingListDialog dialog)
         {
             UseDefaultDialogSounds((BaseEODialog)dialog);
@@ -505,12 +518,20 @@ namespace EndlessClient.Dialogs.Actions
                 textbox.OnGotFocus += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
         }
 
-        private void UseQuestDialogSounds(QuestDialog dialog)
+        private void UseQuestDialogSounds(IXNADialog dialog)
         {
             dialog.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
-            dialog.BackAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
-            dialog.NextAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
-            dialog.ClickSoundEffect += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+
+            if (dialog is QuestDialog questDialog)
+            {
+                questDialog.BackAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
+                questDialog.NextAction += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.TextBoxFocus);
+                questDialog.ClickSoundEffect += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+            }
+            else if (dialog is CodeDrawnQuestDialog codeDrawnDialog)
+            {
+                codeDrawnDialog.ClickSoundEffect += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+            }
         }
     }
 

@@ -1,10 +1,15 @@
+using System;
 using System.Text;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
+using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
+using EndlessClient.UI.Styles;
+using EOLib.Config;
 using EOLib.Graphics;
 using EOLib.Localization;
+using EOLib.Shared;
 using Optional;
 using XNAControls;
 
@@ -19,13 +24,19 @@ namespace EndlessClient.Dialogs.Factories
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly IActiveDialogRepository _activeDialogRepository;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IUIStyleProviderFactory _styleProviderFactory;
+        private readonly IContentProvider _contentProvider;
 
         public EOMessageBoxFactory(INativeGraphicsManager nativeGraphicsManager,
                                    IGameStateProvider gameStateProvider,
                                    IEODialogButtonService eoDialogButtonService,
                                    ILocalizedStringFinder localizedStringFinder,
                                    IActiveDialogRepository activeDialogRepository,
-                                   ISfxPlayer sfxPlayer)
+                                   ISfxPlayer sfxPlayer,
+                                   IConfigurationProvider configProvider,
+                                   IUIStyleProviderFactory styleProviderFactory,
+                                   IContentProvider contentProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _gameStateProvider = gameStateProvider;
@@ -33,6 +44,9 @@ namespace EndlessClient.Dialogs.Factories
             _localizedStringFinder = localizedStringFinder;
             _activeDialogRepository = activeDialogRepository;
             _sfxPlayer = sfxPlayer;
+            _configProvider = configProvider;
+            _styleProviderFactory = styleProviderFactory;
+            _contentProvider = contentProvider;
         }
 
         public IXNADialog CreateMessageBox(string message,
@@ -40,18 +54,35 @@ namespace EndlessClient.Dialogs.Factories
                                            EODialogButtons whichButtons = EODialogButtons.Ok,
                                            EOMessageBoxStyle style = EOMessageBoxStyle.SmallDialogSmallHeader)
         {
+            IXNADialog messageBox;
 
-            var messageBox = new EOMessageBox(_nativeGraphicsManager,
+            if (_configProvider.UIMode == UIMode.Code)
+            {
+                var codeDialog = new CodeDrawnDialog(_styleProviderFactory.Create(), _gameStateProvider)
+                {
+                    Message = message,
+                    Caption = caption
+                };
+                var font = _contentProvider.Fonts[Constants.FontSize09];
+                codeDialog.SetupDialog(whichButtons, font);
+                messageBox = codeDialog;
+            }
+            else
+            {
+                messageBox = new EOMessageBox(_nativeGraphicsManager,
                                               _gameStateProvider,
                                               _eoDialogButtonService,
                                               message,
                                               caption,
                                               style,
                                               whichButtons);
+            }
+
             messageBox.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
             messageBox.DialogClosed += (_, _) => _activeDialogRepository.MessageBox = Option.None<EOMessageBox>();
 
-            _activeDialogRepository.MessageBox = Option.Some(messageBox);
+            if (messageBox is EOMessageBox gfxBox)
+                _activeDialogRepository.MessageBox = Option.Some(gfxBox);
 
             return messageBox;
         }

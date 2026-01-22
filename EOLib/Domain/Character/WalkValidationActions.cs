@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AutomaticTypeMapper;
+using EOLib.Config;
 using EOLib.Domain.Extensions;
 using EOLib.Domain.Map;
 using EOLib.IO.Map;
@@ -26,18 +27,21 @@ namespace EOLib.Domain.Character
         private readonly ICurrentMapStateProvider _currentMapStateProvider;
         private readonly IUnlockDoorValidator _unlockDoorValidator;
         private readonly IGhostingRepository _ghostingRepository;
+        private readonly IConfigurationProvider _configurationProvider;
 
         public WalkValidationActions(IMapCellStateProvider mapCellStateProvider,
                                      ICharacterProvider characterProvider,
                                      ICurrentMapStateProvider currentMapStateProvider,
                                      IUnlockDoorValidator unlockDoorValidator,
-                                     IGhostingRepository ghostingRepository)
+                                     IGhostingRepository ghostingRepository,
+                                     IConfigurationProvider configurationProvider)
         {
             _mapCellStateProvider = mapCellStateProvider;
             _characterProvider = characterProvider;
             _currentMapStateProvider = currentMapStateProvider;
             _unlockDoorValidator = unlockDoorValidator;
             _ghostingRepository = ghostingRepository;
+            _configurationProvider = configurationProvider;
 
         }
 
@@ -93,7 +97,7 @@ namespace EOLib.Domain.Character
                     return BoolToWalkResult(IsTileSpecWalkable(cellState.TileSpec));
                 },
                 none: () => cellState.NPC.Match(
-                    some: _ => BoolToWalkResult(mc.NoWall && IsTileSpecWalkable(cellState.TileSpec)),
+                    some: _ => BoolToWalkResult((mc.NoWall || _configurationProvider.NPCGhosting) && IsTileSpecWalkable(cellState.TileSpec)),
                     none: () => cellState.Warp.Match(
                         some: w => BoolToWalkResult(mc.NoWall || IsWarpWalkable(w, cellState.TileSpec)),
                         none: () => BoolToWalkResult(mc.NoWall || IsTileSpecWalkable(cellState.TileSpec)))));
