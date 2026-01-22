@@ -94,15 +94,19 @@ namespace EndlessClient.Rendering.Chat
         {
             SetLabelDrawPosition();
 
-            // Apply zoom to draw location
+            // Apply zoom to draw location - zoom the parent's center position, then center the label
             var zoom = _configurationProvider.MapZoom;
             if (zoom != 1.0f)
             {
                 var centerX = _clientWindowSizeProvider.GameWidth / 2f;
                 var centerY = _clientWindowSizeProvider.GameHeight / 2f;
-                var zoomedX = (_textLabel.DrawPosition.X - centerX) * zoom + centerX;
-                var zoomedY = (_textLabel.DrawPosition.Y - centerY) * zoom + centerY;
-                _textLabel.DrawPosition = new Vector2(zoomedX, zoomedY);
+                // Zoom the parent's center position first
+                var zoomedHorizontalCenter = (_parent.HorizontalCenter - centerX) * zoom + centerX;
+                var zoomedNameLabelY = (_parent.NameLabelY - _textLabel.ActualHeight + 10 - centerY) * zoom + centerY;
+                // Then center the unzoomed label around the zoomed position
+                _textLabel.DrawPosition = new Vector2(
+                    zoomedHorizontalCenter - _textLabel.ActualWidth / 2.0f,
+                    zoomedNameLabelY);
             }
 
             _drawLocation = _textLabel.DrawPosition - new Vector2(

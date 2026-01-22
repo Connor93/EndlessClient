@@ -273,17 +273,8 @@ namespace EndlessClient.Rendering.Map
         {
             var mousePos = _userInputProvider.CurrentMouseState.Position;
 
-            // First: transform from window coords to game coords (scaled mode)
-            if (_clientWindowSizeProvider.IsScaledMode)
-            {
-                var offset = _clientWindowSizeProvider.RenderOffset;
-                var scale = _clientWindowSizeProvider.ScaleFactor;
-                mousePos = new Point(
-                    (int)((mousePos.X - offset.X) / scale),
-                    (int)((mousePos.Y - offset.Y) / scale));
-            }
-
-            // Second: apply inverse zoom transform
+            // Note: Scaled mode transform is NOT needed - DrawArea is in game coordinates
+            // and the rendering pipeline handles window→game mapping.
             var zoom = _configurationProvider.MapZoom;
             if (zoom == 1.0f)
                 return mousePos;

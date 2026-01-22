@@ -325,37 +325,27 @@ namespace EndlessClient.Rendering.NPC
 
         private Vector2 GetNameLabelPosition()
         {
-            var baseX = HorizontalCenter - (_nameLabel.ActualWidth / 2f);
-            var baseY = (float)NameLabelY;
-
             // Apply zoom transformation for labels drawn outside the zoomed map spritebatch
             var zoom = _configurationProvider.MapZoom;
             if (zoom != 1.0f)
             {
+                // First zoom the NPC's center position, then center the label around it
                 var centerX = _clientWindowSizeProvider.GameWidth / 2f;
                 var centerY = _clientWindowSizeProvider.GameHeight / 2f;
-                baseX = (baseX - centerX) * zoom + centerX;
-                baseY = (baseY - centerY) * zoom + centerY;
+                var zoomedHorizontalCenter = (HorizontalCenter - centerX) * zoom + centerX;
+                var zoomedNameLabelY = (NameLabelY - centerY) * zoom + centerY;
+                return new Vector2(zoomedHorizontalCenter - (_nameLabel.ActualWidth / 2f), zoomedNameLabelY);
             }
 
-            return new Vector2(baseX, baseY);
+            return new Vector2(HorizontalCenter - (_nameLabel.ActualWidth / 2f), NameLabelY);
         }
 
         private Point GetZoomAdjustedMousePosition()
         {
             var mousePos = _userInputProvider.CurrentMouseState.Position;
 
-            // First: transform from window coords to game coords (scaled mode)
-            if (_clientWindowSizeProvider.IsScaledMode)
-            {
-                var offset = _clientWindowSizeProvider.RenderOffset;
-                var scale = _clientWindowSizeProvider.ScaleFactor;
-                mousePos = new Point(
-                    (int)((mousePos.X - offset.X) / scale),
-                    (int)((mousePos.Y - offset.Y) / scale));
-            }
-
-            // Second: apply inverse zoom transform
+            // Note: Scaled mode transform is NOT needed - DrawArea is in game coordinates
+            // and the rendering pipeline handles window→game mapping.
             var zoom = _configurationProvider.MapZoom;
             if (zoom == 1.0f)
                 return mousePos;

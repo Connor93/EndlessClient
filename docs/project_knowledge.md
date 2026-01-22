@@ -1109,4 +1109,93 @@ protected override void OnVisibleChanged(object sender, EventArgs args)
 ### F-Key Binding
 F-key spell casting now only uses Macro panel (no fallback to Active Spells slots).
 
+## 19. Zoom and Scaled Mode Coordinate Handling
+
+### Coordinate Systems Overview
+EndlessClient uses two independent coordinate scaling systems:
+
+1. **Scaled Mode** (window resize): Fits the 1200×800 game canvas into different window sizes
+2. **Map Zoom**: In-game zoom feature controlled by scroll wheel
+
+### Critical Insight: Scaled Mode Does NOT Require Hit-Test Transforms
+**DO NOT** apply window→game coordinate transforms for mouse hit-testing in scaled mode:
+
+```csharp
+// WRONG - causes hit detection to break when window is resized
+if (_clientWindowSizeProvider.IsScaledMode)
+{
+    mousePos = ((mousePos.X - offset.X) / scale, (mousePos.Y - offset.Y) / scale);
+}
+
+// CORRECT - only apply zoom transform, not scaled mode transform
+private Point GetZoomAdjustedMousePosition()
+{
+    var mousePos = _userInputProvider.CurrentMouseState.Position;
+    
+    // Scaled mode transform NOT needed - DrawArea is in game coordinates
+    // and the rendering pipeline handles window→game mapping automatically.
+    
+    var zoom = _configurationProvider.MapZoom;
+    if (zoom == 1.0f)
+        return mousePos;
+        
+    var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+    var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+    return new Point(
+        (int)((mousePos.X - centerX) / zoom + centerX),
+        (int)((mousePos.Y - centerY) / zoom + centerY));
+}
+```
+
+**Why**: DrawArea is calculated using `GameWidth`/`GameHeight` (1200×800), not window dimensions. The XNA/MonoGame rendering pipeline automatically handles the visual scaling, so the raw mouse coordinates (in effective game space) already match DrawArea positions.
+
+### Map Zoom Hit Detection
+When map zoom (scroll wheel) is enabled, hit detection requires inverse zoom transformation:
+
+```csharp
+// Map zoom IS needed for hit detection
+var zoom = _configurationProvider.MapZoom;
+var centerX = GameWidth / 2f;
+var centerY = GameHeight / 2f;
+// Transform: (mousePos - center) / zoom + center
+```
+
+### Map Zoom Label/UI Positioning
+For labels and UI elements that render outside the zoomed map SpriteBatch (like name labels, chat bubbles, context menus), apply zoom transformation to positions:
+
+**Key formula**: Zoom the center point first, THEN center the un-zoomed element:
+
+```csharp
+// CORRECT - zoom position first, then center the label
+var zoomedHorizontalCenter = (HorizontalCenter - centerX) * zoom + centerX;
+return new Vector2(zoomedHorizontalCenter - (label.ActualWidth / 2f), zoomedNameLabelY);
+
+// WRONG - zooming the already-centered position
+var baseX = HorizontalCenter - (label.ActualWidth / 2f);
+baseX = (baseX - centerX) * zoom + centerX;  // Label width shouldn't be zoomed!
+```
+
+### Files with Zoom Handling
+These files contain `GetZoomAdjustedMousePosition()` for hit detection:
+- `CharacterRenderer.cs` - Player hover/clicks
+- `NPCRenderer.cs` - NPC hover/clicks
+- `ClickDispatcher.cs` - Right-click menu triggering
+- `DynamicMapObjectUpdater.cs` - Map object interactions
+
+These files have zoom-aware label positioning:
+- `CharacterRenderer.GetNameLabelPosition()` - Player name labels
+- `NPCRenderer.GetNameLabelPosition()` - NPC name labels
+- `ChatBubble.Update()` - Chat bubbles above characters
+- `ContextMenuRenderer.SetPositionBasedOnCharacterRenderer()` - Right-click menus
+
+### ClientWindowSizeProvider Key Properties
+| Property | Scaled Mode Value | Non-Scaled Mode Value |
+|----------|-------------------|----------------------|
+| `Width` | `GameWidth` (1200) | `WindowWidth` (actual) |
+| `Height` | `GameHeight` (800) | `WindowHeight` (actual) |
+| `GameWidth` | `ConfiguredGameWidth` (1200) | `WindowWidth` |
+| `GameHeight` | `ConfiguredGameHeight` (800) | `WindowHeight` |
+| `ScaleFactor` | `min(WindowW/GameW, WindowH/GameH)` | 1.0 |
+| `RenderOffset` | Letterbox/pillarbox offset | (0, 0) |
+
 

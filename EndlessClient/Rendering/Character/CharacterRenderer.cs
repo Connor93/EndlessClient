@@ -403,37 +403,30 @@ namespace EndlessClient.Rendering.Character
         private Vector2 GetNameLabelPosition()
         {
             NameLabelY = DrawArea.Y - 12 - (int)(_nameLabel?.ActualHeight ?? 0) + ((int)Character.RenderProperties.SitState) * 10;
-            var baseX = HorizontalCenter - (_nameLabel.ActualWidth / 2f);
-            var baseY = (float)NameLabelY;
 
             // Apply zoom transformation for labels drawn outside the zoomed map spritebatch
             var zoom = _configurationProvider.MapZoom;
             if (zoom != 1.0f && !_isUiControl)
             {
+                // First zoom the character's center position, then center the label around it
                 var centerX = _clientWindowSizeRepository.GameWidth / 2f;
                 var centerY = _clientWindowSizeRepository.GameHeight / 2f;
-                baseX = (baseX - centerX) * zoom + centerX;
-                baseY = (baseY - centerY) * zoom + centerY;
+                var zoomedHorizontalCenter = (HorizontalCenter - centerX) * zoom + centerX;
+                var zoomedNameLabelY = (NameLabelY - centerY) * zoom + centerY;
+                return new Vector2(zoomedHorizontalCenter - (_nameLabel.ActualWidth / 2f), zoomedNameLabelY);
             }
 
-            return new Vector2(baseX, baseY);
+            return new Vector2(HorizontalCenter - (_nameLabel.ActualWidth / 2f), NameLabelY);
         }
 
         private Point GetZoomAdjustedMousePosition()
         {
             var mousePos = _userInputProvider.CurrentMouseState.Position;
 
-            // First: transform from window coords to game coords (scaled mode)
-            if (_clientWindowSizeRepository.IsScaledMode)
-            {
-                var offset = _clientWindowSizeRepository.RenderOffset;
-                var scale = _clientWindowSizeRepository.ScaleFactor;
-                mousePos = new Point(
-                    (int)((mousePos.X - offset.X) / scale),
-                    (int)((mousePos.Y - offset.Y) / scale));
-            }
+            // Note: Scaled mode transform is NOT needed here because DrawArea positions are already
+            // calculated in game coordinates and the rendering pipeline handles the window→game mapping.
+            // We only need to apply inverse zoom transform for the map zoom feature.
 
-            // Second: apply inverse zoom transform
             var zoom = _configurationProvider.MapZoom;
             if (zoom == 1.0f)
                 return mousePos;
