@@ -28,6 +28,7 @@ namespace EndlessClient.HUD.Panels
         private readonly IHudControlProvider _hudControlProvider;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _chatFont;
         private readonly BitmapFont _labelFont;
 
@@ -58,6 +59,7 @@ namespace EndlessClient.HUD.Panels
             _hudControlProvider = hudControlProvider;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _chatFont = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
@@ -119,7 +121,8 @@ namespace EndlessClient.HUD.Panels
 
         protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
         {
-            var mousePos = eventArgs.Position;
+            // Transform mouse position for scaled mode
+            var mousePos = TransformMousePosition(eventArgs.Position);
             var panelPos = DrawAreaWithParentOffset;
 
             // Check if clicked on a tab
@@ -325,6 +328,22 @@ namespace EndlessClient.HUD.Panels
                 Label = label;
                 Active = active;
             }
+        }
+
+        private Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
         }
     }
 }

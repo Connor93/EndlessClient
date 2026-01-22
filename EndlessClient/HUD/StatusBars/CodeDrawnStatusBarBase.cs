@@ -170,7 +170,9 @@ namespace EndlessClient.HUD.StatusBars
 
         protected void ChangeStatusBarPosition()
         {
-            var xCoord = (_clientWindowSizeProvider.Width / 2) + StatusBarIndex * DrawArea.Width;
+            // Add extra spacing between bars to account for label width (label is drawn to the left of bar)
+            var barSpacing = DrawArea.Width + 40; // Extra 40px for label
+            var xCoord = (_clientWindowSizeProvider.Width / 2) + StatusBarIndex * barSpacing;
             DrawPosition = new Vector2(xCoord, 0);
         }
 

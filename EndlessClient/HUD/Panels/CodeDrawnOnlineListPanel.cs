@@ -38,6 +38,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _headerFont;
 
@@ -87,6 +88,7 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _headerFont = contentProvider.Fonts[Constants.FontSize09];
 
@@ -133,9 +135,10 @@ namespace EndlessClient.HUD.Panels
                 }
             }
 
-            // Handle clicks
+            // Handle clicks - transform mouse position for scaled mode
             var mouseState = Mouse.GetState();
-            var mousePos = new Point(mouseState.X, mouseState.Y);
+            var rawMousePos = new Point(mouseState.X, mouseState.Y);
+            var mousePos = TransformMousePosition(rawMousePos);
             var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
 
             // Handle mousewheel scrolling when mouse is over panel
@@ -303,6 +306,22 @@ namespace EndlessClient.HUD.Panels
                 CharacterIcon.Gm or CharacterIcon.Hgm or CharacterIcon.GmParty or CharacterIcon.HgmParty => true,
                 _ => false,
             };
+        }
+
+        private Point TransformMousePosition(Point position)
+        {
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
         }
     }
 }
