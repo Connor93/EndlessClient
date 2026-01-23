@@ -477,8 +477,12 @@ namespace EndlessClient.HUD.Panels
                                 if (item.Data.GetEquipLocation() != EquipLocation.PAPERDOLL_MAX)
                                     _inventoryController.EquipItem(item.Data);
                                 break;
-                            case ChestDialog: _inventoryController.DropItemInChest(item.Data, item.InventoryItem); break;
-                            case LockerDialog: _inventoryController.DropItemInLocker(item.Data, item.InventoryItem); break;
+                            case ChestDialog:
+                            case CodeDrawnChestDialog:
+                                _inventoryController.DropItemInChest(item.Data, item.InventoryItem); break;
+                            case LockerDialog:
+                            case CodeDrawnLockerDialog:
+                                _inventoryController.DropItemInLocker(item.Data, item.InventoryItem); break;
                             case BankAccountDialog:
                                 if (item.Data.ID == 1)
                                     _inventoryController.DropItemInBank(item.Data, item.InventoryItem);

@@ -52,7 +52,7 @@ namespace EndlessClient.HUD.Controls
 
             SetControlUnparented();
             Game.Components.Add(this);
-            DrawOrder = 1000;
+            DrawOrder = 10000;
 
             DraggingStarted?.Invoke(this, EventArgs.Empty);
         }

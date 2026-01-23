@@ -147,7 +147,7 @@ namespace EndlessClient.Dialogs
             return button;
         }
 
-        public void AddItem(string primaryText, string subText = "", object data = null, Action<CodeDrawnListItem> onClick = null, bool isLink = false, Texture2D icon = null)
+        public void AddItem(string primaryText, string subText = "", object data = null, Action<CodeDrawnListItem> onClick = null, Action<CodeDrawnListItem> onRightClick = null, bool isLink = false, Texture2D icon = null)
         {
             // Calculate max width for text (with some padding)
             var maxTextWidth = DialogWidth - 56;
@@ -190,9 +190,12 @@ namespace EndlessClient.Dialogs
                     IconGraphic = i == 0 ? icon : null // Only first line shows icon
                 };
 
-                // Only attach click handler to first line for links, or to all items if not a link
+                // Only attach click handlers to first line for links, or to all items if not a link
                 if (onClick != null && (i == 0 || !isLink))
                     item.LeftClick += (_, _) => onClick(item);
+
+                if (onRightClick != null && (i == 0 || !isLink))
+                    item.RightClick += (_, _) => onRightClick(item);
 
                 _listItems.Add(item);
             }
@@ -302,6 +305,11 @@ namespace EndlessClient.Dialogs
 
             base.OnDrawControl(gameTime);
         }
+
+        // Absorb all clicks on the dialog background to prevent click-through to underlying controls
+        protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs) => true;
+
+        protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs) => true;
 
         protected override bool HandleMouseWheelMoved(IXNAControl control, MouseEventArgs eventArgs)
         {

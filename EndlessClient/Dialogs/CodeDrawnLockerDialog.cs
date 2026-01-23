@@ -129,7 +129,7 @@ namespace EndlessClient.Dialogs
 
                 var lockerItem = item;
                 AddItem(itemData.Name, subText: subText, data: lockerItem,
-                    onClick: _ => TakeItem(itemData, lockerItem),
+                    onRightClick: _ => TakeItem(itemData, lockerItem),
                     isLink: true,
                     icon: itemIcon);
             }
