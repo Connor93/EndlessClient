@@ -119,6 +119,9 @@ namespace EndlessClient.Rendering.Map
         {
             _clientWindowSizeRepository.GameWindowSizeChanged += ResizeGameWindow;
 
+            // Run after UI panels (UpdateOrder=-1 or 0) so ScrollWheelConsumed flag is set before we check it
+            UpdateOrder = 1;
+
             _mapBaseTarget = _renderTargetFactory.CreateRenderTarget();
             _mapObjectTarget = _renderTargetFactory.CreateRenderTarget();
             _sb = new SpriteBatch(Game.GraphicsDevice);
@@ -543,11 +546,17 @@ namespace EndlessClient.Rendering.Map
             if (!_configurationRepository.ScrollWheelZoom)
                 return;
 
+            // Always read and update the scroll tracking value to stay in sync,
+            // even if we're going to skip zooming due to UI consumption
             var currentScrollValue = _userInputProvider.CurrentMouseState.ScrollWheelValue;
             var scrollDelta = currentScrollValue - _lastScrollWheelValue;
             _lastScrollWheelValue = currentScrollValue;
 
             if (scrollDelta == 0)
+                return;
+
+            // Skip zoom if a UI component (scrollbar) already consumed this scroll input
+            if (_userInputProvider.ScrollWheelConsumed)
                 return;
 
             // Predefined zoom levels

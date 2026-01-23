@@ -25,6 +25,9 @@ namespace EndlessClient.Input
 
         public override void Update(GameTime gameTime)
         {
+            // Reset scroll wheel consumed flag at the start of each frame
+            _userInputRepository.ScrollWheelConsumed = false;
+
             _userInputRepository.CurrentKeyState = Keyboard.GetState();
 
             var rawMouseState = Mouse.GetState();

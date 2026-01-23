@@ -1,4 +1,5 @@
 using System;
+using EndlessClient.Input;
 using EndlessClient.UI.Styles;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -218,6 +219,7 @@ namespace EndlessClient.UI.Controls
             var newOffset = ScrollOffset + dif;
             ScrollOffset = Math.Clamp(newOffset, 0, _totalHeight - LinesToRender);
 
+            ScrollWheelConsumedHelper.MarkConsumed();
             return true;
         }
     }

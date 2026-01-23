@@ -12,6 +12,12 @@ namespace EndlessClient.Input
         MouseState PreviousMouseState { get; set; }
 
         MouseState CurrentMouseState { get; set; }
+
+        /// <summary>
+        /// Set to true when a UI component consumes the scroll wheel input.
+        /// Reset at the start of each frame by CurrentUserInputTracker.
+        /// </summary>
+        bool ScrollWheelConsumed { get; set; }
     }
 
     public interface IUserInputProvider
@@ -23,6 +29,11 @@ namespace EndlessClient.Input
         MouseState PreviousMouseState { get; }
 
         MouseState CurrentMouseState { get; }
+
+        /// <summary>
+        /// Returns true if a UI component has consumed the scroll wheel input this frame.
+        /// </summary>
+        bool ScrollWheelConsumed { get; }
     }
 
     [MappedType(BaseType = typeof(IUserInputRepository), IsSingleton = true)]
@@ -36,5 +47,7 @@ namespace EndlessClient.Input
         public MouseState PreviousMouseState { get; set; }
 
         public MouseState CurrentMouseState { get; set; }
+
+        public bool ScrollWheelConsumed { get; set; }
     }
 }

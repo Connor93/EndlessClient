@@ -652,6 +652,8 @@ namespace EndlessClient.HUD.Controls
 
         private CurrentUserInputTracker CreateCurrentUserInputTracker()
         {
+            // Initialize the scroll wheel consumed helper for scrollbar-to-zoom coordination
+            ScrollWheelConsumedHelper.Initialize(_userInputRepository);
             return new CurrentUserInputTracker(_endlessGameProvider, _userInputRepository, _clientWindowSizeRepository);
         }
 

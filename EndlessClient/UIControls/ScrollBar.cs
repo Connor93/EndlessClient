@@ -1,4 +1,5 @@
 ﻿using System;
+using EndlessClient.Input;
 using EOLib.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -229,6 +230,7 @@ namespace EndlessClient.UIControls
                     _scrollButton.DrawPosition = new Vector2(_scrollButton.DrawPosition.X, scrollArea.Height - _scrollButton.DrawArea.Height);
             }
 
+            ScrollWheelConsumedHelper.MarkConsumed();
             return true;
         }
     }
