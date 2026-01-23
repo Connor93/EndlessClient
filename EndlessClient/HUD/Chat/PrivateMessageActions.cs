@@ -67,7 +67,7 @@ namespace EndlessClient.HUD.Chat
             return (true, messageParts[0]);
         }
 
-        private ChatPanel ChatPanel => _hudControlProvider.GetComponent<ChatPanel>(HudControlIdentifier.ChatPanel);
+        private IChatPanel ChatPanel => _hudControlProvider.GetComponent<IChatPanel>(HudControlIdentifier.ChatPanel);
 
         private ChatTab CurrentTab => ChatPanel.CurrentTab;
     }

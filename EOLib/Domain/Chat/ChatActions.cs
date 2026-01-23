@@ -156,10 +156,13 @@ namespace EOLib.Domain.Chat
                     _chatRepository.AllChat[ChatTab.Group].Add(new ChatData(ChatTab.Group, who, chat, ChatIcon.HGM, ChatColor.Admin));
                     break;
                 case ChatType.PM:
-                    if (targetCharacter == _chatRepository.PMTarget1)
+                    if (string.Equals(targetCharacter, _chatRepository.PMTarget1, StringComparison.OrdinalIgnoreCase))
                         _chatRepository.AllChat[ChatTab.Private1].Add(new ChatData(ChatTab.Private1, who, chat, ChatIcon.Note, ChatColor.PM));
-                    else if (targetCharacter == _chatRepository.PMTarget2)
+                    else if (string.Equals(targetCharacter, _chatRepository.PMTarget2, StringComparison.OrdinalIgnoreCase))
                         _chatRepository.AllChat[ChatTab.Private2].Add(new ChatData(ChatTab.Private2, who, chat, ChatIcon.Note, ChatColor.PM));
+                    else
+                        // Fallback: show in Local tab when both PM slots are full
+                        _chatRepository.AllChat[ChatTab.Local].Add(new ChatData(ChatTab.Local, who, $"[To {targetCharacter}] {chat}", ChatIcon.Note, ChatColor.PM));
 
                     break;
                 case ChatType.Local:

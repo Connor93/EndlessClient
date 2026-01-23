@@ -53,9 +53,9 @@ namespace EndlessClient.HUD.Chat
 
         public void NotifyPrivateMessageRecipientNotFound(string recipientName)
         {
-            var whichTab = _chatRepository.PMTarget1.ToLower() == recipientName.ToLower()
+            var whichTab = string.Equals(_chatRepository.PMTarget1, recipientName, StringComparison.OrdinalIgnoreCase)
                 ? Option.Some(ChatTab.Private1)
-                : _chatRepository.PMTarget2.ToLower() == recipientName.ToLower()
+                : string.Equals(_chatRepository.PMTarget2, recipientName, StringComparison.OrdinalIgnoreCase)
                     ? Option.Some(ChatTab.Private2)
                     : Option.None<ChatTab>();
 
@@ -68,7 +68,7 @@ namespace EndlessClient.HUD.Chat
 
                 _chatRepository.AllChat[tab].Clear();
 
-                var chatPanel = _hudControlProvider.GetComponent<ChatPanel>(HudControlIdentifier.ChatPanel);
+                var chatPanel = _hudControlProvider.GetComponent<IChatPanel>(HudControlIdentifier.ChatPanel);
                 chatPanel.ClosePMTab(tab);
             });
 

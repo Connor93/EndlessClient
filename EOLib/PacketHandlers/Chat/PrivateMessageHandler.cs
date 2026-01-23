@@ -36,14 +36,12 @@ namespace EOLib.PacketHandlers.Chat
             var localData = new ChatData(ChatTab.Local, name, message, ChatIcon.Note, ChatColor.PM, log: false);
 
             ChatTab whichPmTab;
-            if (_chatRepository.PMTarget1 == null && _chatRepository.PMTarget2 == null)
-                whichPmTab = ChatTab.Local;
+            if (string.Equals(_chatRepository.PMTarget1, name, StringComparison.InvariantCultureIgnoreCase))
+                whichPmTab = ChatTab.Private1;
+            else if (string.Equals(_chatRepository.PMTarget2, name, StringComparison.InvariantCultureIgnoreCase))
+                whichPmTab = ChatTab.Private2;
             else
-                whichPmTab = _chatRepository.PMTarget1.Equals(name, StringComparison.InvariantCultureIgnoreCase)
-                    ? ChatTab.Private1
-                    : _chatRepository.PMTarget2.Equals(name, StringComparison.InvariantCultureIgnoreCase)
-                        ? ChatTab.Private2
-                        : ChatTab.Local;
+                whichPmTab = ChatTab.Local;
 
             var pmData = new ChatData(whichPmTab, name, message, ChatIcon.Note);
 

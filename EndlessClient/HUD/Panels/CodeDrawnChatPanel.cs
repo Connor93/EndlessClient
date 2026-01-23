@@ -22,7 +22,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnChatPanel : DraggableHudPanel
+    public class CodeDrawnChatPanel : DraggableHudPanel, IChatPanel
     {
         private readonly IChatActions _chatActions;
         private readonly IChatRenderableGenerator _chatRenderableGenerator;
