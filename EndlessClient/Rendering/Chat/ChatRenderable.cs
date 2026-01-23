@@ -77,6 +77,39 @@ namespace EndlessClient.Rendering.Chat
             spriteBatch.End();
         }
 
+        public void RenderScaled(SpriteBatch spriteBatch, BitmapFont chatFont, Vector2 scaledPosition, float scale)
+        {
+            spriteBatch.Begin();
+
+            // Scale offsets to match the position
+            var lineY = DisplayIndex * 13 * scale;
+            var iconXOff = ICON_GRAPHIC_X_OFF * scale;
+            var textXOff = CHAT_MESSAGE_X_OFF * scale;
+            var headerYOff = HeaderYOffset * scale;
+
+            var pos = scaledPosition + new Vector2(0, lineY);
+
+            // Draw icon (scaled position, but icon itself stays at native size for crispness)
+            spriteBatch.Draw(_nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 32, true),
+                             new Vector2(pos.X + iconXOff, pos.Y + headerYOff),
+                             GetChatIconRectangle(Data.Icon),
+                             Color.White);
+
+            string strToDraw;
+            if (string.IsNullOrEmpty(Data.Who))
+                strToDraw = _partialMessage;
+            else
+                strToDraw = Data.Who + "  " + _partialMessage;
+
+            // Draw text at scaled position (font renders at native size = crisp)
+            spriteBatch.DrawString(chatFont,
+                                   strToDraw,
+                                   new Vector2(pos.X + textXOff, pos.Y + headerYOff),
+                                   Data.ChatColor.ToColor());
+
+            spriteBatch.End();
+        }
+
         private static Rectangle? GetChatIconRectangle(ChatIcon icon)
         {
             var (x, y, width, height) = icon.GetChatIconRectangleBounds().ValueOrDefault();

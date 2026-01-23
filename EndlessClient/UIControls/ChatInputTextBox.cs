@@ -14,14 +14,30 @@ namespace EndlessClient.UIControls
     public class ChatInputTextBox : ClearableTextBox
     {
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         public ChatInputTextBox(IConfigurationProvider configurationProvider,
                                 Rectangle drawArea,
                                 string fontContentName,
-                                Texture2D caretTexture = null)
+                                Texture2D caretTexture = null,
+                                IClientWindowSizeProvider clientWindowSizeProvider = null)
             : base(drawArea, fontContentName, caretTexture: caretTexture)
         {
             _configurationProvider = configurationProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+        }
+
+        protected override void OnDrawControl(GameTime gameTime)
+        {
+            // In scaled mode, skip drawing text (it will be drawn post-scale by the parent panel)
+            if (_clientWindowSizeProvider?.IsScaledMode == true)
+            {
+                // Don't call base - this skips drawing the text
+                // The parent panel's DrawInputTextScaled handles crisp text rendering
+                return;
+            }
+
+            base.OnDrawControl(gameTime);
         }
 
         protected override bool HandleTextInput(KeyboardEventArgs eventArgs)

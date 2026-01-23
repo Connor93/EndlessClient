@@ -33,6 +33,7 @@ namespace EndlessClient.HUD.Panels
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _chatFont;
+        private readonly BitmapFont _scaledChatFont; // Larger font for post-scale rendering
         private readonly BitmapFont _labelFont;
 
         private readonly ScrollBar _scrollBar;
@@ -88,6 +89,7 @@ namespace EndlessClient.HUD.Panels
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _chatFont = contentProvider.Fonts[Constants.FontSize08];
+            _scaledChatFont = contentProvider.Fonts[Constants.FontSize10]; // Larger 13px font for scaled mode
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
             DrawArea = new Rectangle(102, 280, PanelWidth, PanelHeight); // Y position adjusted for taller panel
@@ -104,7 +106,7 @@ namespace EndlessClient.HUD.Panels
             // Create integrated text input box with WASD filtering
             // Position: below message area (130px) + gap (4) = 138, relative to panel
             var inputY = 4 + VisibleLines * 13 + 4 + 3; // message area top + height + gap + padding inside input bar
-            _inputTextBox = new ChatInputTextBox(configurationProvider, Rectangle.Empty, Constants.FontSize08, caretTexture: contentProvider.Textures[ContentProvider.Cursor])
+            _inputTextBox = new ChatInputTextBox(configurationProvider, Rectangle.Empty, Constants.FontSize08, caretTexture: contentProvider.Textures[ContentProvider.Cursor], clientWindowSizeProvider: clientWindowSizeProvider)
             {
                 MaxChars = 140,
                 MaxWidth = PanelWidth - 40,
@@ -233,10 +235,9 @@ namespace EndlessClient.HUD.Panels
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode: draw fills + messages to render target (they'll be scaled together)
-                // The borders/frame will be drawn post-scale for crispness
+                // In scaled mode: draw only fills to render target
+                // Text and borders will be drawn post-scale for crispness
                 DrawPanelFills(DrawPositionWithParentOffset, 1.0f);
-                DrawChatMessages(DrawPositionWithParentOffset);
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -257,9 +258,14 @@ namespace EndlessClient.HUD.Panels
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
-            // Draw only borders/frame post-scale for crispness
-            // (fills are already in render target behind the text)
+            // Draw borders/frame post-scale for crispness
             DrawPanelBordersOnly(scaledPos, scaleFactor);
+
+            // Draw chat messages post-scale for crisp text
+            DrawChatMessagesScaled(scaledPos, scaleFactor);
+
+            // Draw input textbox text post-scale for crisp text
+            DrawInputTextScaled(scaledPos, scaleFactor);
         }
 
         /// <summary>
@@ -401,6 +407,44 @@ namespace EndlessClient.HUD.Panels
                 renderable.DisplayIndex = ndx;
                 renderable.Render(this, _spriteBatch, _chatFont);
             }
+        }
+
+        private void DrawChatMessagesScaled(Vector2 scaledPos, float scaleFactor)
+        {
+            // Calculate the scaled message area position (matching DrawPanelFills layout)
+            const int gamePadding = 4;
+            var messageAreaPos = new Vector2(
+                scaledPos.X + gamePadding * scaleFactor,
+                scaledPos.Y + gamePadding * scaleFactor);
+
+            var activeTabInfo = _tabs[CurrentTab];
+            foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
+            {
+                renderable.DisplayIndex = ndx;
+                renderable.RenderScaled(_spriteBatch, _scaledChatFont, messageAreaPos, scaleFactor);
+            }
+        }
+
+        private void DrawInputTextScaled(Vector2 scaledPos, float scaleFactor)
+        {
+            // Calculate input text position to match DrawPanelFills layout
+            const int gamePadding = 4;
+            const int gameVisibleLinesHeight = VisibleLines * 13; // 130
+            const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 138
+            const int gamePromptWidth = 18; // Width of "> " prompt area
+
+            var inputTextPos = new Vector2(
+                scaledPos.X + (gamePadding + gamePromptWidth) * scaleFactor,
+                scaledPos.Y + (gameInputBarY + 3) * scaleFactor);
+
+            // Get the text from the input textbox
+            var text = _inputTextBox?.Text ?? "";
+            if (string.IsNullOrEmpty(text))
+                return;
+
+            _spriteBatch.Begin();
+            _spriteBatch.DrawString(_scaledChatFont, text, inputTextPos, Color.White);
+            _spriteBatch.End();
         }
 
         private void DrawTabs(Vector2 pos)

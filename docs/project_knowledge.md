@@ -1198,4 +1198,84 @@ These files have zoom-aware label positioning:
 | `ScaleFactor` | `min(WindowW/GameW, WindowH/GameH)` | 1.0 |
 | `RenderOffset` | Letterbox/pillarbox offset | (0, 0) |
 
+## 18. Post-Scale Crisp UI Rendering
+
+### Problem
+Code-drawn panels (primitives + text) render to `RenderTarget2D` and get upscaled, appearing fuzzy/blurry at higher window scales.
+
+### Solution: Two-Phase Rendering
+1. **Render Target Phase**: Fill backgrounds (scaled with world)
+2. **Post-Scale Phase**: Borders + text at native window resolution (crisp)
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `IPostScaleDrawable.cs` | Interface for post-scale controls |
+| `EndlessGame.Draw()` | Calls `DrawPostScaleControls()` after blit |
+| `CodeDrawnChatPanel.cs` | Reference implementation |
+
+### Critical Pattern: Alignment
+The biggest gotcha is coordinate alignment. Integer truncation at each scaled dimension causes cumulative offset:
+
+```csharp
+// ❌ WRONG: Scale each dimension separately → rounding errors accumulate
+var padding = (int)(4 * scale);  // 4 * 1.5 = 6
+var messageHeight = (int)(130 * scale);  // 130 * 1.5 = 195
+var inputY = scaledPos.Y + padding + messageHeight + padding;  // Misaligned!
+
+// ✅ CORRECT: Calculate in game-space first, then scale result
+const int gameInputBarY = 4 + 130 + 4;  // = 138 (game coordinates)
+var inputY = scaledPos.Y + (int)(gameInputBarY * scale);  // Perfectly aligned!
+```
+
+### Text Rendering Pattern
+For crisp, proportionally-sized text:
+1. Use a **larger font** for post-scale (e.g., 13px instead of 11px)
+2. Add `RenderScaled()` method to renderables accepting scaled position + scale factor
+3. Text draws at native window resolution → crisp at any scale
+
+```csharp
+// IChatRenderable.RenderScaled()
+void RenderScaled(SpriteBatch spriteBatch, BitmapFont chatFont, Vector2 scaledPosition, float scale);
+```
+
+### Input Controls: Avoiding Double-Render
+XNAControls render through normal path (render target). To prevent ghosting:
+
+```csharp
+// In ChatInputTextBox
+protected override void OnDrawControl(GameTime gameTime)
+{
+    // Skip drawing in scaled mode - parent panel handles post-scale text
+    if (_clientWindowSizeProvider?.IsScaledMode == true)
+        return;
+    base.OnDrawControl(gameTime);
+}
+```
+
+### Available Fonts
+Fonts loaded in `ContentProvider.RefreshFonts()`:
+| Constant | Size | Loaded |
+|----------|------|--------|
+| `FontSize08` | 11px | ✅ |
+| `FontSize08pt5` | 11px 103% | ✅ |
+| `FontSize09` | 12px | ✅ |
+| `FontSize10` | 13px | ✅ (added for scaled mode) |
+
+Font assets are BMFont format (`.fnt` + `.png`) in `ContentPipeline/BitmapFonts/`.
+
+### Drawing Order
+```
+1. Render to RenderTarget2D:
+   - Panel fills/backgrounds
+   - (XNAControls skip drawing in scaled mode)
+   
+2. Blit RenderTarget to backbuffer (scaled)
+
+3. Draw post-scale to backbuffer:
+   - Panel borders (crisp)
+   - Chat messages (crisp, larger font)
+   - Input text (crisp, larger font)
+   - Tabs (crisp)
+```
 
