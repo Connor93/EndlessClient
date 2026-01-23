@@ -41,8 +41,8 @@ namespace EndlessClient.HUD.Panels
         private readonly Dictionary<ChatTab, CodeDrawnChatTabInfo> _tabs;
 
         private const int PanelWidth = 489;
-        private const int PanelHeight = 182; // 10 lines (130) + gaps + input bar (22) + tabs (14) + padding
-        private const int VisibleLines = 10;
+        private const int PanelHeight = 186; // 10 lines (130) + extra buffer (8) + gaps + input bar (22) + tabs (14) + padding
+        private const int VisibleLines = 10; // Reduced from 10 to fit larger FontSize10 text
         private const int InputBarHeight = 22;
 
         // Integrated text input
@@ -104,8 +104,8 @@ namespace EndlessClient.HUD.Panels
             SetScrollWheelHandler(_scrollBar);
 
             // Create integrated text input box with WASD filtering
-            // Position: below message area (130px) + gap (4) = 138, relative to panel
-            var inputY = 4 + VisibleLines * 13 + 4 + 3; // message area top + height + gap + padding inside input bar
+            // Position: below message area (130px + 8 buffer) + gap (4) = 146, relative to panel
+            var inputY = 4 + VisibleLines * 13 + 8 + 4 + 3; // message area top + height + buffer + gap + padding inside input bar
             _inputTextBox = new ChatInputTextBox(configurationProvider, Rectangle.Empty, Constants.FontSize08, caretTexture: contentProvider.Textures[ContentProvider.Cursor], clientWindowSizeProvider: clientWindowSizeProvider)
             {
                 MaxChars = 140,
@@ -276,7 +276,7 @@ namespace EndlessClient.HUD.Panels
             var panelWidth = (int)(PanelWidth * scale);
             var panelHeight = (int)(PanelHeight * scale);
             var lineHeight = (int)(13 * scale);
-            var visibleLinesHeight = VisibleLines * lineHeight;
+            var visibleLinesHeight = VisibleLines * lineHeight + (int)(8 * scale); // +8 for text descenders
             var inputHeight = (int)(InputBarHeight * scale);
             var padding = (int)(4 * scale);
 
@@ -320,7 +320,7 @@ namespace EndlessClient.HUD.Panels
 
             // Game-space dimensions (same as DrawPanelFills with scale=1.0)
             const int gamePadding = 4;
-            const int gameVisibleLinesHeight = VisibleLines * 13; // 10 * 13 = 130
+            const int gameVisibleLinesHeight = VisibleLines * 13 + 8; // 10 * 13 + 8 = 138
             const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 4 + 130 + 4 = 138
             const int gameInputBarWidth = PanelWidth - 12; // 489 - 12 = 477
 
@@ -354,7 +354,7 @@ namespace EndlessClient.HUD.Panels
             var panelWidth = (int)(PanelWidth * scale);
             var panelHeight = (int)(PanelHeight * scale);
             var lineHeight = (int)(13 * scale);
-            var visibleLinesHeight = VisibleLines * lineHeight;
+            var visibleLinesHeight = VisibleLines * lineHeight + (int)(8 * scale); // +8 for text descenders
             var inputHeight = (int)(InputBarHeight * scale);
             var padding = (int)(4 * scale);
             var borderWidth = Math.Max(1, (int)(2 * scale));
@@ -401,50 +401,131 @@ namespace EndlessClient.HUD.Panels
 
         private void DrawChatMessages(Vector2 pos)
         {
+            // Calculate message area bounds for clipping
+            // Use DrawPosition (not pos parameter) because that's what RenderWithClipping uses
+            const int gamePadding = 4;
+            const int gameMessageAreaWidth = 460; // Panel width minus scrollbar and padding
+            const int gameMessageAreaHeight = VisibleLines * 13 + 8; // Extra height for text descenders
+
+            // Scissor rect must match where the renderable draws (using DrawPosition)
+            var messageAreaPos = DrawPosition + new Vector2(gamePadding, gamePadding);
+
+            // Set up scissor rectangle to clip text that overflows
+            var scissorRect = new Rectangle(
+                (int)messageAreaPos.X,
+                (int)messageAreaPos.Y,
+                gameMessageAreaWidth,
+                gameMessageAreaHeight);
+
+            var graphicsDevice = _graphicsDeviceProvider.GraphicsDevice;
+            var previousScissorRectangle = graphicsDevice.ScissorRectangle;
+
+            graphicsDevice.ScissorRectangle = scissorRect;
+
+            // Begin spritebatch with scissor test enabled - all renderables draw within this batch
+            _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
+
             var activeTabInfo = _tabs[CurrentTab];
             foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
-                renderable.Render(this, _spriteBatch, _chatFont);
+                renderable.RenderWithClipping(this, _spriteBatch, _chatFont);
             }
+
+            _spriteBatch.End();
+
+            // Restore previous state
+            graphicsDevice.ScissorRectangle = previousScissorRectangle;
         }
 
         private void DrawChatMessagesScaled(Vector2 scaledPos, float scaleFactor)
         {
-            // Calculate the scaled message area position (matching DrawPanelFills layout)
+            // Calculate the scaled message area bounds for clipping
             const int gamePadding = 4;
+            const int gameMessageAreaWidth = 460; // Panel width minus scrollbar and padding
+            const int gameMessageAreaHeight = VisibleLines * 13 + 8; // Extra height for text descenders
+
             var messageAreaPos = new Vector2(
                 scaledPos.X + gamePadding * scaleFactor,
                 scaledPos.Y + gamePadding * scaleFactor);
+
+            // Set up scissor rectangle to clip text that overflows
+            var scissorRect = new Rectangle(
+                (int)messageAreaPos.X,
+                (int)messageAreaPos.Y,
+                (int)(gameMessageAreaWidth * scaleFactor),
+                (int)(gameMessageAreaHeight * scaleFactor));
+
+            var graphicsDevice = _graphicsDeviceProvider.GraphicsDevice;
+            var previousScissorRectangle = graphicsDevice.ScissorRectangle;
+            var previousRasterizerState = graphicsDevice.RasterizerState;
+
+            graphicsDevice.ScissorRectangle = scissorRect;
+
+            // Begin spritebatch with scissor test enabled - all renderables draw within this batch
+            _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
 
             var activeTabInfo = _tabs[CurrentTab];
             foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
-                renderable.RenderScaled(_spriteBatch, _scaledChatFont, messageAreaPos, scaleFactor);
+                renderable.RenderScaledWithClipping(_spriteBatch, _scaledChatFont, messageAreaPos, scaleFactor);
             }
+
+            _spriteBatch.End();
+
+            // Restore previous state
+            graphicsDevice.ScissorRectangle = previousScissorRectangle;
         }
+
+        private static readonly RasterizerState _scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
 
         private void DrawInputTextScaled(Vector2 scaledPos, float scaleFactor)
         {
             // Calculate input text position to match DrawPanelFills layout
             const int gamePadding = 4;
-            const int gameVisibleLinesHeight = VisibleLines * 13; // 130
-            const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 138
+            const int gameVisibleLinesHeight = VisibleLines * 13 + 8; // 138 (130 + 8 buffer)
+            const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 146
             const int gamePromptWidth = 18; // Width of "> " prompt area
-
-            var inputTextPos = new Vector2(
-                scaledPos.X + (gamePadding + gamePromptWidth) * scaleFactor,
-                scaledPos.Y + (gameInputBarY + 3) * scaleFactor);
+            const int gameInputTextWidth = 440; // Available width for text (panel width - prompt - scrollbar - padding)
 
             // Get the text from the input textbox
             var text = _inputTextBox?.Text ?? "";
             if (string.IsNullOrEmpty(text))
                 return;
 
-            _spriteBatch.Begin();
+            // Calculate the text width and whether we need horizontal scrolling
+            var textSize = _scaledChatFont.MeasureString(text);
+            var availableWidth = gameInputTextWidth * scaleFactor;
+            var textOffsetX = 0f;
+
+            // If text is wider than available space, scroll to show the end (right side)
+            if (textSize.Width > availableWidth)
+            {
+                textOffsetX = availableWidth - textSize.Width;
+            }
+
+            var inputTextPos = new Vector2(
+                scaledPos.X + (gamePadding + gamePromptWidth) * scaleFactor + textOffsetX,
+                scaledPos.Y + (gameInputBarY + 3) * scaleFactor);
+
+            // Set up scissor rectangle to clip text that overflows
+            var scissorRect = new Rectangle(
+                (int)(scaledPos.X + (gamePadding + gamePromptWidth) * scaleFactor),
+                (int)(scaledPos.Y + gameInputBarY * scaleFactor),
+                (int)(gameInputTextWidth * scaleFactor),
+                (int)(20 * scaleFactor)); // Height of input bar text area
+
+            var graphicsDevice = _graphicsDeviceProvider.GraphicsDevice;
+            var previousScissorRectangle = graphicsDevice.ScissorRectangle;
+
+            graphicsDevice.ScissorRectangle = scissorRect;
+
+            _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
             _spriteBatch.DrawString(_scaledChatFont, text, inputTextPos, Color.White);
             _spriteBatch.End();
+
+            graphicsDevice.ScissorRectangle = previousScissorRectangle;
         }
 
         private void DrawTabs(Vector2 pos)
@@ -515,8 +596,8 @@ namespace EndlessClient.HUD.Panels
 
         private Rectangle GetTabRect(ChatTab tab)
         {
-            // Tabs positioned below input bar: message area (130) + gap (4) + input bar (22) + gap (4) = 160
-            var tabY = 4 + VisibleLines * 13 + 4 + InputBarHeight + 4;
+            // Tabs positioned below input bar: message area (130 + 8 buffer) + gap (4) + input bar (22) + gap (4) = 168
+            var tabY = 4 + VisibleLines * 13 + 8 + 4 + InputBarHeight + 4;
             return tab switch
             {
                 ChatTab.Private1 => new Rectangle(23, tabY, 110, 14),

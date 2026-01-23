@@ -12,6 +12,7 @@ using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 
@@ -21,13 +22,16 @@ namespace EndlessClient.HUD.Panels
     /// Code-drawn Macro/Hotkey panel that extends the base MacroPanel.
     /// Shows 16 slots for F1-F8 and Shift+F1-F8 hotkeys.
     /// </summary>
-    public class CodeDrawnMacroPanel : MacroPanel
+    public class CodeDrawnMacroPanel : MacroPanel, IPostScaleDrawable
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly BitmapFont _font;
         private readonly BitmapFont _headerFont;
+        private readonly BitmapFont _scaledFont;
+        private readonly BitmapFont _scaledHeaderFont;
 
         private const int PanelWidth = 440;
         private const int PanelHeight = 145; // Extended to include button area
@@ -63,9 +67,12 @@ namespace EndlessClient.HUD.Panels
         {
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _sfxPlayer = sfxPlayer;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _headerFont = contentProvider.Fonts[Constants.FontSize09];
+            _scaledFont = contentProvider.Fonts[Constants.FontSize10];
+            _scaledHeaderFont = contentProvider.Fonts[Constants.FontSize10];
 
             // Clear the GFX background image - we'll draw our own
             BackgroundImage = null;
@@ -115,38 +122,152 @@ namespace EndlessClient.HUD.Panels
             base.OnUpdateControl(gameTime);
         }
 
+        // IPostScaleDrawable implementation
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
         protected override void OnDrawControl(GameTime gameTime)
+        {
+            if (SkipRenderTargetDraw)
+            {
+                DrawPanelFills(DrawPositionWithParentOffset);
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
+            DrawPanelComplete(DrawPositionWithParentOffset, _font, _headerFont);
+            base.OnDrawControl(gameTime);
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (!Visible) return;
+
+            var gamePos = DrawPositionWithParentOffset;
+            var scaledPos = new Vector2(
+                gamePos.X * scaleFactor + renderOffset.X,
+                gamePos.Y * scaleFactor + renderOffset.Y);
+
+            DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFills(Vector2 pos)
         {
             _spriteBatch.Begin();
 
-            var pos = DrawPositionWithParentOffset;
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
 
-            // Draw main panel background (extended height)
+            // Left panel area fill
+            var leftPanelRect = new Rectangle((int)pos.X + LeftPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(40, 35, 30, 180));
+
+            // Right panel area fill
+            var rightPanelRect = new Rectangle((int)pos.X + RightPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightPanelRect, new Color(40, 35, 30, 180));
+
+            // Slot grid fills
+            DrawSlotGridFills(pos, LeftPanelStartX);
+            DrawSlotGridFills(pos, RightPanelStartX);
+
+            // OK button fill
+            var buttonWidth = 80;
+            var buttonHeight = 24;
+            _okButtonRect = new Rectangle(
+                (int)pos.X + (PanelWidth - buttonWidth) / 2,
+                (int)pos.Y + PanelHeight - buttonHeight - 8,
+                buttonWidth, buttonHeight);
+            var buttonColor = _okButtonHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, _okButtonRect, buttonColor);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelBordersAndText(Vector2 scaledPos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            // Select font based on scale
+            BitmapFont font, headerFont;
+            if (scale >= 1.5f) { font = _scaledFont; headerFont = _scaledHeaderFont; }
+            else if (scale >= 1.2f) { font = _headerFont; headerFont = _headerFont; }
+            else { font = _font; headerFont = _headerFont; }
+
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+
+            // Panel border
+            var bgRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, panelWidth, panelHeight);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, System.Math.Max(1, (int)(2 * scale)));
+
+            // Left/Right panel borders
+            var leftPanelRect = new Rectangle(
+                (int)(scaledPos.X + (LeftPanelStartX - 4) * scale),
+                (int)(scaledPos.Y + 4 * scale),
+                (int)((SlotsPerRow * SlotWidth + 8) * scale),
+                (int)(96 * scale));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(70, 60, 50), 1);
+
+            var rightPanelRect = new Rectangle(
+                (int)(scaledPos.X + (RightPanelStartX - 4) * scale),
+                (int)(scaledPos.Y + 4 * scale),
+                (int)((SlotsPerRow * SlotWidth + 8) * scale),
+                (int)(96 * scale));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, rightPanelRect, new Color(70, 60, 50), 1);
+
+            // Panel labels
+            _spriteBatch.DrawString(headerFont, "F1-F8", new Vector2(scaledPos.X + (LeftPanelStartX + 70) * scale, scaledPos.Y + 6 * scale), Color.White);
+            _spriteBatch.DrawString(headerFont, "^F1-^F8", new Vector2(scaledPos.X + (RightPanelStartX + 60) * scale, scaledPos.Y + 6 * scale), Color.White);
+
+            // Slot grid borders and labels
+            DrawSlotGridBordersAndText(scaledPos, scale, LeftPanelStartX, new[] { "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8" }, font);
+            DrawSlotGridBordersAndText(scaledPos, scale, RightPanelStartX, new[] { "^F1", "^F2", "^F3", "^F4", "^F5", "^F6", "^F7", "^F8" }, font);
+
+            // OK button border and text
+            var buttonWidth = (int)(80 * scale);
+            var buttonHeight = (int)(24 * scale);
+            var buttonRect = new Rectangle(
+                (int)(scaledPos.X + (PanelWidth - 80) / 2 * scale),
+                (int)(scaledPos.Y + (PanelHeight - 24 - 8) * scale),
+                buttonWidth, buttonHeight);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, Color.Black, 1);
+            var buttonText = "OK";
+            var textSize = headerFont.MeasureString(buttonText);
+            var textPos = new Vector2(
+                buttonRect.X + (buttonRect.Width - textSize.Width) / 2,
+                buttonRect.Y + (buttonRect.Height - textSize.Height) / 2);
+            _spriteBatch.DrawString(headerFont, buttonText, textPos, Color.White);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelComplete(Vector2 pos, BitmapFont font, BitmapFont headerFont)
+        {
+            _spriteBatch.Begin();
+
+            // Draw main panel background
             var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
 
-            // Draw left panel area (F1-F8)
+            // Draw left/right panel areas
             var leftPanelRect = new Rectangle((int)pos.X + LeftPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(40, 35, 30, 180));
             DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(70, 60, 50), 1);
 
-            // Draw right panel area (Shift+F1-F8)
             var rightPanelRect = new Rectangle((int)pos.X + RightPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, rightPanelRect, new Color(40, 35, 30, 180));
             DrawingPrimitives.DrawRectBorder(_spriteBatch, rightPanelRect, new Color(70, 60, 50), 1);
 
             // Draw panel labels
-            _spriteBatch.DrawString(_headerFont, "F1-F8", new Vector2(pos.X + LeftPanelStartX + 70, pos.Y + 6), Color.White);
-            _spriteBatch.DrawString(_headerFont, "^F1-^F8", new Vector2(pos.X + RightPanelStartX + 60, pos.Y + 6), Color.White);
+            _spriteBatch.DrawString(headerFont, "F1-F8", new Vector2(pos.X + LeftPanelStartX + 70, pos.Y + 6), Color.White);
+            _spriteBatch.DrawString(headerFont, "^F1-^F8", new Vector2(pos.X + RightPanelStartX + 60, pos.Y + 6), Color.White);
 
-            // Draw slot grid for left panel (F1-F8)
+            // Draw slot grids
             DrawSlotGrid(pos, LeftPanelStartX, new[] { "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8" });
-
-            // Draw slot grid for right panel (Shift+F1-F8)
             DrawSlotGrid(pos, RightPanelStartX, new[] { "^F1", "^F2", "^F3", "^F4", "^F5", "^F6", "^F7", "^F8" });
 
-            // Draw code-drawn OK button at bottom center
+            // Draw OK button
             var buttonWidth = 80;
             var buttonHeight = 24;
             _okButtonRect = new Rectangle(
@@ -158,19 +279,54 @@ namespace EndlessClient.HUD.Panels
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _okButtonRect, buttonColor);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, _okButtonRect, Color.Black, 1);
 
-            // Draw button text centered
             var buttonText = "OK";
-            var textSize = _headerFont.MeasureString(buttonText);
+            var textSize = headerFont.MeasureString(buttonText);
             var textPos = new Vector2(
                 _okButtonRect.X + (_okButtonRect.Width - textSize.Width) / 2,
                 _okButtonRect.Y + (_okButtonRect.Height - textSize.Height) / 2);
-            _spriteBatch.DrawString(_headerFont, buttonText, textPos, Color.White);
+            _spriteBatch.DrawString(headerFont, buttonText, textPos, Color.White);
 
             _spriteBatch.End();
-
-            // Let base class draw the macro items (but not the old button since we cleared it)
-            base.OnDrawControl(gameTime);
         }
+
+        private void DrawSlotGridFills(Vector2 panelPos, int startX)
+        {
+            for (int row = 0; row < 2; row++)
+            {
+                for (int col = 0; col < SlotsPerRow; col++)
+                {
+                    var slotX = (int)panelPos.X + startX + (col * SlotWidth);
+                    var slotY = (int)panelPos.Y + GridStartY + (row * SlotHeight);
+                    var slotRect = new Rectangle(slotX, slotY, SlotWidth - 4, SlotHeight - 4);
+                    var slotColor = (row + col) % 2 == 0 ? new Color(55, 50, 45, 180) : new Color(50, 45, 40, 180);
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, slotColor);
+                }
+            }
+        }
+
+        private void DrawSlotGridBordersAndText(Vector2 panelPos, float scale, int startX, string[] labels, BitmapFont font)
+        {
+            for (int row = 0; row < 2; row++)
+            {
+                for (int col = 0; col < SlotsPerRow; col++)
+                {
+                    var slotX = (int)(panelPos.X + (startX + col * SlotWidth) * scale);
+                    var slotY = (int)(panelPos.Y + (GridStartY + row * SlotHeight) * scale);
+                    var slotWidth = (int)((SlotWidth - 4) * scale);
+                    var slotHeight = (int)((SlotHeight - 4) * scale);
+                    var slotRect = new Rectangle(slotX, slotY, slotWidth, slotHeight);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, new Color(70, 60, 50), 1);
+
+                    var labelIndex = row * SlotsPerRow + col;
+                    if (labelIndex < labels.Length)
+                    {
+                        _spriteBatch.DrawString(font, labels[labelIndex],
+                            new Vector2(slotX + 2 * scale, slotY + (SlotHeight - 16) * scale), new Color(150, 140, 130));
+                    }
+                }
+            }
+        }
+
 
         private void DrawSlotGrid(Vector2 panelPos, int startX, string[] labels)
         {

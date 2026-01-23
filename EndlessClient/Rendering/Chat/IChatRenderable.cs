@@ -15,8 +15,18 @@ namespace EndlessClient.Rendering.Chat
         void Render(IHudPanel parentPanel, SpriteBatch spriteBatch, BitmapFont chatFont);
 
         /// <summary>
+        /// Renders with scissor clipping enabled for text overflow prevention
+        /// </summary>
+        void RenderWithClipping(IHudPanel parentPanel, SpriteBatch spriteBatch, BitmapFont chatFont);
+
+        /// <summary>
         /// Renders at a specific scaled position for post-scale crisp text
         /// </summary>
         void RenderScaled(SpriteBatch spriteBatch, BitmapFont chatFont, Vector2 scaledPosition, float scale);
+
+        /// <summary>
+        /// Renders at a specific scaled position with scissor clipping enabled
+        /// </summary>
+        void RenderScaledWithClipping(SpriteBatch spriteBatch, BitmapFont chatFont, Vector2 scaledPosition, float scale);
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.GameExecution;
+using EOLib.Config;
 using EOLib.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,6 +15,8 @@ namespace EndlessClient.Rendering
         private const int DigitWidth = 9;
 
         private readonly IMapActor _parentReference;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IConfigurationProvider _configurationProvider;
 
         private readonly SpriteBatch _spriteBatch;
         private readonly Texture2D _sourceTexture;
@@ -38,10 +41,14 @@ namespace EndlessClient.Rendering
 
         public HealthBarRenderer(IEndlessGameProvider endlessGameProvider,
                                  INativeGraphicsManager nativeGraphicsManager,
+                                 IClientWindowSizeProvider clientWindowSizeProvider,
+                                 IConfigurationProvider configurationProvider,
                                  IMapActor parentReference)
             : base((Game)endlessGameProvider.Game)
         {
             _parentReference = parentReference;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _configurationProvider = configurationProvider;
 
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
             _sourceTexture = nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 58, true);
@@ -100,22 +107,42 @@ namespace EndlessClient.Rendering
                 _doneCallback?.Invoke();
             }
 
-            _healthBarPosition = new Vector2(
-                _parentReference.HorizontalCenter - _healthBarBackgroundSource.Width / 2f,
-                _parentReference.NameLabelY);
+            // Calculate base positions from parent
+            var baseHealthBarX = _parentReference.HorizontalCenter - _healthBarBackgroundSource.Width / 2f;
+            var baseHealthBarY = _parentReference.NameLabelY;
 
+            float baseDamageX, baseDamageY;
             if (_isMiss)
             {
-                var xPos = _parentReference.HorizontalCenter - (_numberSourceRectangles[0].Width / 2f);
-                var yPos = _parentReference.NameLabelY - _frameOffset - _healthBarBackgroundSource.Height * 2f;
-                _damageCounterPosition = new Vector2(xPos, yPos);
+                baseDamageX = _parentReference.HorizontalCenter - (_numberSourceRectangles[0].Width / 2f);
+                baseDamageY = _parentReference.NameLabelY - _frameOffset - _healthBarBackgroundSource.Height * 2f;
             }
             else
             {
                 var digitCount = _numberSourceRectangles.Count;
-                var xPos = _parentReference.HorizontalCenter - (digitCount * DigitWidth / 2f);
-                var yPos = _parentReference.NameLabelY - _frameOffset - _healthBarBackgroundSource.Height * 2f;
-                _damageCounterPosition = new Vector2(xPos, yPos);
+                baseDamageX = _parentReference.HorizontalCenter - (digitCount * DigitWidth / 2f);
+                baseDamageY = _parentReference.NameLabelY - _frameOffset - _healthBarBackgroundSource.Height * 2f;
+            }
+
+            // Apply zoom transformation if zoomed (same pattern as CharacterRenderer.GetNameLabelPosition)
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f)
+            {
+                var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+                var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+
+                _healthBarPosition = new Vector2(
+                    (baseHealthBarX - centerX) * zoom + centerX,
+                    (baseHealthBarY - centerY) * zoom + centerY);
+
+                _damageCounterPosition = new Vector2(
+                    (baseDamageX - centerX) * zoom + centerX,
+                    (baseDamageY - centerY) * zoom + centerY);
+            }
+            else
+            {
+                _healthBarPosition = new Vector2(baseHealthBarX, baseHealthBarY);
+                _damageCounterPosition = new Vector2(baseDamageX, baseDamageY);
             }
         }
 

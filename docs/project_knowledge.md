@@ -1279,3 +1279,39 @@ Font assets are BMFont format (`.fnt` + `.png`) in `ContentPipeline/BitmapFonts/
    - Tabs (crisp)
 ```
 
+### Chat Panel Text Rendering (WIP - 2026-01-23)
+
+**Status**: Horizontal wrapping FIXED, vertical cutoff PENDING
+
+#### Font Mismatch Issue (FIXED)
+The chat system has a font size mismatch between text wrapping and rendering:
+- **Text wrapping**: Calculated in `ChatRenderableGenerator` using `FontSize08` (11px)
+- **Post-scale rendering**: Rendered with `FontSize10` (13px) in `CodeDrawnChatPanel`
+
+Since text is wider when rendered with FontSize10, words that fit in the wrapping calculation overflow when drawn.
+
+**Fix applied**: Reduced `LineLength` from 380 to **310** and `HardBreak` from 425 to **350** in `ChatRenderableGenerator.SplitTextIntoLines()` to compensate for the larger rendering font.
+
+#### Scissor Clipping (FIXED)
+Added scissor rectangle clipping to prevent text overflow:
+- `DrawChatMessages()` - normal mode (not currently used when `IsScaledMode` is true)
+- `DrawChatMessagesScaled()` - scaled mode  
+- Both wrap the renderable loop in `_spriteBatch.Begin(rasterizerState: _scissorRasterizerState)`
+
+The scissor rect is calculated based on message area bounds (460px width, VisibleLines*13+4 height).
+
+#### Bottom Line Cutoff (PENDING)
+The 10th visible line gets cut off at the bottom. Attempts to fix:
+1. ❌ Increased scissor height (+8px extra) - made text overlap input box border
+2. ❌ Increased message area fill height - broke panel alignment
+3. ❌ Reduced VisibleLines to 9 or 8 - left too much empty space
+
+**Suggested approach**: The root cause is that FontSize10 text is taller than the 13px line height assumes. Options:
+- Increase `PanelHeight` from 182 to ~188-190 to accommodate larger text
+- OR keep VisibleLines=9 but adjust spacing to fill the gap
+- OR recalculate all layout constants for FontSize10 dimensions
+
+**Key files to modify**:
+- `CodeDrawnChatPanel.cs` - constants `PanelHeight`, `VisibleLines`, `gameMessageAreaHeight`
+- `ChatRenderable.cs` - `HeaderYOffset` (currently 3px), line spacing (currently 13px for DisplayIndex)
+

@@ -80,8 +80,11 @@ namespace EndlessClient.Rendering.Chat
 
             var splitter = new TextSplitter("", _chatFont)
             {
-                LineLength = 380,
-                HardBreak = 425,
+                // Note: Text wrapping is calculated with FontSize08 but may be rendered with FontSize10
+                // in scaled mode. LineLength values are reduced from original 380/425 to ensure text
+                // fits when rendered with the larger font.
+                LineLength = 310,   // Reduced from 380 for FontSize10 rendering compatibility
+                HardBreak = 350,    // Reduced from 425 for FontSize10 rendering compatibility
                 Hyphen = "-",
                 LineIndent = indentForUserName
             };

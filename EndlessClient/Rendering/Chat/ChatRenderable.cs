@@ -77,6 +77,30 @@ namespace EndlessClient.Rendering.Chat
             spriteBatch.End();
         }
 
+        public void RenderWithClipping(IHudPanel parentPanel, SpriteBatch spriteBatch, BitmapFont chatFont)
+        {
+            // NOTE: SpriteBatch.Begin must already be called by caller with scissor rasterizer state
+            var pos = parentPanel.DrawPosition + new Vector2(0, DisplayIndex * 13);
+
+            // Draw icon
+            spriteBatch.Draw(_nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 32, true),
+                             new Vector2(pos.X + ICON_GRAPHIC_X_OFF, pos.Y + HeaderYOffset),
+                             GetChatIconRectangle(Data.Icon),
+                             Color.White);
+
+            string strToDraw;
+            if (string.IsNullOrEmpty(Data.Who))
+                strToDraw = _partialMessage;
+            else
+                strToDraw = Data.Who + "  " + _partialMessage;
+
+            spriteBatch.DrawString(chatFont,
+                                   strToDraw,
+                                   new Vector2(pos.X + CHAT_MESSAGE_X_OFF, pos.Y + HeaderYOffset),
+                                   Data.ChatColor.ToColor());
+            // NOTE: SpriteBatch.End must be called by caller after all renderables are drawn
+        }
+
         public void RenderScaled(SpriteBatch spriteBatch, BitmapFont chatFont, Vector2 scaledPosition, float scale)
         {
             spriteBatch.Begin();
@@ -108,6 +132,39 @@ namespace EndlessClient.Rendering.Chat
                                    Data.ChatColor.ToColor());
 
             spriteBatch.End();
+        }
+
+        private static readonly RasterizerState _scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
+
+        public void RenderScaledWithClipping(SpriteBatch spriteBatch, BitmapFont chatFont, Vector2 scaledPosition, float scale)
+        {
+            // NOTE: SpriteBatch.Begin must already be called by caller with scissor rasterizer state
+            // Scale offsets to match the position
+            var lineY = DisplayIndex * 13 * scale;
+            var iconXOff = ICON_GRAPHIC_X_OFF * scale;
+            var textXOff = CHAT_MESSAGE_X_OFF * scale;
+            var headerYOff = HeaderYOffset * scale;
+
+            var pos = scaledPosition + new Vector2(0, lineY);
+
+            // Draw icon (scaled position)
+            spriteBatch.Draw(_nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 32, true),
+                             new Vector2(pos.X + iconXOff, pos.Y + headerYOff),
+                             GetChatIconRectangle(Data.Icon),
+                             Color.White);
+
+            string strToDraw;
+            if (string.IsNullOrEmpty(Data.Who))
+                strToDraw = _partialMessage;
+            else
+                strToDraw = Data.Who + "  " + _partialMessage;
+
+            // Draw text at scaled position (font renders at native size = crisp)
+            spriteBatch.DrawString(chatFont,
+                                   strToDraw,
+                                   new Vector2(pos.X + textXOff, pos.Y + headerYOff),
+                                   Data.ChatColor.ToColor());
+            // NOTE: SpriteBatch.End must be called by caller after all renderables are drawn
         }
 
         private static Rectangle? GetChatIconRectangle(ChatIcon icon)
