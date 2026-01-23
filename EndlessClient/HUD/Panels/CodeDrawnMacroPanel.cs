@@ -189,8 +189,8 @@ namespace EndlessClient.HUD.Panels
 
             // Select font based on scale
             BitmapFont font, headerFont;
-            if (scale >= 1.5f) { font = _scaledFont; headerFont = _scaledHeaderFont; }
-            else if (scale >= 1.2f) { font = _headerFont; headerFont = _headerFont; }
+            if (scale >= 1.75f) { font = _scaledFont; headerFont = _scaledHeaderFont; }
+            else if (scale >= 1.25f) { font = _headerFont; headerFont = _headerFont; }
             else { font = _font; headerFont = _headerFont; }
 
             var panelWidth = (int)(PanelWidth * scale);

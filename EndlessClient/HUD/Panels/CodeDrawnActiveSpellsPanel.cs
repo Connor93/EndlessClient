@@ -159,12 +159,12 @@ namespace EndlessClient.HUD.Panels
 
             // Dynamic font selection based on scale
             BitmapFont font, headerFont;
-            if (scale >= 1.5f)
+            if (scale >= 1.75f)
             {
                 font = _scaledFont;
                 headerFont = _scaledHeaderFont;
             }
-            else if (scale >= 1.2f)
+            else if (scale >= 1.25f)
             {
                 font = _headerFont;
                 headerFont = _headerFont;

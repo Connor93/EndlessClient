@@ -388,8 +388,11 @@ namespace EndlessClient.Dialogs
             var cornerRadius = _styleProvider.CornerRadius;
             var borderThickness = _styleProvider.BorderThickness;
 
-            // Select font based on scale
-            var font = scale >= 1.5f ? _scaledFont : _font;
+            // Select font based on scale - 3 tier system
+            BitmapFont font;
+            if (scale >= 1.75f) font = _scaledFont;
+            else if (scale >= 1.25f) font = _scaledFont; // Medium scale uses scaled font
+            else font = _font;
 
             var panelWidth = (int)(DialogWidth * scale);
             var panelHeight = (int)(DialogHeight * scale);

@@ -290,12 +290,12 @@ namespace EndlessClient.HUD.Panels
             // Choose font based on scale factor to match visual size
             // At low scales, larger fonts would overflow the panel
             BitmapFont font, headerFont;
-            if (scale >= 1.5f)
+            if (scale >= 1.75f)
             {
                 font = _scaledFont;       // 13px for large scales
                 headerFont = _scaledHeaderFont;
             }
-            else if (scale >= 1.2f)
+            else if (scale >= 1.25f)
             {
                 font = _headerFont;       // 12px for medium scales
                 headerFont = _headerFont;
