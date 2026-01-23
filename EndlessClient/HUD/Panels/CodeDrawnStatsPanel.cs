@@ -18,7 +18,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnStatsPanel : DraggableHudPanel
+    public class CodeDrawnStatsPanel : DraggableHudPanel, IPostScaleDrawable
     {
         private readonly ICharacterProvider _characterProvider;
         private readonly ICharacterInventoryProvider _characterInventoryProvider;
@@ -27,8 +27,11 @@ namespace EndlessClient.HUD.Panels
         private readonly ITrainingController _trainingController;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
+        private readonly BitmapFont _scaledFont;
+        private readonly BitmapFont _scaledLabelFont;
 
         private const int STR = 0, INT = 1, WIS = 2, AGI = 3, CON = 4, CHA = 5;
         private readonly CodeDrawnButton[] _arrowButtons;
@@ -60,8 +63,11 @@ namespace EndlessClient.HUD.Panels
             _trainingController = trainingController;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
+            _scaledFont = contentProvider.Fonts[Constants.FontSize10];
+            _scaledLabelFont = contentProvider.Fonts[Constants.FontSize10];
 
             DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
 
@@ -115,11 +121,76 @@ namespace EndlessClient.HUD.Panels
             base.OnUpdateControl(gameTime);
         }
 
+        // IPostScaleDrawable implementation
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
         protected override void OnDrawControl(GameTime gameTime)
+        {
+            if (SkipRenderTargetDraw)
+            {
+                // In scaled mode: draw only fills to render target
+                DrawPanelFills(DrawPositionWithParentOffset);
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
+            // Normal mode: draw everything
+            DrawPanelComplete(DrawPositionWithParentOffset, _font, _labelFont);
+            base.OnDrawControl(gameTime);
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (!Visible) return;
+
+            var gamePos = DrawPositionWithParentOffset;
+            var scaledPos = new Vector2(
+                gamePos.X * scaleFactor + renderOffset.X,
+                gamePos.Y * scaleFactor + renderOffset.Y);
+
+            DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFills(Vector2 pos)
         {
             _spriteBatch.Begin();
 
-            var pos = DrawPositionWithParentOffset;
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelBordersAndText(Vector2 scaledPos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            // Select font based on scale
+            BitmapFont font, labelFont;
+            if (scale >= 1.5f) { font = _scaledFont; labelFont = _scaledLabelFont; }
+            else if (scale >= 1.2f) { font = _labelFont; labelFont = _labelFont; }
+            else { font = _font; labelFont = _labelFont; }
+
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+
+            // Panel border
+            var bgRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, panelWidth, panelHeight);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, Math.Max(1, (int)(2 * scale)));
+
+            // Grid lines
+            DrawGridScaled(scaledPos, scale);
+
+            // Stats
+            DrawStatsScaled(scaledPos, scale, font, labelFont);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelComplete(Vector2 pos, BitmapFont font, BitmapFont labelFont)
+        {
+            _spriteBatch.Begin();
 
             // Draw panel background
             var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
@@ -133,9 +204,8 @@ namespace EndlessClient.HUD.Panels
             DrawStats(pos);
 
             _spriteBatch.End();
-
-            base.OnDrawControl(gameTime);
         }
+
 
         private void DrawGrid(Vector2 pos)
         {
@@ -231,6 +301,102 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.DrawString(_font, $"{ExperienceToNextLevel}", new Vector2(col4X + 45, pos.Y + HeaderHeight + 3 + 4 * RowHeight), valueColor);
 
             _spriteBatch.DrawString(_font, $"{stats.GetKarmaString()}", new Vector2(col4X + 8, pos.Y + HeaderHeight + 3 + 5 * RowHeight), valueColor);
+        }
+
+        private void DrawGridScaled(Vector2 pos, float scale)
+        {
+            var lineColor = new Color((byte)_styleProvider.PanelBorder.R, (byte)_styleProvider.PanelBorder.G, (byte)_styleProvider.PanelBorder.B, (byte)100);
+
+            // Column widths: Basic(100), Combat(120), Info(150), Other(106)
+            int[] colWidths = { 100, 120, 150, 106 };
+            float x = pos.X;
+            for (int i = 0; i < colWidths.Length - 1; i++)
+            {
+                x += colWidths[i] * scale;
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)x, (int)(pos.Y + 2 * scale), Math.Max(1, (int)scale), (int)((PanelHeight - 4) * scale)), lineColor);
+            }
+
+            // Horizontal row lines
+            for (int i = 1; i <= 6; i++)
+            {
+                var y = (int)(pos.Y + (HeaderHeight + i * RowHeight) * scale);
+                if (y < pos.Y + PanelHeight * scale - 2)
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)(pos.X + 2 * scale), y, (int)((PanelWidth - 4) * scale), Math.Max(1, (int)scale)), lineColor);
+            }
+        }
+
+        private void DrawStatsScaled(Vector2 pos, float scale, BitmapFont font, BitmapFont labelFont)
+        {
+            var stats = _lastCharacterStats;
+            if (stats == null) return;
+
+            var labelColor = _styleProvider.TextSecondary;
+            var valueColor = _styleProvider.TextPrimary;
+
+            // Column 1: Basic Stats
+            string[] basicLabels = { "Str", "Int", "Wis", "Agi", "Con", "Dex" };
+            CharacterStat[] basicStats = { CharacterStat.Strength, CharacterStat.Intelligence, CharacterStat.Wisdom,
+                                           CharacterStat.Agility, CharacterStat.Constitution, CharacterStat.Charisma };
+            for (int i = 0; i < 6; i++)
+            {
+                var y = pos.Y + (HeaderHeight + 3 + i * RowHeight) * scale;
+                _spriteBatch.DrawString(labelFont, basicLabels[i], new Vector2(pos.X + 8 * scale, y), labelColor);
+                _spriteBatch.DrawString(font, $"{stats[basicStats[i]]}", new Vector2(pos.X + 45 * scale, y), valueColor);
+            }
+
+            // Column 2: Combat Stats
+            string[] combatLabels = { "HP", "TP", "Atk", "Acc", "Def", "Eva" };
+            float col2X = pos.X + 100 * scale;
+            _spriteBatch.DrawString(labelFont, combatLabels[0], new Vector2(col2X + 8 * scale, pos.Y + (HeaderHeight + 3) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.HP]}", new Vector2(col2X + 40 * scale, pos.Y + (HeaderHeight + 3) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, combatLabels[1], new Vector2(col2X + 8 * scale, pos.Y + (HeaderHeight + 3 + RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.TP]}", new Vector2(col2X + 40 * scale, pos.Y + (HeaderHeight + 3 + RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, combatLabels[2], new Vector2(col2X + 8 * scale, pos.Y + (HeaderHeight + 3 + 2 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.MinDam]} - {stats[CharacterStat.MaxDam]}", new Vector2(col2X + 40 * scale, pos.Y + (HeaderHeight + 3 + 2 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, combatLabels[3], new Vector2(col2X + 8 * scale, pos.Y + (HeaderHeight + 3 + 3 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.Accuracy]}", new Vector2(col2X + 40 * scale, pos.Y + (HeaderHeight + 3 + 3 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, combatLabels[4], new Vector2(col2X + 8 * scale, pos.Y + (HeaderHeight + 3 + 4 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.Armor]}", new Vector2(col2X + 40 * scale, pos.Y + (HeaderHeight + 3 + 4 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, combatLabels[5], new Vector2(col2X + 8 * scale, pos.Y + (HeaderHeight + 3 + 5 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.Evade]}", new Vector2(col2X + 40 * scale, pos.Y + (HeaderHeight + 3 + 5 * RowHeight) * scale), valueColor);
+
+            // Column 3: Character Info
+            float col3X = pos.X + 220 * scale;
+            _spriteBatch.DrawString(labelFont, "Name", new Vector2(col3X + 8 * scale, pos.Y + (HeaderHeight + 3) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{_characterProvider.MainCharacter.Name}", new Vector2(col3X + 55 * scale, pos.Y + (HeaderHeight + 3) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "Guild", new Vector2(col3X + 8 * scale, pos.Y + (HeaderHeight + 3 + RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{_characterProvider.MainCharacter.GuildName}", new Vector2(col3X + 55 * scale, pos.Y + (HeaderHeight + 3 + RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "Weight", new Vector2(col3X + 8 * scale, pos.Y + (HeaderHeight + 3 + 2 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.Weight]} / {stats[CharacterStat.MaxWeight]}", new Vector2(col3X + 55 * scale, pos.Y + (HeaderHeight + 3 + 2 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "St.Pts", new Vector2(col3X + 8 * scale, pos.Y + (HeaderHeight + 3 + 3 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.StatPoints]}", new Vector2(col3X + 55 * scale, pos.Y + (HeaderHeight + 3 + 3 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "Sk.Pts", new Vector2(col3X + 8 * scale, pos.Y + (HeaderHeight + 3 + 4 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.SkillPoints]}", new Vector2(col3X + 55 * scale, pos.Y + (HeaderHeight + 3 + 4 * RowHeight) * scale), valueColor);
+
+            // Column 4: Resources
+            float col4X = pos.X + 370 * scale;
+            _spriteBatch.DrawString(labelFont, "LvL", new Vector2(col4X + 8 * scale, pos.Y + (HeaderHeight + 3) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.Level]}", new Vector2(col4X + 45 * scale, pos.Y + (HeaderHeight + 3) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "Gold", new Vector2(col4X + 8 * scale, pos.Y + (HeaderHeight + 3 + 2 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{CurrentCharacterGold.Amount}", new Vector2(col4X + 45 * scale, pos.Y + (HeaderHeight + 3 + 2 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "Exp", new Vector2(col4X + 8 * scale, pos.Y + (HeaderHeight + 3 + 3 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{stats[CharacterStat.Experience]}", new Vector2(col4X + 45 * scale, pos.Y + (HeaderHeight + 3 + 3 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(labelFont, "TNL", new Vector2(col4X + 8 * scale, pos.Y + (HeaderHeight + 3 + 4 * RowHeight) * scale), labelColor);
+            _spriteBatch.DrawString(font, $"{ExperienceToNextLevel}", new Vector2(col4X + 45 * scale, pos.Y + (HeaderHeight + 3 + 4 * RowHeight) * scale), valueColor);
+
+            _spriteBatch.DrawString(font, $"{stats.GetKarmaString()}", new Vector2(col4X + 8 * scale, pos.Y + (HeaderHeight + 3 + 5 * RowHeight) * scale), valueColor);
         }
 
         private void HandleArrowButtonClick(object sender, EventArgs e)

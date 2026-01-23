@@ -14,13 +14,14 @@ using EOLib.Graphics;
 using EOLib.Localization;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnSettingsPanel : DraggableHudPanel
+    public class CodeDrawnSettingsPanel : DraggableHudPanel, IPostScaleDrawable
     {
         private enum KeyboardLayout
         {
@@ -58,6 +59,8 @@ namespace EndlessClient.HUD.Panels
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
+        private readonly BitmapFont _scaledFont;
+        private readonly BitmapFont _scaledLabelFont;
 
         private readonly Dictionary<WhichSetting, string> _settingLabels;
         private readonly Dictionary<WhichSetting, string> _settingValues;
@@ -97,6 +100,8 @@ namespace EndlessClient.HUD.Panels
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
+            _scaledFont = contentProvider.Fonts[Constants.FontSize10];
+            _scaledLabelFont = contentProvider.Fonts[Constants.FontSize10];
 
             DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
 
@@ -190,11 +195,125 @@ namespace EndlessClient.HUD.Panels
             return base.HandleClick(control, eventArgs);
         }
 
+        // IPostScaleDrawable implementation
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
         protected override void OnDrawControl(GameTime gameTime)
+        {
+            if (SkipRenderTargetDraw)
+            {
+                DrawPanelFills(DrawPositionWithParentOffset);
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
+            DrawPanelComplete(DrawPositionWithParentOffset, _font, _labelFont);
+            base.OnDrawControl(gameTime);
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (!Visible) return;
+
+            var gamePos = DrawPositionWithParentOffset;
+            var scaledPos = new Vector2(
+                gamePos.X * scaleFactor + renderOffset.X,
+                gamePos.Y * scaleFactor + renderOffset.Y);
+
+            DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFills(Vector2 pos)
         {
             _spriteBatch.Begin();
 
-            var pos = DrawPositionWithParentOffset;
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+
+            // Row hover highlight fills
+            foreach (var pair in _settingLabels)
+            {
+                var setting = pair.Key;
+                var hitArea = _settingHitAreas[setting];
+                var rowRect = new Rectangle((int)pos.X + hitArea.X, (int)pos.Y + hitArea.Y, hitArea.Width, hitArea.Height);
+
+                if (_hoveredSetting == setting)
+                {
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, new Color(255, 255, 255, 30));
+                }
+            }
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelBordersAndText(Vector2 scaledPos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            // Select font based on scale
+            BitmapFont font, labelFont;
+            if (scale >= 1.5f) { font = _scaledFont; labelFont = _scaledLabelFont; }
+            else if (scale >= 1.2f) { font = _labelFont; labelFont = _labelFont; }
+            else { font = _font; labelFont = _labelFont; }
+
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+
+            // Panel border
+            var bgRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, panelWidth, panelHeight);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, Math.Max(1, (int)(2 * scale)));
+
+            // Column divider
+            var lineColor = new Color((byte)_styleProvider.PanelBorder.R, (byte)_styleProvider.PanelBorder.G, (byte)_styleProvider.PanelBorder.B, (byte)100);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)(scaledPos.X + ColWidth * scale), (int)(scaledPos.Y + 4 * scale), Math.Max(1, (int)scale), (int)((PanelHeight - 8) * scale)), lineColor);
+
+            // Draw settings text
+            var labelColor = _styleProvider.TextSecondary;
+
+            foreach (var pair in _settingLabels)
+            {
+                var setting = pair.Key;
+                var label = pair.Value;
+                var ndx = (int)setting;
+                var col = ndx / 6;
+                var row = ndx % 6;
+
+                var hitArea = _settingHitAreas[setting];
+
+                // Hover border (post-scale)
+                if (_hoveredSetting == setting)
+                {
+                    var rowRect = new Rectangle(
+                        (int)(scaledPos.X + hitArea.X * scale),
+                        (int)(scaledPos.Y + hitArea.Y * scale),
+                        (int)(hitArea.Width * scale),
+                        (int)(hitArea.Height * scale));
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, rowRect, new Color(255, 255, 255, 60), 1);
+                }
+
+                var labelX = scaledPos.X + (10 + col * ColWidth) * scale;
+                var valueX = scaledPos.X + (90 + col * ColWidth) * scale;
+                var y = scaledPos.Y + (9 + row * RowHeight) * scale;
+
+                _spriteBatch.DrawString(labelFont, label, new Vector2(labelX, y), labelColor);
+
+                // Value with color
+                var value = _settingValues[setting];
+                var valueColor = GetValueColor(setting, value);
+                _spriteBatch.DrawString(font, value, new Vector2(valueX, y), valueColor);
+
+                // Toggle indicator arrow
+                var arrowX = scaledPos.X + (205 + col * ColWidth) * scale;
+                _spriteBatch.DrawString(font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
+            }
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelComplete(Vector2 pos, BitmapFont font, BitmapFont labelFont)
+        {
+            _spriteBatch.Begin();
 
             // Draw panel background
             var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
@@ -230,22 +349,21 @@ namespace EndlessClient.HUD.Panels
                 var valueX = pos.X + 90 + col * ColWidth;
                 var y = pos.Y + 9 + row * RowHeight;
 
-                _spriteBatch.DrawString(_labelFont, label, new Vector2(labelX, y), labelColor);
+                _spriteBatch.DrawString(labelFont, label, new Vector2(labelX, y), labelColor);
 
                 // Draw value with color based on state
                 var value = _settingValues[setting];
                 var valueColor = GetValueColor(setting, value);
-                _spriteBatch.DrawString(_font, value, new Vector2(valueX, y), valueColor);
+                _spriteBatch.DrawString(font, value, new Vector2(valueX, y), valueColor);
 
                 // Draw toggle indicator arrow
                 var arrowX = pos.X + 205 + col * ColWidth;
-                _spriteBatch.DrawString(_font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
+                _spriteBatch.DrawString(font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
             }
 
             _spriteBatch.End();
-
-            base.OnDrawControl(gameTime);
         }
+
 
         private Color GetValueColor(WhichSetting setting, string value)
         {
