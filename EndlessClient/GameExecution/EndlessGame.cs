@@ -387,9 +387,11 @@ namespace EndlessClient.GameExecution
         private void DrawPostScaleControls(float scaleFactor, Point renderOffset)
         {
             // Find and draw all post-scale drawable controls
+            // Note: DrawPostScale is called for ALL IPostScaleDrawable components.
+            // SkipRenderTargetDraw only controls whether the normal Draw is skipped.
             foreach (var component in Components)
             {
-                if (component is IPostScaleDrawable postScaleDrawable && postScaleDrawable.SkipRenderTargetDraw)
+                if (component is IPostScaleDrawable postScaleDrawable)
                 {
                     postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
                 }

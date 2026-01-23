@@ -2,6 +2,26 @@
 
 This document serves as a repository for technical learnings, architectural patterns, and asset management details discovered during the development of the EndlessClient.
 
+## Design Philosophy: Code-Drawn Controls Over GFX/XNAControls
+
+**Prefer code-drawn controls over GFX textures and XNAControls when possible.**
+
+While the codebase historically relies heavily on XNAControls and GFX-based UI elements, new development should aim to move away from these patterns. Code-drawn controls are:
+
+- **More maintainable** - No external texture dependencies, easier to debug
+- **More flexible** - Easy to adjust sizes, colors, and layouts
+- **More reliable** - Avoids measurement/rendering mismatches common with XNALabel and 9-patch tiles
+- **Scale-aware** - Can adapt to different display scales with proper padding logic
+- **Simpler** - Direct drawing with `SpriteBatch.Draw()` eliminates complex control hierarchies
+
+**When to replace existing GFX/XNAControls**:
+- When fixing bugs in existing controls proves difficult or unreliable
+- When adding new UI elements
+- When controls need to work across different scale modes
+- When XNAControl timing/measurement issues cause visual bugs
+
+**Example**: The chat bubble system was rewritten from a complex 9-patch tile system with XNALabel to a simple code-drawn rectangle with manual text rendering, eliminating persistent text overflow bugs.
+
 ## 1. Asset Management & GFX Resources
 
 ### Resource ID Mapping
@@ -1314,4 +1334,136 @@ The 10th visible line gets cut off at the bottom. Attempts to fix:
 **Key files to modify**:
 - `CodeDrawnChatPanel.cs` - constants `PanelHeight`, `VisibleLines`, `gameMessageAreaHeight`
 - `ChatRenderable.cs` - `HeaderYOffset` (currently 3px), line spacing (currently 13px for DisplayIndex)
+
+## 21. UI Click Absorption and Window Layering
+
+### The Problem
+Multiple UI issues can occur when dialogs overlap:
+1. **Click-through**: Clicking on dialog backgrounds triggers actions on controls behind
+2. **Hover highlighting**: Items in windows underneath still highlight when mouse is over a dialog on top
+3. **Drag-drop interference**: Dragged items (DrawOrder 10000) can block MouseOver for drop targets
+
+### Click Absorption Pattern
+Code-drawn dialogs must override `HandleClick` and `HandleMouseDown` to absorb clicks on their background:
+
+```csharp
+// In CodeDrawnScrollingListDialog.cs
+protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs) => true;
+protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs) => true;
+```
+
+*   **Why return true**: Returning `true` signals the event was handled, preventing propagation
+*   **Child controls**: Override in the base dialog class; child controls (buttons, list items) already handle their own clicks
+
+### ZOrder-Aware MouseOver Filtering
+`InputManager.Update()` was modified to only send MouseOver events to the topmost control:
+
+```csharp
+// Filter out controls obscured by higher-ZOrder controls
+var controlsUnderMouse = comps
+    .Where(c => c.EventArea.Contains(transformedPosition))
+    .Where(c => c != _dragTarget && c.ZOrder < 10000)  // Exclude drags
+    .ToList();
+
+// Find max ZOrder and only allow those controls + their parents
+var maxZOrder = controlsUnderMouse.Max(c => c.ZOrder);
+var allowedControls = controlsUnderMouse.Where(c => c.ZOrder == maxZOrder);
+```
+
+**Key rules**:
+1. Only the highest-ZOrder control(s) receive MouseOver
+2. Parent/child controls of the topmost control also receive MouseOver
+3. Drag targets (`_dragTarget`) are excluded from ZOrder calculation so drop targets get MouseOver
+4. High-ZOrder controls (≥10000) are also excluded but still added to `allowedControls`
+
+### Drag-and-Drop Considerations
+Dragged items have `DrawOrder = 10000` to appear above all dialogs. The ZOrder filter handles both drag modes:
+
+| Mode | Framework Tracking | Solution |
+|------|-------------------|----------|
+| **Hold-to-drag** | `_dragTarget` set | Excluded via `c != _dragTarget` |
+| **Click-to-drag** | `_dragTarget` is null | Excluded via `c.ZOrder < 10000` |
+
+Both modes allow drop targets to receive MouseOver while the dragged item still gets click events.
+
+### Right-Click for Locker Withdrawal
+To prevent accidental item withdrawals when clicking dialog buttons:
+
+```csharp
+// In CodeDrawnScrollingListDialog.cs - added onRightClick parameter
+public void AddItem(string primaryText, ..., Action<CodeDrawnListItem> onRightClick = null, ...)
+
+// In CodeDrawnLockerDialog.cs - use right-click for withdrawal
+AddItem(itemData.Name, 
+    onRightClick: _ => TakeItem(itemData, lockerItem),
+    isLink: true, ...);
+```
+
+**Files Modified**:
+- `XNAControls/Input/InputManager.cs` - ZOrder-aware MouseOver filtering
+- `CodeDrawnScrollingListDialog.cs` - Click absorption + onRightClick parameter
+- `CodeDrawnLockerDialog.cs` - Right-click withdrawal
+
+## 22. Chat Bubble Code-Drawn Implementation
+
+### The Problem
+The original 9-patch tile-based chat bubble system had persistent text overflow issues:
+- `MonoGame.Extended.BitmapFont.MeasureString()` returns measurements that don't match actual rendered pixel widths
+- XNALabel's `ActualWidth` property has timing/measurement issues
+- Complex tile math with off-by-one errors in the bubble width loop
+
+### Solution: Simple Code-Drawn Bubble
+Replaced the entire 9-patch tile system with a simple rectangle-based approach:
+
+```csharp
+// ChatBubble.cs - uses a 1x1 white pixel to draw shapes
+_whitePixel = new Texture2D(Game.GraphicsDevice, 1, 1);
+_whitePixel.SetData(new[] { Color.White });
+
+// Draw bubble as rectangle + border + triangular nub
+_spriteBatch.Draw(_whitePixel, bubbleRect, bubbleColor);
+```
+
+### Key Design Decisions
+
+**Fixed bubble width instead of measured text width**:
+```csharp
+// Font measurement is unreliable, so use fixed MaxTextWidth + generous padding
+var bubbleWidth = MaxTextWidth + effectivePadding * 2 + extraWidth;
+```
+
+**Scale-aware padding**:
+```csharp
+// At 1:1 scale: use extra margins to compensate for font measurement issues
+// When scaled up: remove extra margins (they get scaled too and look excessive)
+var isActuallyScaled = _clientWindowSizeProvider.IsScaledMode && 
+                       _clientWindowSizeProvider.ScaleFactor > 1.0f;
+var effectivePadding = isActuallyScaled ? 4 : Padding;  // 4px vs 8px
+var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;  // 0 vs 30px
+var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin; // 0 vs 12px
+```
+
+### Constants
+```csharp
+private const int Padding = 8;           // Base padding around text
+private const int ExtraWidthMargin = 30; // Extra width at 1:1 scale
+private const int ExtraHeightMargin = 12; // Extra height at 1:1 scale
+private const int MaxTextWidth = 96;     // Max width before wrapping
+private const int NubHeight = 6;         // Speech bubble pointer height
+```
+
+### Text Wrapping
+Manual word wrapping with hyphenation for long words:
+```csharp
+// Handle words that are too long - break them with hyphens
+while (font.MeasureString(wordToProcess).Width > MaxTextWidth)
+{
+    // Find fitting portion, add hyphen, continue with remainder
+    _wrappedLines.Add(fitting + "-");
+    wordToProcess = wordToProcess.Substring(fitting.Length);
+}
+```
+
+### Files Modified
+- `EndlessClient/Rendering/Chat/ChatBubble.cs` - Complete rewrite to code-drawn approach
 

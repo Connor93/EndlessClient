@@ -1,4 +1,5 @@
 ﻿using AutomaticTypeMapper;
+using EndlessClient.Content;
 using EndlessClient.GameExecution;
 using EOLib.Config;
 
@@ -11,21 +12,24 @@ namespace EndlessClient.Rendering.Chat
         private readonly IEndlessGameProvider _endlessGameProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IContentProvider _contentProvider;
 
         public ChatBubbleFactory(IChatBubbleTextureProvider chatBubbleTextureProvider,
                                  IEndlessGameProvider endlessGameProvider,
                                  IConfigurationProvider configurationProvider,
-                                 IClientWindowSizeProvider clientWindowSizeProvider)
+                                 IClientWindowSizeProvider clientWindowSizeProvider,
+                                 IContentProvider contentProvider)
         {
             _chatBubbleTextureProvider = chatBubbleTextureProvider;
             _endlessGameProvider = endlessGameProvider;
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _contentProvider = contentProvider;
         }
 
         public IChatBubble CreateChatBubble(IMapActor owner)
         {
-            var chatBubble = new ChatBubble(owner, _chatBubbleTextureProvider, _endlessGameProvider, _configurationProvider, _clientWindowSizeProvider);
+            var chatBubble = new ChatBubble(owner, _chatBubbleTextureProvider, _endlessGameProvider, _configurationProvider, _clientWindowSizeProvider, _contentProvider);
 
             if (!_endlessGameProvider.Game.Components.Contains(chatBubble))
                 _endlessGameProvider.Game.Components.Add(chatBubble);

@@ -1,6 +1,8 @@
 using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.GameExecution;
+using EndlessClient.Rendering;
+using EndlessClient.Services;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Interact;
@@ -16,6 +18,7 @@ namespace EndlessClient.Dialogs
 {
     /// <summary>
     /// A procedurally-drawn NPC info dialog that displays NPC properties and related info (drops, shop, crafts, spawns).
+    /// Inherits post-scale rendering support from CodeDrawnScrollingListDialog.
     /// </summary>
     public class CodeDrawnNpcInfoDialog : CodeDrawnScrollingListDialog
     {
@@ -23,21 +26,22 @@ namespace EndlessClient.Dialogs
         private readonly Texture2D _npcGraphic;
         private readonly INpcSourceProvider _npcSourceProvider;
         private readonly IEIFFileProvider _eifFileProvider;
-        private readonly IUIStyleProvider _styleProvider;
         private bool _sourcesChecked;
         private int _lastDataHash;
 
         public CodeDrawnNpcInfoDialog(
             IUIStyleProvider styleProvider,
             IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
             IContentProvider contentProvider,
             INpcSourceProvider npcSourceProvider,
             IEIFFileProvider eifFileProvider,
             INativeGraphicsManager nativeGraphicsManager,
             ENFRecord npc)
-            : base(styleProvider, gameStateProvider, contentProvider.Fonts[Constants.FontSize08])
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider,
+                   contentProvider.Fonts[Constants.FontSize08], contentProvider.Fonts[Constants.FontSize10])
         {
-            _styleProvider = styleProvider;
             _npc = npc;
             _npcSourceProvider = npcSourceProvider;
             _eifFileProvider = eifFileProvider;
@@ -234,34 +238,83 @@ namespace EndlessClient.Dialogs
             // Let base class draw all standard dialog elements (background, title, list, buttons)
             base.OnDrawControl(gameTime);
 
-            // Draw NPC graphic on top of the dialog background
+            // Draw NPC graphic on top of the dialog background (non-scaled mode only)
+            if (_npcGraphic != null && !SkipRenderTargetDraw)
+            {
+                DrawNpcGraphic(DrawAreaWithParentOffset, 1.0f);
+            }
+        }
+
+        public override void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            base.DrawPostScale(spriteBatch, scaleFactor, renderOffset);
+
+            // Draw NPC graphic in post-scale phase
             if (_npcGraphic != null)
             {
-                var drawPos = DrawAreaWithParentOffset;
-                var titleBarHeight = _styleProvider.TitleBarHeight;
+                var gamePos = DrawAreaWithParentOffset;
+                var scaledPos = new Rectangle(
+                    (int)(gamePos.X * scaleFactor + renderOffset.X),
+                    (int)(gamePos.Y * scaleFactor + renderOffset.Y),
+                    (int)(gamePos.Width * scaleFactor),
+                    (int)(gamePos.Height * scaleFactor));
 
-                // Scale to fit within max bounds while preserving aspect ratio
-                const int maxWidth = 120;
-                const int maxHeight = 90;
-
-                var scale = 1.0f;
-                if (_npcGraphic.Width > maxWidth || _npcGraphic.Height > maxHeight)
-                {
-                    var scaleX = (float)maxWidth / _npcGraphic.Width;
-                    var scaleY = (float)maxHeight / _npcGraphic.Height;
-                    scale = System.Math.Min(scaleX, scaleY);
-                }
-
-                var scaledWidth = (int)(_npcGraphic.Width * scale);
-                var scaledHeight = (int)(_npcGraphic.Height * scale);
-
-                _spriteBatch.Begin();
-                var npcX = drawPos.X + (DialogWidth - scaledWidth) / 2;
-                var npcY = drawPos.Y + titleBarHeight + 10 + (maxHeight - scaledHeight) / 2; // Center vertically in header area
-                var destRect = new Rectangle((int)npcX, (int)npcY, scaledWidth, scaledHeight);
-                _spriteBatch.Draw(_npcGraphic, destRect, Color.White);
-                _spriteBatch.End();
+                DrawNpcGraphicPostScale(scaledPos, scaleFactor);
             }
+        }
+
+        private void DrawNpcGraphic(Rectangle drawPos, float scale)
+        {
+            var titleBarHeight = StyleProvider.TitleBarHeight;
+
+            // Scale to fit within max bounds while preserving aspect ratio
+            const int maxWidth = 120;
+            const int maxHeight = 90;
+
+            var graphicScale = 1.0f;
+            if (_npcGraphic.Width > maxWidth || _npcGraphic.Height > maxHeight)
+            {
+                var scaleX = (float)maxWidth / _npcGraphic.Width;
+                var scaleY = (float)maxHeight / _npcGraphic.Height;
+                graphicScale = System.Math.Min(scaleX, scaleY);
+            }
+
+            var scaledWidth = (int)(_npcGraphic.Width * graphicScale);
+            var scaledHeight = (int)(_npcGraphic.Height * graphicScale);
+
+            _spriteBatch.Begin();
+            var npcX = drawPos.X + (DialogWidth - scaledWidth) / 2;
+            var npcY = drawPos.Y + titleBarHeight + 10 + (maxHeight - scaledHeight) / 2;
+            var destRect = new Rectangle((int)npcX, (int)npcY, scaledWidth, scaledHeight);
+            _spriteBatch.Draw(_npcGraphic, destRect, Color.White);
+            _spriteBatch.End();
+        }
+
+        private void DrawNpcGraphicPostScale(Rectangle scaledPos, float scale)
+        {
+            var titleBarHeight = StyleProvider.TitleBarHeight;
+
+            // Scale to fit within max bounds while preserving aspect ratio
+            const int maxWidth = 120;
+            const int maxHeight = 90;
+
+            var graphicScale = 1.0f;
+            if (_npcGraphic.Width > maxWidth || _npcGraphic.Height > maxHeight)
+            {
+                var scaleX = (float)maxWidth / _npcGraphic.Width;
+                var scaleY = (float)maxHeight / _npcGraphic.Height;
+                graphicScale = System.Math.Min(scaleX, scaleY);
+            }
+
+            var scaledWidth = (int)(_npcGraphic.Width * graphicScale * scale);
+            var scaledHeight = (int)(_npcGraphic.Height * graphicScale * scale);
+
+            _spriteBatch.Begin();
+            var npcX = scaledPos.X + (int)((DialogWidth - _npcGraphic.Width * graphicScale) / 2 * scale);
+            var npcY = scaledPos.Y + (int)((titleBarHeight + 10 + (maxHeight - _npcGraphic.Height * graphicScale) / 2) * scale);
+            var destRect = new Rectangle(npcX, npcY, scaledWidth, scaledHeight);
+            _spriteBatch.Draw(_npcGraphic, destRect, Color.White);
+            _spriteBatch.End();
         }
     }
 }

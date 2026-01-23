@@ -1,6 +1,8 @@
 using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.GameExecution;
+using EndlessClient.Rendering;
+using EndlessClient.Services;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Interact;
@@ -16,6 +18,7 @@ namespace EndlessClient.Dialogs
 {
     /// <summary>
     /// A procedurally-drawn item info dialog that displays item properties and acquisition sources.
+    /// Inherits post-scale rendering support from CodeDrawnScrollingListDialog.
     /// </summary>
     public class CodeDrawnItemInfoDialog : CodeDrawnScrollingListDialog
     {
@@ -24,22 +27,23 @@ namespace EndlessClient.Dialogs
         private readonly IItemSourceProvider _itemSourceProvider;
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly IENFFileProvider _enfFileProvider;
-        private readonly IUIStyleProvider _styleProvider;
         private bool _sourcesChecked;
         private int _lastSourceCount;
 
         public CodeDrawnItemInfoDialog(
             IUIStyleProvider styleProvider,
             IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
             IContentProvider contentProvider,
             IItemSourceProvider itemSourceProvider,
             IEIFFileProvider eifFileProvider,
             IENFFileProvider enfFileProvider,
             INativeGraphicsManager nativeGraphicsManager,
             EIFRecord item)
-            : base(styleProvider, gameStateProvider, contentProvider.Fonts[Constants.FontSize08])
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider,
+                   contentProvider.Fonts[Constants.FontSize08], contentProvider.Fonts[Constants.FontSize10])
         {
-            _styleProvider = styleProvider;
             _item = item;
             _itemSourceProvider = itemSourceProvider;
             _eifFileProvider = eifFileProvider;
@@ -234,34 +238,83 @@ namespace EndlessClient.Dialogs
             // Let base class draw all standard dialog elements (background, title, list, buttons)
             base.OnDrawControl(gameTime);
 
-            // Draw item graphic on top of the dialog background, but below list area
+            // Draw item graphic on top of the dialog background, but below list area (non-scaled mode only)
+            if (_itemGraphic != null && !SkipRenderTargetDraw)
+            {
+                DrawItemGraphic(DrawAreaWithParentOffset, 1.0f);
+            }
+        }
+
+        public override void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            base.DrawPostScale(spriteBatch, scaleFactor, renderOffset);
+
+            // Draw item graphic in post-scale phase
             if (_itemGraphic != null)
             {
-                var drawPos = DrawAreaWithParentOffset;
-                var titleBarHeight = _styleProvider.TitleBarHeight;
+                var gamePos = DrawAreaWithParentOffset;
+                var scaledPos = new Rectangle(
+                    (int)(gamePos.X * scaleFactor + renderOffset.X),
+                    (int)(gamePos.Y * scaleFactor + renderOffset.Y),
+                    (int)(gamePos.Width * scaleFactor),
+                    (int)(gamePos.Height * scaleFactor));
 
-                // Scale to fit within max bounds while preserving aspect ratio
-                const int maxWidth = 80;
-                const int maxHeight = 60;
-
-                var scale = 1.0f;
-                if (_itemGraphic.Width > maxWidth || _itemGraphic.Height > maxHeight)
-                {
-                    var scaleX = (float)maxWidth / _itemGraphic.Width;
-                    var scaleY = (float)maxHeight / _itemGraphic.Height;
-                    scale = System.Math.Min(scaleX, scaleY);
-                }
-
-                var scaledWidth = (int)(_itemGraphic.Width * scale);
-                var scaledHeight = (int)(_itemGraphic.Height * scale);
-
-                _spriteBatch.Begin();
-                var itemX = drawPos.X + (DialogWidth - scaledWidth) / 2;
-                var itemY = drawPos.Y + titleBarHeight + 10 + (maxHeight - scaledHeight) / 2; // Center vertically in header area
-                var destRect = new Rectangle((int)itemX, (int)itemY, scaledWidth, scaledHeight);
-                _spriteBatch.Draw(_itemGraphic, destRect, Color.White);
-                _spriteBatch.End();
+                DrawItemGraphicPostScale(scaledPos, scaleFactor);
             }
+        }
+
+        private void DrawItemGraphic(Rectangle drawPos, float scale)
+        {
+            var titleBarHeight = StyleProvider.TitleBarHeight;
+
+            // Scale to fit within max bounds while preserving aspect ratio
+            const int maxWidth = 80;
+            const int maxHeight = 60;
+
+            var graphicScale = 1.0f;
+            if (_itemGraphic.Width > maxWidth || _itemGraphic.Height > maxHeight)
+            {
+                var scaleX = (float)maxWidth / _itemGraphic.Width;
+                var scaleY = (float)maxHeight / _itemGraphic.Height;
+                graphicScale = System.Math.Min(scaleX, scaleY);
+            }
+
+            var scaledWidth = (int)(_itemGraphic.Width * graphicScale);
+            var scaledHeight = (int)(_itemGraphic.Height * graphicScale);
+
+            _spriteBatch.Begin();
+            var itemX = drawPos.X + (DialogWidth - scaledWidth) / 2;
+            var itemY = drawPos.Y + titleBarHeight + 10 + (maxHeight - scaledHeight) / 2;
+            var destRect = new Rectangle((int)itemX, (int)itemY, scaledWidth, scaledHeight);
+            _spriteBatch.Draw(_itemGraphic, destRect, Color.White);
+            _spriteBatch.End();
+        }
+
+        private void DrawItemGraphicPostScale(Rectangle scaledPos, float scale)
+        {
+            var titleBarHeight = StyleProvider.TitleBarHeight;
+
+            // Scale to fit within max bounds while preserving aspect ratio
+            const int maxWidth = 80;
+            const int maxHeight = 60;
+
+            var graphicScale = 1.0f;
+            if (_itemGraphic.Width > maxWidth || _itemGraphic.Height > maxHeight)
+            {
+                var scaleX = (float)maxWidth / _itemGraphic.Width;
+                var scaleY = (float)maxHeight / _itemGraphic.Height;
+                graphicScale = System.Math.Min(scaleX, scaleY);
+            }
+
+            var scaledWidth = (int)(_itemGraphic.Width * graphicScale * scale);
+            var scaledHeight = (int)(_itemGraphic.Height * graphicScale * scale);
+
+            _spriteBatch.Begin();
+            var itemX = scaledPos.X + (int)((DialogWidth - _itemGraphic.Width * graphicScale) / 2 * scale);
+            var itemY = scaledPos.Y + (int)((titleBarHeight + 10 + (maxHeight - _itemGraphic.Height * graphicScale) / 2) * scale);
+            var destRect = new Rectangle(itemX, itemY, scaledWidth, scaledHeight);
+            _spriteBatch.Draw(_itemGraphic, destRect, Color.White);
+            _spriteBatch.End();
         }
     }
 }

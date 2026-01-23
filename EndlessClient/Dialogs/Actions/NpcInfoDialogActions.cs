@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
 using EndlessClient.Dialogs.Factories;
@@ -15,7 +14,7 @@ namespace EndlessClient.Dialogs.Actions
     public class NpcInfoDialogActions : INpcInfoDialogActions
     {
         private readonly INpcInfoDialogFactory _dialogFactory;
-        private readonly IScrollingListDialogFactory _scrollingListDialogFactory;
+        private readonly ICodeDrawnSearchResultsDialogFactory _searchResultsDialogFactory;
         private readonly IActiveDialogRepository _activeDialogRepository;
         private readonly IENFFileProvider _enfFileProvider;
         private readonly IChatRepository _chatRepository;
@@ -23,7 +22,7 @@ namespace EndlessClient.Dialogs.Actions
         private readonly IPacketSendService _packetSendService;
 
         public NpcInfoDialogActions(INpcInfoDialogFactory dialogFactory,
-                                    IScrollingListDialogFactory scrollingListDialogFactory,
+                                    ICodeDrawnSearchResultsDialogFactory searchResultsDialogFactory,
                                     IActiveDialogRepository activeDialogRepository,
                                     IENFFileProvider enfFileProvider,
                                     IChatRepository chatRepository,
@@ -31,7 +30,7 @@ namespace EndlessClient.Dialogs.Actions
                                     IPacketSendService packetSendService)
         {
             _dialogFactory = dialogFactory;
-            _scrollingListDialogFactory = scrollingListDialogFactory;
+            _searchResultsDialogFactory = searchResultsDialogFactory;
             _activeDialogRepository = activeDialogRepository;
             _enfFileProvider = enfFileProvider;
             _chatRepository = chatRepository;
@@ -80,39 +79,21 @@ namespace EndlessClient.Dialogs.Actions
             var enfFile = _enfFileProvider.ENFFile;
 
             // Close any existing search results dialog
-            _activeDialogRepository.MessageDialog.MatchSome(dlg => dlg.Close());
+            _activeDialogRepository.SearchResultsDialog.MatchSome(dlg => dlg.Close());
 
-            // Create a scrolling list dialog for search results
-            var dlg = _scrollingListDialogFactory.Create(DialogType.NpcQuestDialog);
-            dlg.Title = $"Found {matchingNpcIds.Length} NPCs";
-            dlg.Buttons = ScrollingListDialogButtons.Cancel;
-            dlg.ListItemType = ListDialogItem.ListItemStyle.Small;
+            // Create a code-drawn search results dialog
+            var dlg = _searchResultsDialogFactory.Create($"Found {matchingNpcIds.Length} NPCs");
 
             // Add clickable items to the list
-            var items = new List<ListDialogItem>();
             foreach (var id in matchingNpcIds)
             {
                 var npcRecord = enfFile[id];
-                var listItem = new ListDialogItem(dlg, ListDialogItem.ListItemStyle.Small)
-                {
-                    PrimaryText = $"[{id}] {npcRecord.Name}"
-                };
-
-                // Capture the ID for the click handler
                 var capturedId = id;
-                listItem.SetPrimaryClickAction((_, _) =>
-                {
-                    dlg.Close();
-                    ShowNpcInfo(capturedId);
-                });
-
-                items.Add(listItem);
+                dlg.AddItem($"[{id}] {npcRecord.Name}", () => ShowNpcInfo(capturedId));
             }
 
-            dlg.SetItemList(items);
-
-            dlg.DialogClosed += (_, _) => _activeDialogRepository.MessageDialog = Option.None<ScrollingListDialog>();
-            _activeDialogRepository.MessageDialog = Option.Some(dlg);
+            dlg.DialogClosed += (_, _) => _activeDialogRepository.SearchResultsDialog = Option.None<CodeDrawnSearchResultsDialog>();
+            _activeDialogRepository.SearchResultsDialog = Option.Some(dlg);
 
             dlg.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
 
@@ -120,3 +101,4 @@ namespace EndlessClient.Dialogs.Actions
         }
     }
 }
+
