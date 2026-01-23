@@ -304,6 +304,9 @@ namespace EndlessClient.GameExecution
                 _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
                 _spriteBatch.Draw(_gameRenderTarget, destRect, Color.White);
                 _spriteBatch.End();
+
+                // Draw post-scale UI controls directly to backbuffer for crisp rendering
+                DrawPostScaleControls(scale, new Point(offset.X, offset.Y));
             }
             else
             {
@@ -379,6 +382,18 @@ namespace EndlessClient.GameExecution
                 ex.ToString(),
                 "*Report this exception as a GitHub issue");
             dlg.ShowDialog();
+        }
+
+        private void DrawPostScaleControls(float scaleFactor, Point renderOffset)
+        {
+            // Find and draw all post-scale drawable controls
+            foreach (var component in Components)
+            {
+                if (component is IPostScaleDrawable postScaleDrawable && postScaleDrawable.SkipRenderTargetDraw)
+                {
+                    postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
+                }
+            }
         }
     }
 }

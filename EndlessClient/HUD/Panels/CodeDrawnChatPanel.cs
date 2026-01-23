@@ -14,6 +14,7 @@ using EOLib.Domain.Chat;
 using EOLib.Graphics;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Input;
@@ -22,7 +23,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnChatPanel : DraggableHudPanel, IChatPanel
+    public class CodeDrawnChatPanel : DraggableHudPanel, IChatPanel, IPostScaleDrawable
     {
         private readonly IChatActions _chatActions;
         private readonly IChatRenderableGenerator _chatRenderableGenerator;
@@ -225,45 +226,181 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
+        // IPostScaleDrawable implementation
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
         protected override void OnDrawControl(GameTime gameTime)
         {
+            if (SkipRenderTargetDraw)
+            {
+                // In scaled mode: draw fills + messages to render target (they'll be scaled together)
+                // The borders/frame will be drawn post-scale for crispness
+                DrawPanelFills(DrawPositionWithParentOffset, 1.0f);
+                DrawChatMessages(DrawPositionWithParentOffset);
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
+            // Normal mode: draw everything
+            DrawPanelBackground(DrawPositionWithParentOffset, 1.0f);
+            DrawChatMessages(DrawPositionWithParentOffset);
+            base.OnDrawControl(gameTime);
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (!Visible) return;
+
+            // Calculate scaled position: game position * scale + render offset
+            var gamePos = DrawPositionWithParentOffset;
+            var scaledPos = new Vector2(
+                gamePos.X * scaleFactor + renderOffset.X,
+                gamePos.Y * scaleFactor + renderOffset.Y);
+
+            // Draw only borders/frame post-scale for crispness
+            // (fills are already in render target behind the text)
+            DrawPanelBordersOnly(scaledPos, scaleFactor);
+        }
+
+        /// <summary>
+        /// Draws only the filled backgrounds (no borders) - for render target phase in scaled mode
+        /// </summary>
+        private void DrawPanelFills(Vector2 pos, float scale)
+        {
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+            var lineHeight = (int)(13 * scale);
+            var visibleLinesHeight = VisibleLines * lineHeight;
+            var inputHeight = (int)(InputBarHeight * scale);
+            var padding = (int)(4 * scale);
+
             _spriteBatch.Begin();
 
-            var pos = DrawPositionWithParentOffset;
-
-            // Draw panel background
-            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
+            // Draw panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, panelWidth, panelHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
 
-            // Draw message area (10 lines * 13px = 130px height)
-            var messageAreaHeight = VisibleLines * 13;
-            var messageAreaRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 4, PanelWidth - 30, messageAreaHeight);
+            // Draw message area fill
+            var messageAreaRect = new Rectangle(
+                (int)pos.X + padding,
+                (int)pos.Y + padding,
+                panelWidth - (int)(30 * scale),
+                visibleLinesHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, new Color(120, 110, 100, 255));
 
-            // Draw input bar area
-            var inputBarY = (int)pos.Y + 4 + messageAreaHeight + 4;
-            var inputBarRect = new Rectangle((int)pos.X + 4, inputBarY, PanelWidth - 12, InputBarHeight);
+            // Draw input bar fill
+            var inputBarY = (int)pos.Y + padding + visibleLinesHeight + padding;
+            var inputBarRect = new Rectangle(
+                (int)pos.X + padding,
+                inputBarY,
+                panelWidth - (int)(12 * scale),
+                inputHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, new Color(100, 90, 80, 255));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
 
             // Draw ">" prompt
-            _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + 4, inputBarRect.Y + 3), Color.White);
-
-            // Draw tabs
-            DrawTabs(pos);
+            _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), Color.White);
 
             _spriteBatch.End();
+        }
 
-            // Draw chat messages for active tab
+        /// <summary>
+        /// Draws only the borders/frame (no fills) - for post-scale phase
+        /// </summary>
+        private void DrawPanelBordersOnly(Vector2 scaledPos, float scale)
+        {
+            // IMPORTANT: To align with the render target blit, we calculate positions in game-space
+            // first (same as DrawPanelFills), then scale the final coordinates.
+            // This avoids accumulated rounding errors from scaling individual dimensions.
+
+            // Game-space dimensions (same as DrawPanelFills with scale=1.0)
+            const int gamePadding = 4;
+            const int gameVisibleLinesHeight = VisibleLines * 13; // 10 * 13 = 130
+            const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 4 + 130 + 4 = 138
+            const int gameInputBarWidth = PanelWidth - 12; // 489 - 12 = 477
+
+            var borderWidth = Math.Max(1, (int)(2 * scale));
+
+            _spriteBatch.Begin();
+
+            // Draw panel border - this is straightforward
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+            var bgRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, panelWidth, panelHeight);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, borderWidth);
+
+            // Draw input bar border - calculate game-space position first, then scale
+            var inputBarRect = new Rectangle(
+                (int)scaledPos.X + (int)(gamePadding * scale),
+                (int)scaledPos.Y + (int)(gameInputBarY * scale),
+                (int)(gameInputBarWidth * scale),
+                (int)(InputBarHeight * scale));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
+
+            // Draw tabs (scaled) - they have their own fills/borders
+            DrawTabsScaled(scaledPos, scale);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawPanelBackground(Vector2 pos, float scale, bool skipMessageAreaFill = false)
+        {
+            // Scale dimensions
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+            var lineHeight = (int)(13 * scale);
+            var visibleLinesHeight = VisibleLines * lineHeight;
+            var inputHeight = (int)(InputBarHeight * scale);
+            var padding = (int)(4 * scale);
+            var borderWidth = Math.Max(1, (int)(2 * scale));
+
+            _spriteBatch.Begin();
+
+            // Draw panel background
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, panelWidth, panelHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, borderWidth);
+
+            // Draw message area
+            var messageAreaRect = new Rectangle(
+                (int)pos.X + padding,
+                (int)pos.Y + padding,
+                panelWidth - (int)(30 * scale),
+                visibleLinesHeight);
+            if (!skipMessageAreaFill)
+            {
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, new Color(120, 110, 100, 255));
+            }
+
+            // Draw input bar area
+            var inputBarY = (int)pos.Y + padding + visibleLinesHeight + padding;
+            var inputBarRect = new Rectangle(
+                (int)pos.X + padding,
+                inputBarY,
+                panelWidth - (int)(12 * scale),
+                inputHeight);
+            if (!skipMessageAreaFill)
+            {
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, new Color(100, 90, 80, 255));
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
+
+                // Draw ">" prompt
+                _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), Color.White);
+            }
+
+            // Draw tabs (scaled)
+            DrawTabsScaled(pos, scale);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawChatMessages(Vector2 pos)
+        {
             var activeTabInfo = _tabs[CurrentTab];
             foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
                 renderable.Render(this, _spriteBatch, _chatFont);
             }
-
-            base.OnDrawControl(gameTime);
         }
 
         private void DrawTabs(Vector2 pos)
@@ -292,6 +429,42 @@ namespace EndlessClient.HUD.Panels
                     var closeRect = new Rectangle(absRect.X + 3, absRect.Y + 3, 12, 12);
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, new Color(150, 50, 50));
                     _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + 2, closeRect.Y - 1), Color.White);
+                }
+            }
+        }
+
+        private void DrawTabsScaled(Vector2 pos, float scale)
+        {
+            foreach (var pair in _tabs.Where(x => x.Value.Visible))
+            {
+                var tab = pair.Key;
+                var info = pair.Value;
+                var tabRect = GetTabRect(tab);
+
+                // Scale the tab rectangle
+                var absRect = new Rectangle(
+                    (int)(pos.X + tabRect.X * scale),
+                    (int)(pos.Y + tabRect.Y * scale),
+                    (int)(tabRect.Width * scale),
+                    (int)(tabRect.Height * scale));
+
+                // Draw tab background
+                var bgColor = info.Active ? _styleProvider.ButtonPressed : _styleProvider.ButtonNormal;
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, absRect, bgColor);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
+
+                // Draw tab label
+                var labelColor = info.Active ? Color.White : _styleProvider.TextSecondary;
+                var textPos = new Vector2(absRect.X + (int)(16 * scale), absRect.Y + (int)(2 * scale));
+                _spriteBatch.DrawString(_labelFont, info.Label, textPos, labelColor);
+
+                // Draw close button for PM tabs
+                if ((tab == ChatTab.Private1 || tab == ChatTab.Private2) && info.Active)
+                {
+                    var closeSize = (int)(12 * scale);
+                    var closeRect = new Rectangle(absRect.X + (int)(3 * scale), absRect.Y + (int)(3 * scale), closeSize, closeSize);
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, new Color(150, 50, 50));
+                    _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + (int)(2 * scale), closeRect.Y - (int)(1 * scale)), Color.White);
                 }
             }
         }
