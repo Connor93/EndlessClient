@@ -133,7 +133,7 @@ namespace EndlessClient.Content
         private void LoadSFX()
         {
             var id = (SoundEffectID)0;
-            foreach (var sfxFile in GetSoundEffects("sfx*.wav"))
+            foreach (var sfxFile in GetSoundEffects("sfx???.wav"))
                 _sfx[id++] = sfxFile;
             if (_sfx.Count < 81)
                 throw new FileNotFoundException($"Unexpected number of SFX (Expected 81, Found {_sfx.Count})");
