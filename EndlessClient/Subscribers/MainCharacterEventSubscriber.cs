@@ -2,6 +2,7 @@
 
 using EndlessClient.Audio;
 using EndlessClient.HUD;
+using EndlessClient.HUD.Toast;
 using EndlessClient.Rendering.Character;
 
 using EOLib.Domain.Chat;
@@ -15,6 +16,7 @@ namespace EndlessClient.Subscribers
     public class MainCharacterEventSubscriber : IMainCharacterEventNotifier
     {
         private readonly IStatusLabelSetter _statusLabelSetter;
+        private readonly IToastNotifier _toastNotifier;
         private readonly IChatRepository _chatRepository;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly IPubFileProvider _pubFileProvider;
@@ -22,6 +24,7 @@ namespace EndlessClient.Subscribers
         private readonly ISfxPlayer _sfxPlayer;
 
         public MainCharacterEventSubscriber(IStatusLabelSetter statusLabelSetter,
+                                            IToastNotifier toastNotifier,
                                             IChatRepository chatRepository,
                                             ILocalizedStringFinder localizedStringFinder,
                                             IPubFileProvider pubFileProvider,
@@ -29,6 +32,7 @@ namespace EndlessClient.Subscribers
                                             ISfxPlayer sfxPlayer)
         {
             _statusLabelSetter = statusLabelSetter;
+            _toastNotifier = toastNotifier;
             _chatRepository = chatRepository;
             _localizedStringFinder = localizedStringFinder;
             _pubFileProvider = pubFileProvider;
@@ -41,6 +45,8 @@ namespace EndlessClient.Subscribers
             _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION,
                                               EOResourceID.STATUS_LABEL_YOU_GAINED_EXP,
                 $" {expDifference} EXP");
+
+            _toastNotifier.NotifyExpGained(expDifference);
 
             var youGained = _localizedStringFinder.GetString(EOResourceID.STATUS_LABEL_YOU_GAINED_EXP);
             var message = $"{youGained} {expDifference} EXP";
@@ -65,6 +71,8 @@ namespace EndlessClient.Subscribers
 
             _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION, EOResourceID.STATUS_LABEL_ITEM_PICKUP_YOU_PICKED_UP,
                 $" {amountTaken} {rec.Name}");
+
+            _toastNotifier.NotifyItemPickup(rec.Name, amountTaken);
         }
 
         public void DropItem(int id, int amountDropped)

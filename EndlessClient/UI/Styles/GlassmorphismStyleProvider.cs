@@ -44,5 +44,13 @@ namespace EndlessClient.UI.Styles
         public int BorderThickness => 1;
         public int TitleBarHeight => 28;
         public int ButtonPadding => 12;
+
+        // Toast notifications - semi-transparent with glass effect
+        public Color ToastInfoBackground => new Color(40, 80, 140, 220);
+        public Color ToastInfoBorder => new Color(80, 140, 200, 200);
+        public Color ToastWarningBackground => new Color(160, 80, 40, 220);
+        public Color ToastWarningBorder => new Color(220, 120, 60, 200);
+        public Color ToastActionBackground => new Color(40, 120, 80, 220);
+        public Color ToastActionBorder => new Color(80, 180, 120, 200);
     }
 }

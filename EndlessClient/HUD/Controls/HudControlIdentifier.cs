@@ -69,6 +69,7 @@ namespace EndlessClient.HUD.Controls
         //lower stuff
         StatusLabel,
         ClockLabel,
+        ToastManager,
 
         //not displayed
         PeriodicStatUpdater,

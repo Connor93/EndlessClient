@@ -44,5 +44,13 @@ namespace EndlessClient.UI.Styles
         public int BorderThickness => 1;
         public int TitleBarHeight => 26;
         public int ButtonPadding => 10;
+
+        // Toast notifications - solid flat colors
+        public Color ToastInfoBackground => new Color(45, 100, 170);
+        public Color ToastInfoBorder => new Color(70, 130, 200);
+        public Color ToastWarningBackground => new Color(180, 90, 50);
+        public Color ToastWarningBorder => new Color(220, 120, 70);
+        public Color ToastActionBackground => new Color(50, 140, 90);
+        public Color ToastActionBorder => new Color(80, 180, 120);
     }
 }

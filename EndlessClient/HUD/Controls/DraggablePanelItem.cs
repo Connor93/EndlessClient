@@ -89,6 +89,11 @@ namespace EndlessClient.HUD.Controls
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
         {
+            // Only start single-click-to-drag on left mouse button
+            // Right-clicks should fall through to HandleClick for context actions (e.g., use/equip items)
+            if (eventArgs.Button != MouseButton.Left)
+                return false;
+
             if (_followMouse)
             {
                 StopDragging(eventArgs);

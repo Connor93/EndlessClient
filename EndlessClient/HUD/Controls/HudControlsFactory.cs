@@ -10,6 +10,7 @@ using EndlessClient.GameExecution;
 using EndlessClient.HUD.Chat;
 using EndlessClient.HUD.Panels;
 using EndlessClient.HUD.Spells;
+using EndlessClient.HUD.Toast;
 using EndlessClient.HUD.StatusBars;
 using EndlessClient.Input;
 using EndlessClient.Network;
@@ -225,6 +226,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.ChatTextBox, CreateChatTextBox()},
                 {HudControlIdentifier.ClockLabel, CreateClockLabel()},
                 {HudControlIdentifier.StatusLabel, CreateStatusLabel()},
+                {HudControlIdentifier.ToastManager, CreateToastManager()},
 
                 {HudControlIdentifier.PeriodicStatUpdater, CreatePeriodicStatUpdater()},
                 {HudControlIdentifier.UserInputHandler, CreateUserInputHandler()},
@@ -645,8 +647,22 @@ namespace EndlessClient.HUD.Controls
         {
             return new StatusBarLabel(_nativeGraphicsManager, _clientWindowSizeRepository, _statusLabelTextProvider)
             {
-                Visible = true,
+                // Hide in scaled mode - toast notifications replace this
+                Visible = !_clientWindowSizeRepository.Resizable,
                 DrawOrder = HUD_CONTROL_LAYER,
+            };
+        }
+
+        private CodeDrawnToastManager CreateToastManager()
+        {
+            return new CodeDrawnToastManager(
+                _endlessGameProvider,
+                _clientWindowSizeRepository,
+                _styleProvider,
+                _contentProvider)
+            {
+                // Only visible in scaled mode
+                Visible = _clientWindowSizeRepository.Resizable
             };
         }
 

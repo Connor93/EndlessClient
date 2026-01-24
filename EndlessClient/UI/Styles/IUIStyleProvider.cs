@@ -41,5 +41,13 @@ namespace EndlessClient.UI.Styles
         int BorderThickness { get; }
         int TitleBarHeight { get; }
         int ButtonPadding { get; }
+
+        // Toast notifications
+        Color ToastInfoBackground { get; }
+        Color ToastInfoBorder { get; }
+        Color ToastWarningBackground { get; }
+        Color ToastWarningBorder { get; }
+        Color ToastActionBackground { get; }
+        Color ToastActionBorder { get; }
     }
 }

@@ -3,6 +3,7 @@ using EndlessClient.Audio;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Chat;
 using EndlessClient.HUD.Controls;
+using EndlessClient.HUD.Toast;
 using EndlessClient.Rendering.Character;
 using EOLib;
 using EOLib.Domain.Chat;
@@ -18,6 +19,7 @@ namespace EndlessClient.Rendering.NPC
     public class NPCActions : INPCActionNotifier
     {
         private readonly IHudControlProvider _hudControlProvider;
+        private readonly IToastNotifier _toastNotifier;
         private readonly INPCStateCache _npcStateCache;
         private readonly INPCRendererRepository _npcRendererRepository;
         private readonly ICharacterRendererRepository _characterRendererRepository;
@@ -29,6 +31,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly ISfxPlayer _sfxPlayer;
 
         public NPCActions(IHudControlProvider hudControlProvider,
+                          IToastNotifier toastNotifier,
                           INPCStateCache npcStateCache,
                           INPCRendererRepository npcRendererRepository,
                           ICharacterRendererRepository characterRendererRepository,
@@ -40,6 +43,7 @@ namespace EndlessClient.Rendering.NPC
                           ISfxPlayer sfxPlayer)
         {
             _hudControlProvider = hudControlProvider;
+            _toastNotifier = toastNotifier;
             _npcStateCache = npcStateCache;
             _npcRendererRepository = npcRendererRepository;
             _characterRendererRepository = characterRendererRepository;
@@ -145,6 +149,22 @@ namespace EndlessClient.Rendering.NPC
                 $"{_localizedStringFinder.GetString(EOResourceID.STATUS_LABEL_THE_NPC_DROPPED)} {item.Amount} {itemName}",
                 ChatIcon.DownArrow);
             _chatRepository.AllChat[ChatTab.System].Add(chatData);
+
+            // Get player name for toast notification
+            var playerName = "Someone";
+            item.OwningPlayerID.MatchSome(playerId =>
+            {
+                _characterRendererRepository.MainCharacterRenderer.MatchSome(r =>
+                {
+                    if (r.Character.ID == playerId)
+                        playerName = r.Character.Name;
+                });
+
+                if (playerName == "Someone" && _characterRendererRepository.CharacterRenderers.TryGetValue(playerId, out var otherRenderer))
+                    playerName = otherRenderer.Character.Name;
+            });
+
+            _toastNotifier.NotifyNPCDrop(playerName, itemName, item.Amount);
         }
 
         private void ShoutSpellCast(int playerId)

@@ -69,6 +69,7 @@ namespace EndlessClient.HUD.Panels
         private Rectangle _scrollDownRect;
         private Rectangle _scrollTrackRect;
         private bool _wasMouseDown;
+        private bool _wasRightMouseDown;
         private int _previousScrollWheelValue;
 
         public CodeDrawnOnlineListPanel(IHudControlProvider hudControlProvider,
@@ -185,6 +186,31 @@ namespace EndlessClient.HUD.Panels
             }
 
             _wasMouseDown = isMouseDown;
+
+            // Handle right-click to whisper
+            var isRightMouseDown = mouseState.RightButton == ButtonState.Pressed;
+            if (_wasRightMouseDown && !isRightMouseDown)
+            {
+                var listAreaY = DrawArea.Y + HeaderHeight + 2;
+                var listAreaRight = DrawArea.X + PanelWidth - 20; // Exclude scrollbar area
+
+                // Check if click is in the player list area
+                if (mousePos.X >= DrawArea.X + ColName && mousePos.X <= listAreaRight &&
+                    mousePos.Y >= listAreaY && mousePos.Y <= listAreaY + (VisibleRows * RowHeight))
+                {
+                    var rowIndex = (mousePos.Y - listAreaY) / RowHeight;
+                    var playerIndex = _scrollOffset + rowIndex;
+
+                    if (playerIndex >= 0 && playerIndex < _filteredList.Count)
+                    {
+                        var playerName = _filteredList[playerIndex].Name;
+                        // Set the text on the CodeDrawnChatPanel's integrated input
+                        var chatPanel = _hudControlProvider.GetComponent<CodeDrawnChatPanel>(HudControlIdentifier.ChatPanel);
+                        chatPanel.InputText = $"!{playerName} ";
+                    }
+                }
+            }
+            _wasRightMouseDown = isRightMouseDown;
 
             base.OnUpdateControl(gameTime);
         }

@@ -50,8 +50,8 @@ namespace EndlessClient.UIControls
 
             if (clientWindowSizeProvider.Resizable)
             {
-                DrawPosition = new Vector2(122, clientWindowSizeProvider.Height - 39);
-                clientWindowSizeProvider.GameWindowSizeChanged += (_, _) => DrawPosition = new Vector2(122, clientWindowSizeProvider.Height - 39);
+                // Hide in scaled mode - not needed with modern UI
+                Visible = false;
             }
         }
 

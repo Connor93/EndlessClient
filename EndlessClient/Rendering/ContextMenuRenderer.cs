@@ -7,6 +7,7 @@ using EndlessClient.Dialogs.Actions;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Controls;
+using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
 using EndlessClient.Services;
 using EndlessClient.UIControls;
@@ -64,6 +65,7 @@ namespace EndlessClient.Rendering
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IUserInputProvider _userInputProvider;
 
         private static DateTime? _lastTradeRequestedTime;
         private static DateTime? _lastPartyRequestTime;
@@ -84,7 +86,8 @@ namespace EndlessClient.Rendering
                                    IEOMessageBoxFactory messageBoxFactory,
                                    IClientWindowSizeProvider clientWindowSizeProvider,
                                    IConfigurationProvider configurationProvider,
-                                   ISfxPlayer sfxPlayer)
+                                   ISfxPlayer sfxPlayer,
+                                   IUserInputProvider userInputProvider)
         {
             _menuActions = new Dictionary<Rectangle, Action>();
             _inGameDialogActions = inGameDialogActions;
@@ -103,6 +106,7 @@ namespace EndlessClient.Rendering
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _configurationProvider = configurationProvider;
             _sfxPlayer = sfxPlayer;
+            _userInputProvider = userInputProvider;
 
             //first, load up the images. split in half: the right half is the 'over' text
             _backgroundTexture = nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 41, true);
@@ -216,10 +220,13 @@ namespace EndlessClient.Rendering
 
         private void ContextMenuRenderer_OnMouseOver(object sender, MouseStateExtended e)
         {
+            // Use transformed coordinates from IUserInputProvider for correct hit detection in scaled mode
+            var mousePosition = _userInputProvider.CurrentMouseState.Position;
+
             bool found = false;
             foreach (var (sourceRect, menuAction) in _menuActions)
             {
-                if (sourceRect.Contains(e.Position - DrawAreaWithParentOffset.Location))
+                if (sourceRect.Contains(mousePosition - DrawAreaWithParentOffset.Location))
                 {
                     _overRect = Option.Some(sourceRect);
                     found = true;
