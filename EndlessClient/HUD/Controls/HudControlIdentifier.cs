@@ -51,8 +51,10 @@ namespace EndlessClient.HUD.Controls
         NewsPanel,
 
         //top bar
-        SessionExpButton,
-        QuestsButton,
+        ExpTrackerButton,
+        QuestWindowButton,
+        ExpTrackerWindow,
+        QuestWindow,
 
         HPStatusBar,
         TPStatusBar,

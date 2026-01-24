@@ -34,6 +34,10 @@
 
         void ClickQuestStatus();
 
+        void ClickExpTracker();
+
+        void ClickQuestWindow();
+
         void ClickPaperdoll();
     }
 }

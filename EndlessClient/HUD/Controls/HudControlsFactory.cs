@@ -26,6 +26,7 @@ using EndlessClient.UIControls;
 using EOLib;
 using EOLib.Config;
 using EOLib.Domain.Character;
+using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Login;
 using EOLib.Domain.Map;
 using EOLib.Domain.Pathing;
@@ -80,6 +81,9 @@ namespace EndlessClient.HUD.Controls
         private readonly INPCRendererProvider _npcRendererProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IUIStyleProvider _styleProvider;
+        private readonly ICharacterSessionProvider _characterSessionProvider;
+        private readonly IQuestDataProvider _questDataProvider;
+        private readonly IQuestActions _questActions;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -119,7 +123,10 @@ namespace EndlessClient.HUD.Controls
                                   ICharacterRendererProvider characterRendererProvider,
                                   INPCRendererProvider npcRendererProvider,
                                   IConfigurationProvider configurationProvider,
-                                  IUIStyleProvider styleProvider)
+                                  IUIStyleProvider styleProvider,
+                                  ICharacterSessionProvider characterSessionProvider,
+                                  IQuestDataProvider questDataProvider,
+                                  IQuestActions questActions)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -158,6 +165,9 @@ namespace EndlessClient.HUD.Controls
             _npcRendererProvider = npcRendererProvider;
             _configurationProvider = configurationProvider;
             _styleProvider = styleProvider;
+            _characterSessionProvider = characterSessionProvider;
+            _questDataProvider = questDataProvider;
+            _questActions = questActions;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -214,8 +224,10 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.SettingsPanel, CreateStatePanel(InGameStates.Settings)},
                 {HudControlIdentifier.HelpPanel, CreateStatePanel(InGameStates.Help)},
 
-                {HudControlIdentifier.SessionExpButton, CreateSessionExpButton()},
-                {HudControlIdentifier.QuestsButton, CreateQuestButton()},
+                {HudControlIdentifier.ExpTrackerButton, CreateExpTrackerButton()},
+                {HudControlIdentifier.QuestWindowButton, CreateQuestWindowButton()},
+                {HudControlIdentifier.ExpTrackerWindow, CreateExpTrackerWindow()},
+                {HudControlIdentifier.QuestWindow, CreateQuestWindow()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
@@ -506,36 +518,71 @@ namespace EndlessClient.HUD.Controls
         }
 
 
-        private IGameComponent CreateSessionExpButton()
+        private IGameComponent CreateExpTrackerButton()
         {
-            var btn = new XNAButton(
-                _nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 58, transparent: true),
-                new Vector2(55, 0),
-                new Rectangle(331, 30, 22, 14),
-                new Rectangle(331, 30, 22, 14))
+            var btn = new UI.Controls.CodeDrawnHudButton(
+                _styleProvider,
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
+                _clientWindowSizeRepository)
             {
+                Text = "E",
+                DrawArea = new Rectangle(55, 0, 22, 14),
                 DrawOrder = HUD_CONTROL_LAYER,
-                Visible = false
+                Visible = _configurationProvider.UIMode == UIMode.Code
             };
-            btn.OnMouseDown += (_, _) => _hudButtonController.ClickSessionExp();
-            btn.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+            btn.OnClick += (_, _) => _hudButtonController.ClickExpTracker();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
             return btn;
         }
 
-        private IGameComponent CreateQuestButton()
+        private IGameComponent CreateQuestWindowButton()
         {
-            var btn = new XNAButton(
-                _nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 58, transparent: true),
-                new Vector2(77, 0),
-                new Rectangle(353, 30, 22, 14),
-                new Rectangle(353, 30, 22, 14))
+            var btn = new UI.Controls.CodeDrawnHudButton(
+                _styleProvider,
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
+                _clientWindowSizeRepository)
             {
+                Text = "Q",
+                DrawArea = new Rectangle(77, 0, 22, 14),
                 DrawOrder = HUD_CONTROL_LAYER,
-                Visible = false
+                Visible = _configurationProvider.UIMode == UIMode.Code
             };
-            btn.OnMouseDown += (_, _) => _hudButtonController.ClickQuestStatus();
-            btn.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+            btn.OnClick += (_, _) => _hudButtonController.ClickQuestWindow();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
             return btn;
+        }
+
+        private IGameComponent CreateExpTrackerWindow()
+        {
+            return new Windows.CodeDrawnExpTrackerWindow(
+                (ICharacterProvider)_characterRepository,
+                _characterSessionProvider,
+                _experienceTableProvider,
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 20
+            };
+        }
+
+        private IGameComponent CreateQuestWindow()
+        {
+            return new Windows.CodeDrawnQuestWindow(
+                (ICharacterProvider)_characterRepository,
+                _questDataProvider,
+                _questActions,
+                _localizedStringFinder,
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 20
+            };
         }
 
         private IGameComponent CreateHPStatusBar()

@@ -1,5 +1,7 @@
 ﻿using AutomaticTypeMapper;
+using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Actions;
+using EndlessClient.HUD.Windows;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Online;
@@ -18,6 +20,7 @@ namespace EndlessClient.HUD
         private readonly IStatusLabelSetter _statusLabelSetter;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly ICharacterProvider _characterProvider;
+        private readonly IHudControlProvider _hudControlProvider;
 
         public HudButtonController(IHudStateActions hudStateActions,
                                    IOnlinePlayerActions onlinePlayerActions,
@@ -25,7 +28,8 @@ namespace EndlessClient.HUD
                                    IQuestActions questActions,
                                    IStatusLabelSetter statusLabelSetter,
                                    ILocalizedStringFinder localizedStringFinder,
-                                   ICharacterProvider characterProvider)
+                                   ICharacterProvider characterProvider,
+                                   IHudControlProvider hudControlProvider)
         {
             _hudStateActions = hudStateActions;
             _onlinePlayerActions = onlinePlayerActions;
@@ -34,6 +38,7 @@ namespace EndlessClient.HUD
             _statusLabelSetter = statusLabelSetter;
             _localizedStringFinder = localizedStringFinder;
             _characterProvider = characterProvider;
+            _hudControlProvider = hudControlProvider;
         }
 
         public void ShowNews()
@@ -133,9 +138,28 @@ namespace EndlessClient.HUD
             _inGameDialogActions.ShowQuestStatusDialog();
         }
 
+        public void ClickExpTracker()
+        {
+            if (_hudControlProvider.IsInGame)
+            {
+                var window = _hudControlProvider.GetComponent<CodeDrawnExpTrackerWindow>(Controls.HudControlIdentifier.ExpTrackerWindow);
+                window.Toggle();
+            }
+        }
+
+        public void ClickQuestWindow()
+        {
+            if (_hudControlProvider.IsInGame)
+            {
+                var window = _hudControlProvider.GetComponent<CodeDrawnQuestWindow>(Controls.HudControlIdentifier.QuestWindow);
+                window.Toggle();
+            }
+        }
+
         public void ClickPaperdoll()
         {
             _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);
         }
     }
 }
+
