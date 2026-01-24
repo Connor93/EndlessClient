@@ -3,6 +3,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.Rendering;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
@@ -33,6 +34,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IUIStyleProviderFactory _styleProviderFactory;
         private readonly IGameStateProvider _gameStateProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
         public ShopDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                  IShopActions shopActions,
@@ -49,7 +52,9 @@ namespace EndlessClient.Dialogs.Factories
                                  IConfigurationProvider configProvider,
                                  IUIStyleProviderFactory styleProviderFactory,
                                  IGameStateProvider gameStateProvider,
-                                 IContentProvider contentProvider)
+                                 IContentProvider contentProvider,
+                                 IClientWindowSizeProvider clientWindowSizeProvider,
+                                 IGraphicsDeviceProvider graphicsDeviceProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _shopActions = shopActions;
@@ -67,6 +72,8 @@ namespace EndlessClient.Dialogs.Factories
             _styleProviderFactory = styleProviderFactory;
             _gameStateProvider = gameStateProvider;
             _contentProvider = contentProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
         public IXNADialog Create()
@@ -75,6 +82,8 @@ namespace EndlessClient.Dialogs.Factories
             {
                 return new CodeDrawnShopDialog(_styleProviderFactory.Create(),
                     _gameStateProvider,
+                    _clientWindowSizeProvider,
+                    _graphicsDeviceProvider,
                     _nativeGraphicsManager,
                     _shopActions,
                     _messageBoxFactory,

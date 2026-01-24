@@ -48,6 +48,7 @@ namespace EndlessClient.Rendering.Chat
         private Option<Stopwatch> _startTime;
 
         // IPostScaleDrawable implementation
+        public int PostScaleDrawOrder => 50;
         public bool SkipRenderTargetDraw => false;
 
         public ChatBubble(IMapActor referenceRenderer,

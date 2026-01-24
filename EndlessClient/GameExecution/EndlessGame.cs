@@ -386,15 +386,23 @@ namespace EndlessClient.GameExecution
 
         private void DrawPostScaleControls(float scaleFactor, Point renderOffset)
         {
-            // Find and draw all post-scale drawable controls
-            // Note: DrawPostScale is called for ALL IPostScaleDrawable components.
-            // SkipRenderTargetDraw only controls whether the normal Draw is skipped.
+            // Find all post-scale drawable controls and sort by draw order
+            // Lower order values are drawn first (background), higher values are drawn later (foreground)
+            var postScaleDrawables = new List<IPostScaleDrawable>();
             foreach (var component in Components)
             {
                 if (component is IPostScaleDrawable postScaleDrawable)
                 {
-                    postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
+                    postScaleDrawables.Add(postScaleDrawable);
                 }
+            }
+
+            // Sort by PostScaleDrawOrder - lower values first, dialogs (100) on top of HUD panels (0)
+            postScaleDrawables.Sort((a, b) => a.PostScaleDrawOrder.CompareTo(b.PostScaleDrawOrder));
+
+            foreach (var postScaleDrawable in postScaleDrawables)
+            {
+                postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
             }
         }
     }

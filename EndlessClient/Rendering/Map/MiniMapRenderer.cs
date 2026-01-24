@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using EOLib;
 using EndlessClient.Rendering.Factories;
 using EOLib.Domain.Character;
 using EOLib.Domain.Map;
@@ -18,18 +19,48 @@ namespace EndlessClient.Rendering.Map
         private const int TileWidth = 28;
         private const int TileHeight = 14;
 
+        // Texture grid is 11 columns × 5 rows, each cell is 27×16 pixels
+        private const int GridColumns = 11;
+        private const int GridRows = 5;
+        private const int CellWidth = 27;
+        private const int CellHeight = 16;
+
+        // Grid positions for minimap graphics (column, row)
+        // Row 0: Borders and colored diamonds
+        private static readonly (int Col, int Row) Border1 = (0, 0);
+        private static readonly (int Col, int Row) Border2 = (1, 0);
+        private static readonly (int Col, int Row) Border3 = (2, 0);
+        private static readonly (int Col, int Row) WallTile = (3, 0);
+
+        // Row 1: Interactive tiles
+        private static readonly (int Col, int Row) Chest = (4, 1);
+        private static readonly (int Col, int Row) Door = (5, 1);
+        private static readonly (int Col, int Row) ChairLeft = (6, 1);
+        private static readonly (int Col, int Row) ChairRight = (7, 1);
+
+        // Row 2: Entity markers
+        private static readonly (int Col, int Row) ThisPlayer = (4, 2);
+        private static readonly (int Col, int Row) Enemy = (5, 2);
+        private static readonly (int Col, int Row) NPC = (6, 2);
+        private static readonly (int Col, int Row) Boss = (8, 2);
+
+        // Row 3: NPC/Player directional indicators (green boxes)
+        private static readonly (int Col, int Row) NPCDown = (4, 3);
+        private static readonly (int Col, int Row) NPCLeft = (5, 3);
+        private static readonly (int Col, int Row) NPCUp = (6, 3);
+        private static readonly (int Col, int Row) NPCRight = (7, 3);
+
+        // Row 4: Enemy directional indicators (red boxes)
+        private static readonly (int Col, int Row) EnemyDown = (0, 4);
+        private static readonly (int Col, int Row) EnemyLeft = (1, 4);
+        private static readonly (int Col, int Row) EnemyUp = (2, 4);
+        private static readonly (int Col, int Row) EnemyRight = (3, 4);
+
+        // Legacy enum for edge graphics (still used by GetEdge)
         private enum MiniMapGfx
         {
-            UpLine = 0,
-            LeftLine = 1,
-            Corner = 2,
-            Solid = 3, //wall or obstacle
-            Green = 4, //other player
-            Red = 5, //attackable npc
-            Orange = 6, //you!
-            Blue = 7, //tile that you can interact with
-            Purple = 8, //npc
-            NUM_GRIDS = 9,
+            UpLine = 0,       // Border1 - thin edge line (up-right diagonal)
+            LeftLine = 1,     // Border2 - thin edge line (up-left diagonal)
         }
 
         private readonly object _rt_locker_ = new object();
@@ -117,8 +148,17 @@ namespace EndlessClient.Rendering.Map
                 foreach (var entity in entities)
                 {
                     var loc = GetMiniMapDrawCoordinates(entity.X, entity.Y);
-                    var miniMapRectSrc = GetSourceRectangleForEntity(entity);
-                    DrawGridBox(loc, null, miniMapRectSrc);
+                    var (baseMarker, directionIndicator) = GetSourceRectangleForEntity(entity);
+
+                    // Draw direction indicator FIRST (underneath)
+                    if (!directionIndicator.IsEmpty)
+                    {
+                        DrawGridBox(loc, null, directionIndicator);
+                    }
+
+                    // Draw entity marker ON TOP, offset up by 4 pixels so it "stands" on the tile
+                    var markerOffset = new Vector2(0, -4);
+                    DrawGridBox(loc + markerOffset, null, baseMarker);
                 }
 
                 _spriteBatch.End();
@@ -135,25 +175,29 @@ namespace EndlessClient.Rendering.Map
             {
                 case TileSpec.Wall:
                 case TileSpec.FakeWall:
-                    return (GetEdge(), GetSourceRect(MiniMapGfx.Solid));
+                    return (GetEdge(), GetSourceRect(WallTile));
                 case TileSpec.BankVault:
+                case TileSpec.Chest:
+                case (TileSpec)8:
+                    return (GetEdge(), GetSourceRect(Chest));
                 case TileSpec.ChairAll:
                 case TileSpec.ChairDown:
-                case TileSpec.ChairLeft:
-                case TileSpec.ChairRight:
                 case TileSpec.ChairUp:
                 case TileSpec.ChairDownRight:
                 case TileSpec.ChairUpLeft:
-                case TileSpec.Chest:
-                case (TileSpec)8:
-                // Unknown TileSpecs 10-15 have been confirmed in the vanilla client to show a Blue ! on the minimap
+                    return (GetEdge(), GetSourceRect(ChairLeft)); // Use left chair for generic
+                case TileSpec.ChairLeft:
+                    return (GetEdge(), GetSourceRect(ChairLeft));
+                case TileSpec.ChairRight:
+                    return (GetEdge(), GetSourceRect(ChairRight));
+                // Unknown TileSpecs 10-15 have been confirmed in the vanilla client to show on the minimap
                 case (TileSpec)10:
                 case (TileSpec)11:
                 case (TileSpec)12:
                 case (TileSpec)13:
                 case (TileSpec)14:
                 case (TileSpec)15:
-                    return (GetEdge(), GetSourceRect(MiniMapGfx.Blue));
+                    return (GetEdge(), GetSourceRect(Chest)); // Use chest graphic for unknown interactives
                 case TileSpec.MapEdge:
                     return (null, Rectangle.Empty);
             }
@@ -161,7 +205,9 @@ namespace EndlessClient.Rendering.Map
             if (_currentMapProvider.CurrentMap.Warps[row, col] != null)
             {
                 var doorType = _currentMapProvider.CurrentMap.Warps[row, col].DoorType;
-                return (GetEdge(), GetSourceRect(doorType != DoorSpec.NoDoor ? MiniMapGfx.Blue : MiniMapGfx.UpLine));
+                // Only show door warps as interactive. Regular warps (zone transitions) are invisible on minimap.
+                if (doorType != DoorSpec.NoDoor)
+                    return (GetEdge(), GetSourceRect(Door));
             }
 
             return (GetEdge(), Rectangle.Empty);
@@ -173,36 +219,84 @@ namespace EndlessClient.Rendering.Map
 
                 var tiles = _currentMapProvider.CurrentMap.Tiles;
 
-                if (col - 1 >= 0 && tiles[row, col - 1] == TileSpec.MapEdge &&
-                    row - 1 >= 0 && tiles[row - 1, col] == TileSpec.MapEdge)
-                    return null;
-                else if (col == 0 || (col - 1 >= 0 && tiles[row, col - 1] == TileSpec.MapEdge))
+                // Check if this tile is adjacent to a map edge on either side
+                var adjacentToLeftEdge = col == 0 || (col - 1 >= 0 && tiles[row, col - 1] == TileSpec.MapEdge);
+                var adjacentToTopEdge = row == 0 || (row - 1 >= 0 && tiles[row - 1, col] == TileSpec.MapEdge);
+
+                // Only draw edge graphics for tiles actually at the boundary of the playable area
+                if (adjacentToLeftEdge && adjacentToTopEdge)
+                    return null; // Corner of map - don't draw anything (would be outside playable area)
+                else if (adjacentToLeftEdge)
                     return MiniMapGfx.UpLine;
-                else if (row == 0 || (row - 1 >= 0 && tiles[row - 1, col] == TileSpec.MapEdge))
+                else if (adjacentToTopEdge)
                     return MiniMapGfx.LeftLine;
                 else
-                    return MiniMapGfx.Corner;
+                    return null; // Interior tile - no edge needed
             }
         }
 
-        private Rectangle GetSourceRectangleForEntity(IMapEntity mapEntity)
+        private (Rectangle BaseMarker, Rectangle DirectionIndicator) GetSourceRectangleForEntity(IMapEntity mapEntity)
         {
             if (_characterProvider.MainCharacter == mapEntity)
             {
-                return GetSourceRect(MiniMapGfx.Orange);
+                // Main player uses ThisPlayer marker, no direction indicator
+                return (GetSourceRect(ThisPlayer), Rectangle.Empty);
             }
 
             return mapEntity switch
             {
-                EOLib.Domain.NPC.NPC n => GetNPCSourceRectangle(n),
-                EOLib.Domain.Character.Character c => GetSourceRect(MiniMapGfx.Green),
-                _ => Rectangle.Empty
+                EOLib.Domain.NPC.NPC n => GetNPCSourceRectangles(n),
+                EOLib.Domain.Character.Character c => GetCharacterSourceRectangles(c),
+                _ => (Rectangle.Empty, Rectangle.Empty)
             };
 
-            Rectangle GetNPCSourceRectangle(EOLib.Domain.NPC.NPC npc)
+            (Rectangle, Rectangle) GetCharacterSourceRectangles(EOLib.Domain.Character.Character character)
+            {
+                // Other players use NPC graphic with green directional indicator
+                var directionRect = character.RenderProperties.Direction switch
+                {
+                    EODirection.Down => GetSourceRect(NPCDown),
+                    EODirection.Left => GetSourceRect(NPCLeft),
+                    EODirection.Up => GetSourceRect(NPCUp),
+                    EODirection.Right => GetSourceRect(NPCRight),
+                    _ => Rectangle.Empty
+                };
+                return (GetSourceRect(NPC), directionRect);
+            }
+
+            (Rectangle, Rectangle) GetNPCSourceRectangles(EOLib.Domain.NPC.NPC npc)
             {
                 var npcType = _enfFileProvider.ENFFile[npc.ID].Type;
-                return GetSourceRect(npcType == NPCType.Aggressive || npcType == NPCType.Passive ? MiniMapGfx.Red : MiniMapGfx.Purple);
+                var isEnemy = npcType == NPCType.Aggressive || npcType == NPCType.Passive;
+
+                // Get directional indicator based on NPC facing direction
+                Rectangle directionRect;
+                if (isEnemy)
+                {
+                    // Enemies use red directional indicators (row 4)
+                    directionRect = npc.Direction switch
+                    {
+                        EODirection.Down => GetSourceRect(EnemyDown),
+                        EODirection.Left => GetSourceRect(EnemyLeft),
+                        EODirection.Up => GetSourceRect(EnemyUp),
+                        EODirection.Right => GetSourceRect(EnemyRight),
+                        _ => Rectangle.Empty
+                    };
+                    return (GetSourceRect(Enemy), directionRect);
+                }
+                else
+                {
+                    // NPCs use green directional indicators (row 3)
+                    directionRect = npc.Direction switch
+                    {
+                        EODirection.Down => GetSourceRect(NPCDown),
+                        EODirection.Left => GetSourceRect(NPCLeft),
+                        EODirection.Up => GetSourceRect(NPCUp),
+                        EODirection.Right => GetSourceRect(NPCRight),
+                        _ => Rectangle.Empty
+                    };
+                    return (GetSourceRect(NPC), directionRect);
+                }
             }
         }
 
@@ -234,17 +328,14 @@ namespace EndlessClient.Rendering.Map
 
         private void DrawGridBox(Vector2 loc, MiniMapGfx? edgeGfx, Rectangle gridSpaceSourceRect)
         {
+            // Draw edge graphics (UpLine, LeftLine) for map boundaries
             if (edgeGfx != null)
             {
-                var src = gridSpaceSourceRect.Equals(Rectangle.Empty)
-                    ? GetSourceRect(MiniMapGfx.UpLine)
-                    : gridSpaceSourceRect;
-
-                _spriteBatch.Draw(_miniMapTexture, loc,
-                    new Rectangle((int)edgeGfx * src.Width, 0, src.Width, src.Height),
-                    Color.FromNonPremultiplied(255, 255, 255, 128));
+                var edgeRect = GetSourceRect(edgeGfx.Value);
+                _spriteBatch.Draw(_miniMapTexture, loc, edgeRect, Color.FromNonPremultiplied(255, 255, 255, 128));
             }
 
+            // Draw content (walls, interactive tiles, entities) on top
             if (!gridSpaceSourceRect.IsEmpty)
             {
                 _spriteBatch.Draw(_miniMapTexture, loc, gridSpaceSourceRect, Color.FromNonPremultiplied(255, 255, 255, 128));
@@ -267,8 +358,20 @@ namespace EndlessClient.Rendering.Map
 
         private Rectangle GetSourceRect(MiniMapGfx gfx)
         {
-            var delta = _miniMapTexture.Width / (int)MiniMapGfx.NUM_GRIDS;
-            return new Rectangle((int)gfx * delta, 0, delta, _miniMapTexture.Height);
+            // Edge graphics are in row 0
+            return GetSourceRect((int)gfx, 0);
+        }
+
+        private Rectangle GetSourceRect((int Col, int Row) gridPos)
+        {
+            return GetSourceRect(gridPos.Col, gridPos.Row);
+        }
+
+        private Rectangle GetSourceRect(int col, int row)
+        {
+            // Calculate source rectangle from 2D grid coordinates
+            // Add +2 to Y to account for offset between texture rows
+            return new Rectangle(col * CellWidth, row * CellHeight + 2, CellWidth, CellHeight);
         }
 
         private Vector2 GetCharacterOffset()

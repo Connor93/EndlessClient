@@ -5,6 +5,7 @@ using EndlessClient.Audio;
 using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
+using EndlessClient.Rendering;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Graphics;
@@ -27,6 +28,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IConfigurationProvider _configProvider;
         private readonly IUIStyleProviderFactory _styleProviderFactory;
         private readonly IContentProvider _contentProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
         public EOMessageBoxFactory(INativeGraphicsManager nativeGraphicsManager,
                                    IGameStateProvider gameStateProvider,
@@ -36,7 +39,9 @@ namespace EndlessClient.Dialogs.Factories
                                    ISfxPlayer sfxPlayer,
                                    IConfigurationProvider configProvider,
                                    IUIStyleProviderFactory styleProviderFactory,
-                                   IContentProvider contentProvider)
+                                   IContentProvider contentProvider,
+                                   IClientWindowSizeProvider clientWindowSizeProvider,
+                                   IGraphicsDeviceProvider graphicsDeviceProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _gameStateProvider = gameStateProvider;
@@ -47,6 +52,8 @@ namespace EndlessClient.Dialogs.Factories
             _configProvider = configProvider;
             _styleProviderFactory = styleProviderFactory;
             _contentProvider = contentProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
         public IXNADialog CreateMessageBox(string message,
@@ -58,13 +65,18 @@ namespace EndlessClient.Dialogs.Factories
 
             if (_configProvider.UIMode == UIMode.Code)
             {
-                var codeDialog = new CodeDrawnDialog(_styleProviderFactory.Create(), _gameStateProvider)
+                var codeDialog = new CodeDrawnDialog(
+                    _styleProviderFactory.Create(),
+                    _gameStateProvider,
+                    _clientWindowSizeProvider,
+                    _graphicsDeviceProvider)
                 {
                     Message = message,
                     Caption = caption
                 };
                 var font = _contentProvider.Fonts[Constants.FontSize09];
-                codeDialog.SetupDialog(whichButtons, font);
+                var scaledFont = _contentProvider.Fonts[Constants.FontSize10];
+                codeDialog.SetupDialog(whichButtons, font, scaledFont);
                 messageBox = codeDialog;
             }
             else

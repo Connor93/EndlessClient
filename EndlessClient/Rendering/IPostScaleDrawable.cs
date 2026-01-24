@@ -22,5 +22,11 @@ namespace EndlessClient.Rendering
         /// Gets whether this control should skip normal drawing during render target phase.
         /// </summary>
         bool SkipRenderTargetDraw { get; }
+
+        /// <summary>
+        /// Gets the draw order for post-scale rendering. Higher values are drawn later (on top).
+        /// Recommended values: 0 = HUD panels, 100 = Dialogs, 200 = Tooltips/Overlays
+        /// </summary>
+        int PostScaleDrawOrder { get; }
     }
 }

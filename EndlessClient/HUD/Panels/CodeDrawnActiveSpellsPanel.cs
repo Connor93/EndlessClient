@@ -87,6 +87,7 @@ namespace EndlessClient.HUD.Panels
             base.Initialize();
         }
 
+        public int PostScaleDrawOrder => 0;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
 
         protected override void OnDrawControl(GameTime gameTime)

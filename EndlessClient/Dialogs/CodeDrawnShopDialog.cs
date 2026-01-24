@@ -5,6 +5,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
@@ -60,6 +61,8 @@ namespace EndlessClient.Dialogs
         public CodeDrawnShopDialog(
             IUIStyleProvider styleProvider,
             IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
             INativeGraphicsManager graphicsManager,
             IShopActions shopActions,
             IEOMessageBoxFactory messageBoxFactory,
@@ -71,7 +74,8 @@ namespace EndlessClient.Dialogs
             ICharacterProvider characterProvider,
             IInventorySpaceValidator inventorySpaceValidator,
             IContentProvider contentProvider)
-            : base(styleProvider, gameStateProvider, contentProvider.Fonts[Constants.FontSize08pt5])
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider,
+                   contentProvider.Fonts[Constants.FontSize08pt5], contentProvider.Fonts[Constants.FontSize10])
         {
             _graphicsManager = graphicsManager;
             _shopActions = shopActions;
@@ -393,6 +397,36 @@ namespace EndlessClient.Dialogs
             string BuildCaption(EOResourceID resource)
             {
                 return $"{_localizedStringFinder.GetString(resource)} {_localizedStringFinder.GetString(EOResourceID.DIALOG_WORD_FOR)} {data.Name}";
+            }
+        }
+
+        protected override void DrawButtonTextPostScale(Vector2 scaledPos, float scale, MonoGame.Extended.BitmapFonts.BitmapFont font)
+        {
+            var buttonWidth = (int)(72 * scale);
+            var buttonHeight = (int)(26 * scale);
+            var buttonY = (int)(scaledPos.Y + (DialogHeight - 36) * scale);
+
+            // Back button
+            if (_backButton != null && _backButton.Visible)
+            {
+                var backX = (int)(scaledPos.X + (DialogWidth / 2 - 72 - 8) * scale);
+                DrawButtonPostScale("Back", backX, buttonY, buttonWidth, buttonHeight, scale, font, _backButton.MouseOver);
+            }
+
+            // Cancel button
+            if (_cancelButton != null && _cancelButton.Visible)
+            {
+                int cancelX;
+                if (!_backButton.Visible)
+                {
+                    // Center single cancel button
+                    cancelX = (int)(scaledPos.X + ((DialogWidth - 72) / 2) * scale);
+                }
+                else
+                {
+                    cancelX = (int)(scaledPos.X + (DialogWidth / 2 + 8) * scale);
+                }
+                DrawButtonPostScale("Cancel", cancelX, buttonY, buttonWidth, buttonHeight, scale, font, _cancelButton.MouseOver);
             }
         }
     }

@@ -12,6 +12,7 @@ using EndlessClient.HUD;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.HUD.Panels;
+using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
@@ -33,10 +34,13 @@ namespace EndlessClient.Dialogs
 {
     /// <summary>
     /// A code-drawn version of the paperdoll dialog showing character info and equipment.
+    /// Implements IPostScaleDrawable for crisp text rendering at scale.
     /// </summary>
-    public class CodeDrawnPaperdollDialog : XNADialog
+    public class CodeDrawnPaperdollDialog : XNADialog, IPostScaleDrawable
     {
         private readonly IUIStyleProvider _styleProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly INativeGraphicsManager _graphicsManager;
         private readonly IInventoryController _inventoryController;
         private readonly IPaperdollProvider _paperdollProvider;
@@ -60,9 +64,18 @@ namespace EndlessClient.Dialogs
         private const int DialogWidth = 385;
         private const int DialogHeight = 320;  // Taller to fit equipment slots (max y=274)
 
+        public bool IsScaledMode => _clientWindowSizeProvider != null &&
+            _clientWindowSizeProvider.Resizable &&
+            _graphicsDeviceProvider != null;
+
+        public int PostScaleDrawOrder => 100;
+        public bool SkipRenderTargetDraw => false;
+
         public CodeDrawnPaperdollDialog(
             IUIStyleProvider styleProvider,
             IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
             INativeGraphicsManager graphicsManager,
             IInventoryController inventoryController,
             IPaperdollProvider paperdollProvider,
@@ -77,6 +90,8 @@ namespace EndlessClient.Dialogs
             bool isMainCharacter)
         {
             _styleProvider = styleProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
             _graphicsManager = graphicsManager;
             _inventoryController = inventoryController;
             _paperdollProvider = paperdollProvider;
@@ -145,13 +160,28 @@ namespace EndlessClient.Dialogs
         {
             DrawingPrimitives.Initialize(Game.GraphicsDevice);
 
-            _nameLabel?.Initialize();
-            _homeLabel?.Initialize();
-            _classLabel?.Initialize();
-            _partnerLabel?.Initialize();
-            _titleLabel?.Initialize();
-            _guildLabel?.Initialize();
-            _rankLabel?.Initialize();
+            // In scaled mode, unparent labels - we'll draw them in DrawPostScale
+            if (IsScaledMode)
+            {
+                _nameLabel?.SetControlUnparented();
+                _homeLabel?.SetControlUnparented();
+                _classLabel?.SetControlUnparented();
+                _partnerLabel?.SetControlUnparented();
+                _titleLabel?.SetControlUnparented();
+                _guildLabel?.SetControlUnparented();
+                _rankLabel?.SetControlUnparented();
+            }
+            else
+            {
+                _nameLabel?.Initialize();
+                _homeLabel?.Initialize();
+                _classLabel?.Initialize();
+                _partnerLabel?.Initialize();
+                _titleLabel?.Initialize();
+                _guildLabel?.Initialize();
+                _rankLabel?.Initialize();
+            }
+
             _okButton?.Initialize();
 
             foreach (var item in _equipmentItems)
@@ -263,12 +293,52 @@ namespace EndlessClient.Dialogs
 
         protected override void OnDrawControl(GameTime gameTime)
         {
+            if (IsScaledMode)
+            {
+                DrawFills(gameTime);
+            }
+            else
+            {
+                DrawComplete(gameTime);
+            }
+        }
+
+        /// <summary>
+        /// Draw fills only for scaled mode - borders and text drawn in DrawPostScale
+        /// </summary>
+        private void DrawFills(GameTime gameTime)
+        {
             var drawPos = DrawAreaWithParentOffset;
             var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
 
             _spriteBatch.Begin(transformMatrix: transform);
 
-            // Main dialog background - more opaque
+            // Main dialog background (no border - that's drawn post-scale)
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(0, 0, DialogWidth, DialogHeight), _styleProvider.PanelBackground);
+
+            // Title bar fill
+            var titleBarHeight = 32;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(2, 2, DialogWidth - 4, titleBarHeight - 2), _styleProvider.TitleBarBackground);
+
+            // Equipment area background
+            var equipAreaWidth = 220;
+            var equipAreaTop = 20;
+            var equipAreaHeight = 260;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), new Color(20, 20, 30, 200));
+
+            _spriteBatch.End();
+
+            base.OnDrawControl(gameTime);
+        }
+
+        private void DrawComplete(GameTime gameTime)
+        {
+            var drawPos = DrawAreaWithParentOffset;
+            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
+
+            _spriteBatch.Begin(transformMatrix: transform);
+
+            // Main dialog background
             DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(0, 0, DialogWidth, DialogHeight), _styleProvider.PanelBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(0, 0, DialogWidth, DialogHeight), _styleProvider.PanelBorder, 2);
 
@@ -280,19 +350,107 @@ namespace EndlessClient.Dialogs
             var font = _contentProvider.Fonts[Constants.FontSize08pt5];
             _spriteBatch.DrawString(font, "Paperdoll", new Vector2(16, 8), _styleProvider.TitleBarText);
 
-            // Equipment area background (left side) - more opaque
-            // Equipment slots extend from y=21 to y=274, so area should cover that
+            // Equipment area background
             var equipAreaWidth = 220;
             var equipAreaTop = 20;
-            var equipAreaHeight = 260;  // y=20 to y=280 covers all equipment slots
+            var equipAreaHeight = 260;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), new Color(20, 20, 30, 200));
             DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), _styleProvider.PanelBorder, 1);
 
-            // Draw static field labels ("Name:", "Class:", etc.)
+            // Draw static field labels
             DrawFieldLabels(font);
 
             _spriteBatch.End();
             base.OnDrawControl(gameTime);
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (!IsScaledMode) return;
+
+            // Calculate scaled position based on where fills were drawn
+            var drawPos = DrawAreaWithParentOffset;
+            var scaledX = (int)(drawPos.X * scaleFactor) + renderOffset.X;
+            var scaledY = (int)(drawPos.Y * scaleFactor) + renderOffset.Y;
+            var scaledWidth = (int)(DialogWidth * scaleFactor);
+            var scaledHeight = (int)(DialogHeight * scaleFactor);
+            var scaledPos = new Vector2(scaledX, scaledY);
+
+            // Select appropriate font based on scale
+            BitmapFont font;
+            if (scaleFactor >= 2.0f)
+                font = _contentProvider.Fonts[Constants.FontSize10];
+            else if (scaleFactor >= 1.5f)
+                font = _contentProvider.Fonts[Constants.FontSize09];
+            else
+                font = _contentProvider.Fonts[Constants.FontSize08pt5];
+
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+            // Draw borders
+            DrawingPrimitives.DrawRectBorder(spriteBatch,
+                new Rectangle(scaledX, scaledY, scaledWidth, scaledHeight),
+                _styleProvider.PanelBorder, (int)Math.Max(2, 2 * scaleFactor));
+
+            // Equipment area border
+            var equipAreaWidth = (int)(220 * scaleFactor);
+            var equipAreaTop = (int)(20 * scaleFactor);
+            var equipAreaHeight = (int)(260 * scaleFactor);
+            DrawingPrimitives.DrawRectBorder(spriteBatch,
+                new Rectangle(scaledX + (int)(8 * scaleFactor), scaledY + equipAreaTop, equipAreaWidth, equipAreaHeight),
+                _styleProvider.PanelBorder, 1);
+
+            // Title text
+            var titlePos = scaledPos + new Vector2(16 * scaleFactor, 8 * scaleFactor);
+            spriteBatch.DrawString(font, "Paperdoll", titlePos, _styleProvider.TitleBarText);
+
+            // Field labels and values
+            var labelX = scaledPos.X + 240 * scaleFactor;
+            var valueX = scaledPos.X + 300 * scaleFactor;
+
+            var fieldLabels = new[]
+            {
+                (38, "Name:", _nameLabel?.Text ?? ""),
+                (82, "Class:", _classLabel?.Text ?? ""),
+                (105, "Title:", _titleLabel?.Text ?? ""),
+                (147, "Partner:", _partnerLabel?.Text ?? ""),
+                (177, "Home:", _homeLabel?.Text ?? ""),
+                (195, "Guild:", _guildLabel?.Text ?? ""),
+                (216, "Rank:", _rankLabel?.Text ?? "")
+            };
+
+            foreach (var (y, label, value) in fieldLabels)
+            {
+                var labelPos = new Vector2(labelX, scaledPos.Y + y * scaleFactor);
+                var valuePos = new Vector2(valueX, scaledPos.Y + y * scaleFactor);
+                spriteBatch.DrawString(font, label, labelPos, _styleProvider.TextSecondary);
+                spriteBatch.DrawString(font, value, valuePos, _styleProvider.TextPrimary);
+            }
+
+            // OK button
+            if (_okButton != null)
+            {
+                var buttonWidth = (int)(72 * scaleFactor);
+                var buttonHeight = (int)(26 * scaleFactor);
+                var buttonX = (int)(scaledPos.X + (DialogWidth / 2 - 36) * scaleFactor);
+                var buttonY = (int)(scaledPos.Y + (DialogHeight - 36) * scaleFactor);
+
+                // Button background
+                DrawingPrimitives.DrawFilledRect(spriteBatch,
+                    new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+                    _okButton.MouseOver ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal);
+                DrawingPrimitives.DrawRectBorder(spriteBatch,
+                    new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+                    _styleProvider.ButtonBorder, 1);
+
+                // Button text
+                var textSize = font.MeasureString("OK");
+                var textX = buttonX + (buttonWidth - textSize.Width) / 2;
+                var textY = buttonY + (buttonHeight - textSize.Height) / 2;
+                spriteBatch.DrawString(font, "OK", new Vector2(textX, textY), _styleProvider.ButtonText);
+            }
+
+            spriteBatch.End();
         }
 
         private void DrawFieldLabels(BitmapFont font)

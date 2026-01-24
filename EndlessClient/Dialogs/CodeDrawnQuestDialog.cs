@@ -2,13 +2,17 @@ using System;
 using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.GameExecution;
+using EndlessClient.Rendering;
+using EndlessClient.Services;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Interact.Quest;
+using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended.BitmapFonts;
 using Moffat.EndlessOnline.SDK.Protocol.Net.Client;
 using Optional;
 using XNAControls;
@@ -17,6 +21,7 @@ namespace EndlessClient.Dialogs
 {
     /// <summary>
     /// A code-drawn version of QuestDialog that uses procedural rendering.
+    /// Inherits post-scale rendering support from CodeDrawnScrollingListDialog.
     /// </summary>
     public class CodeDrawnQuestDialog : CodeDrawnScrollingListDialog
     {
@@ -47,12 +52,15 @@ namespace EndlessClient.Dialogs
         public CodeDrawnQuestDialog(
             IUIStyleProvider styleProvider,
             IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
             IQuestActions questActions,
             IQuestDataProvider questDataProvider,
             IENFFileProvider enfFileProvider,
             IContentProvider contentProvider,
             ILocalizedStringFinder localizedStringFinder)
-            : base(styleProvider, gameStateProvider, contentProvider.Fonts[Constants.FontSize08pt5])
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider,
+                   contentProvider.Fonts[Constants.FontSize08pt5], contentProvider.Fonts[Constants.FontSize10])
         {
             _questActions = questActions;
             _questDataProvider = questDataProvider;
@@ -311,6 +319,62 @@ namespace EndlessClient.Dialogs
                     _cancelButton.Visible = true;
                     _cancelButton.DrawArea = new Rectangle((DialogWidth - 60) / 2, DialogHeight - 32, 60, 24);
                     break;
+            }
+        }
+
+        protected override void DrawButtonTextPostScale(Vector2 scaledPos, float scale, BitmapFont font)
+        {
+            var buttonWidth = (int)(60 * scale);
+            var buttonHeight = (int)(24 * scale);
+            var buttonY = (int)(scaledPos.Y + (DialogHeight - 32) * scale);
+            var buttonSpacing = (int)(8 * scale);
+
+            // Quest switcher button (top right)
+            if (_questSwitcher != null && _questSwitcher.Visible)
+            {
+                var switcherWidth = (int)(20 * scale);
+                var switcherHeight = (int)(20 * scale);
+                var switcherX = (int)(scaledPos.X + (DialogWidth - 30) * scale);
+                var switcherY = (int)(scaledPos.Y + 12 * scale);
+                DrawButtonPostScale("≡", switcherX, switcherY, switcherWidth, switcherHeight, scale, font, _questSwitcher.MouseOver);
+            }
+
+            // Back button
+            if (_backButton != null && _backButton.Visible)
+            {
+                var backX = (int)(scaledPos.X + (DialogWidth / 2 - 60 - 8) * scale);
+                DrawButtonPostScale("Back", backX, buttonY, buttonWidth, buttonHeight, scale, font, _backButton.MouseOver);
+            }
+
+            // Next button
+            if (_nextButton != null && _nextButton.Visible)
+            {
+                var nextX = (int)(scaledPos.X + (DialogWidth / 2 + 8) * scale);
+                DrawButtonPostScale("Next", nextX, buttonY, buttonWidth, buttonHeight, scale, font, _nextButton.MouseOver);
+            }
+
+            // Cancel button
+            if (_cancelButton != null && _cancelButton.Visible)
+            {
+                int cancelX;
+                int cancelWidth = buttonWidth;
+                if (_state == State.SwitchQuest)
+                {
+                    // Center single cancel button
+                    cancelX = (int)(scaledPos.X + ((DialogWidth - 60) / 2) * scale);
+                }
+                else
+                {
+                    cancelX = (int)(scaledPos.X + (DialogWidth / 2 - 60 - 8) * scale);
+                }
+                DrawButtonPostScale("Cancel", cancelX, buttonY, cancelWidth, buttonHeight, scale, font, _cancelButton.MouseOver);
+            }
+
+            // OK button
+            if (_okButton != null && _okButton.Visible)
+            {
+                var okX = (int)(scaledPos.X + (DialogWidth / 2 + 8) * scale);
+                DrawButtonPostScale("OK", okX, buttonY, buttonWidth, buttonHeight, scale, font, _okButton.MouseOver);
             }
         }
 

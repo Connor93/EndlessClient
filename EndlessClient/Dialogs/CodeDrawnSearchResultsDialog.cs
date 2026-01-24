@@ -202,6 +202,7 @@ namespace EndlessClient.Dialogs
         }
 
         // IPostScaleDrawable implementation
+        public int PostScaleDrawOrder => 100;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
 
         protected override void OnDrawControl(GameTime gameTime)

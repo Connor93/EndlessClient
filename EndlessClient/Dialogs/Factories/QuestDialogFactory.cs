@@ -2,6 +2,8 @@
 using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
+using EndlessClient.Rendering;
+using EndlessClient.Services;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Interact.Quest;
@@ -25,6 +27,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IConfigurationProvider _configProvider;
         private readonly IUIStyleProviderFactory _styleProviderFactory;
         private readonly IGameStateProvider _gameStateProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
         public QuestDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                   IQuestActions questActions,
@@ -35,7 +39,9 @@ namespace EndlessClient.Dialogs.Factories
                                   ILocalizedStringFinder localizedStringFinder,
                                   IConfigurationProvider configProvider,
                                   IUIStyleProviderFactory styleProviderFactory,
-                                  IGameStateProvider gameStateProvider)
+                                  IGameStateProvider gameStateProvider,
+                                  IClientWindowSizeProvider clientWindowSizeProvider,
+                                  IGraphicsDeviceProvider graphicsDeviceProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _questActions = questActions;
@@ -47,6 +53,8 @@ namespace EndlessClient.Dialogs.Factories
             _configProvider = configProvider;
             _styleProviderFactory = styleProviderFactory;
             _gameStateProvider = gameStateProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
         public IXNADialog Create()
@@ -55,6 +63,8 @@ namespace EndlessClient.Dialogs.Factories
             {
                 return new CodeDrawnQuestDialog(_styleProviderFactory.Create(),
                                                 _gameStateProvider,
+                                                _clientWindowSizeProvider,
+                                                _graphicsDeviceProvider,
                                                 _questActions,
                                                 _questDataProvider,
                                                 _enfFileProvider,

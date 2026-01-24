@@ -322,6 +322,7 @@ namespace EndlessClient.Dialogs
         }
 
         // IPostScaleDrawable implementation
+        public int PostScaleDrawOrder => 100;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider?.IsScaledMode ?? false;
 
         protected override void OnDrawControl(GameTime gameTime)
@@ -475,7 +476,7 @@ namespace EndlessClient.Dialogs
         /// <summary>
         /// Draws button borders and text in post-scale phase
         /// </summary>
-        protected void DrawButtonTextPostScale(Vector2 scaledPos, float scale, BitmapFont font)
+        protected virtual void DrawButtonTextPostScale(Vector2 scaledPos, float scale, BitmapFont font)
         {
             var buttonWidth = (int)(72 * scale);
             var buttonHeight = (int)(28 * scale);
@@ -505,7 +506,7 @@ namespace EndlessClient.Dialogs
             }
         }
 
-        private void DrawButtonPostScale(string text, int x, int y, int width, int height, float scale, BitmapFont font, bool isHovered)
+        protected void DrawButtonPostScale(string text, int x, int y, int width, int height, float scale, BitmapFont font, bool isHovered)
         {
             var buttonRect = new Rectangle(x, y, width, height);
             var buttonColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;

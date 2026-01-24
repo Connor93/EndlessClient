@@ -6,6 +6,7 @@ using EndlessClient.Dialogs.Factories;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
@@ -42,6 +43,8 @@ namespace EndlessClient.Dialogs
         public CodeDrawnLockerDialog(
             IUIStyleProvider styleProvider,
             IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
             INativeGraphicsManager graphicsManager,
             ILockerActions lockerActions,
             ILocalizedStringFinder localizedStringFinder,
@@ -52,7 +55,8 @@ namespace EndlessClient.Dialogs
             ILockerDataProvider lockerDataProvider,
             IEIFFileProvider eifFileProvider,
             IContentProvider contentProvider)
-            : base(styleProvider, gameStateProvider, contentProvider.Fonts[Constants.FontSize08pt5])
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider,
+                   contentProvider.Fonts[Constants.FontSize08pt5], contentProvider.Fonts[Constants.FontSize10])
         {
             _graphicsManager = graphicsManager;
             _lockerActions = lockerActions;
@@ -158,6 +162,20 @@ namespace EndlessClient.Dialogs
         private string GetDialogTitle()
         {
             return _characterProvider.MainCharacter.Name + "'s " + _localizedStringFinder.GetString(EOResourceID.DIALOG_TITLE_PRIVATE_LOCKER) + $" [{_lockerDataProvider.Items.Count}]";
+        }
+
+        protected override void DrawButtonTextPostScale(Vector2 scaledPos, float scale, MonoGame.Extended.BitmapFonts.BitmapFont font)
+        {
+            var buttonWidth = (int)(72 * scale);
+            var buttonHeight = (int)(26 * scale);
+            var buttonY = (int)(scaledPos.Y + (DialogHeight - 36) * scale);
+
+            // Cancel button (centered)
+            if (_cancelButton != null && _cancelButton.Visible)
+            {
+                var cancelX = (int)(scaledPos.X + ((DialogWidth - 72) / 2) * scale);
+                DrawButtonPostScale("Cancel", cancelX, buttonY, buttonWidth, buttonHeight, scale, font, _cancelButton.MouseOver);
+            }
         }
     }
 }
