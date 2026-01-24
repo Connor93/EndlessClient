@@ -1467,3 +1467,106 @@ while (font.MeasureString(wordToProcess).Width > MaxTextWidth)
 ### Files Modified
 - `EndlessClient/Rendering/Chat/ChatBubble.cs` - Complete rewrite to code-drawn approach
 
+## 23. Toast Notification System (Scaled Mode)
+
+### Overview
+In scaled mode, the bottom status bar (`StatusBarLabel`) and chat mode indicator (`ChatModePictureBox`) are hidden and replaced by a toast notification system that appears in the top-right corner.
+
+### Architecture
+
+```
+IToastNotifier (interface)
+    ↑
+ToastNotifier (DI adapter, looks up manager from HudControlProvider)
+    ↓
+CodeDrawnToastManager (DrawableGameComponent + IPostScaleDrawable)
+```
+
+**Key Design**: The `CodeDrawnToastManager` is created manually by `HudControlsFactory`, not via DI. The `ToastNotifier` adapter is DI-registered and looks up the manager at runtime via `IHudControlProvider`.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `HUD/Toast/IToastNotifier.cs` | Interface with explicit notification methods |
+| `HUD/Toast/ToastNotifier.cs` | DI-registered adapter (resolves manager from HudControlProvider) |
+| `HUD/Toast/ToastNotification.cs` | Data class for individual toasts |
+| `HUD/Toast/CodeDrawnToastManager.cs` | Rendering component with slide/fade animations |
+
+### Toast Types and Colors
+
+```csharp
+public enum ToastType { Info, Warning, Action }
+```
+
+Colors are defined in `IUIStyleProvider`:
+- **Info** (blue) - General information
+- **Warning** (orange) - Errors, blocked actions
+- **Action** (green) - XP gained, item pickup, NPC drops
+
+### Currently Implemented Notifications
+
+| Event | Method | Toast Text |
+|-------|--------|------------|
+| Experience gained | `NotifyExpGained(amount)` | `+250 EXP` |
+| Item picked up | `NotifyItemPickup(name, amount)` | `Picked up Iron Sword` |
+| NPC dropped item | `NotifyNPCDrop(player, name, amount)` | `Ethan got 50 Gold` |
+
+### Adding New Toast Notifications
+
+1. **Add method to `IToastNotifier`**:
+   ```csharp
+   void NotifyNewEvent(string param);
+   ```
+
+2. **Implement in `CodeDrawnToastManager`**:
+   ```csharp
+   public void NotifyNewEvent(string param)
+   {
+       if (!_clientWindowSizeProvider.Resizable) return;
+       AddToast($"Message: {param}", ToastType.Action);
+   }
+   ```
+
+3. **Implement in `ToastNotifier`** (adapter):
+   ```csharp
+   public void NotifyNewEvent(string param)
+   {
+       if (!_hudControlProvider.IsInGame) return;
+       GetToastManager()?.NotifyNewEvent(param);
+   }
+   ```
+
+4. **Call from event handler** (inject `IToastNotifier`):
+   ```csharp
+   _toastNotifier.NotifyNewEvent("Something happened");
+   ```
+
+### Key Implementation Details
+
+**Visibility toggles** (in `HudControlsFactory`):
+```csharp
+// StatusBarLabel hidden in scaled mode
+Visible = !_clientWindowSizeRepository.Resizable
+
+// ToastManager only visible in scaled mode
+Visible = _clientWindowSizeRepository.Resizable
+```
+
+**Animation constants**:
+```csharp
+private const int ToastDisplayTimeMs = 3000;  // Show for 3 seconds
+private const int SlideInTimeMs = 200;        // Slide-in animation
+private const int FadeOutTimeMs = 300;        // Fade-out animation
+private const int MaxVisibleToasts = 3;       // Stack limit
+```
+
+**IPostScaleDrawable**: The manager implements `IPostScaleDrawable` for crisp text rendering above the scaled game content.
+
+### Files Modified for Integration
+- `HUD/Controls/HudControlIdentifier.cs` - Added `ToastManager` enum
+- `HUD/Controls/HudControlsFactory.cs` - Creates manager, toggles visibility
+- `Subscribers/MainCharacterEventSubscriber.cs` - Calls `NotifyExpGained`, `NotifyItemPickup`
+- `Rendering/NPC/NPCActions.cs` - Calls `NotifyNPCDrop` with player name lookup
+- `UIControls/ChatModePictureBox.cs` - Hidden in scaled mode
+
