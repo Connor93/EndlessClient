@@ -16,8 +16,8 @@ namespace EndlessClient.Rendering.Map
 {
     public class MiniMapRenderer : XNAControl
     {
-        private const int TileWidth = 28;
-        private const int TileHeight = 14;
+        private const int TileWidth = 42;  // Scaled up 1.5x for visibility
+        private const int TileHeight = 21;
 
         // Texture grid is 11 columns × 5 rows, each cell is 27×16 pixels
         private const int GridColumns = 11;
@@ -31,8 +31,10 @@ namespace EndlessClient.Rendering.Map
         private static readonly (int Col, int Row) Border2 = (1, 0);
         private static readonly (int Col, int Row) Border3 = (2, 0);
         private static readonly (int Col, int Row) WallTile = (3, 0);
+        private static readonly (int Col, int Row) PlayerBase = (9, 0);  // X10 - base under current player
 
         // Row 1: Interactive tiles
+        private static readonly (int Col, int Row) Warp = (2, 1);     // Y3 - zone transition warps
         private static readonly (int Col, int Row) Chest = (4, 1);
         private static readonly (int Col, int Row) Door = (5, 1);
         private static readonly (int Col, int Row) ChairLeft = (6, 1);
@@ -205,9 +207,11 @@ namespace EndlessClient.Rendering.Map
             if (_currentMapProvider.CurrentMap.Warps[row, col] != null)
             {
                 var doorType = _currentMapProvider.CurrentMap.Warps[row, col].DoorType;
-                // Only show door warps as interactive. Regular warps (zone transitions) are invisible on minimap.
+                // Door warps use Door graphic, regular zone transitions use Warp graphic
                 if (doorType != DoorSpec.NoDoor)
                     return (GetEdge(), GetSourceRect(Door));
+                else
+                    return (GetEdge(), GetSourceRect(Warp));
             }
 
             return (GetEdge(), Rectangle.Empty);
@@ -239,8 +243,8 @@ namespace EndlessClient.Rendering.Map
         {
             if (_characterProvider.MainCharacter == mapEntity)
             {
-                // Main player uses ThisPlayer marker, no direction indicator
-                return (GetSourceRect(ThisPlayer), Rectangle.Empty);
+                // Main player uses ThisPlayer marker with PlayerBase (X10) underneath
+                return (GetSourceRect(ThisPlayer), GetSourceRect(PlayerBase));
             }
 
             return mapEntity switch
@@ -317,6 +321,17 @@ namespace EndlessClient.Rendering.Map
                 for (int col = 0; col <= _currentMapProvider.CurrentMap.Properties.Width; ++col)
                 {
                     var drawLoc = _gridDrawCoordinateCalculator.CalculateRawRenderCoordinatesFromGridUnits(col, row, TileWidth, TileHeight) + new Vector2(TileHeight * height, 0);
+
+                    // Draw grid lines FIRST (underneath tile content)
+                    // Border1 = up-right edge, Border2 = up-left edge
+                    var tileSpec = _currentMapProvider.CurrentMap.Tiles[row, col];
+                    if (tileSpec != TileSpec.MapEdge)
+                    {
+                        _spriteBatch.Draw(_miniMapTexture, drawLoc, GetSourceRect(Border1), Color.FromNonPremultiplied(255, 255, 255, 128));
+                        _spriteBatch.Draw(_miniMapTexture, drawLoc, GetSourceRect(Border2), Color.FromNonPremultiplied(255, 255, 255, 128));
+                    }
+
+                    // Draw tile content on top of grid lines
                     var (edgeGfx, miniMapRectSrc) = GetSourceRectangleForGridSpace(col, row);
                     DrawGridBox(drawLoc, edgeGfx, miniMapRectSrc);
                 }
