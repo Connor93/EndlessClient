@@ -227,6 +227,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.ExpTrackerButton, CreateExpTrackerButton()},
                 {HudControlIdentifier.QuestWindowButton, CreateQuestWindowButton()},
                 {HudControlIdentifier.ExpTrackerWindow, CreateExpTrackerWindow()},
+                {HudControlIdentifier.QuestTrackerWindow, CreateQuestTrackerWindow()},
                 {HudControlIdentifier.QuestWindow, CreateQuestWindow()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
@@ -569,9 +570,23 @@ namespace EndlessClient.HUD.Controls
             };
         }
 
+        private IGameComponent CreateQuestTrackerWindow()
+        {
+            return new Windows.CodeDrawnQuestTrackerWindow(
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository,
+                _questDataProvider,
+                _questActions)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 25
+            };
+        }
+
         private IGameComponent CreateQuestWindow()
         {
-            return new Windows.CodeDrawnQuestWindow(
+            var questWindow = new Windows.CodeDrawnQuestWindow(
                 (ICharacterProvider)_characterRepository,
                 _questDataProvider,
                 _questActions,
@@ -583,6 +598,10 @@ namespace EndlessClient.HUD.Controls
             {
                 DrawOrder = HUD_CONTROL_LAYER + 20
             };
+
+            // Link the quest window to the tracker window after controls are created
+            // This will be done via Initialize or a separate linking step
+            return questWindow;
         }
 
         private IGameComponent CreateHPStatusBar()

@@ -11,6 +11,7 @@ using EOLib.Localization;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Input.InputListeners;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
@@ -43,6 +44,11 @@ namespace EndlessClient.HUD.Windows
         private IReadOnlyList<string> _cachedHistory = new List<string>();
         private int _scrollOffset = 0;
 
+        // Quest Tracker state
+        private bool _questTrackerEnabled = false;
+        private readonly HashSet<string> _trackedQuestNames = new HashSet<string>();
+        private CodeDrawnQuestTrackerWindow _questTrackerWindow;
+
         private const int WindowWidth = 320;
         private const int WindowHeight = 250;
         private const int HeaderHeight = 24;
@@ -50,6 +56,13 @@ namespace EndlessClient.HUD.Windows
         private const int RowHeight = 18;
         private const int Padding = 8;
         private const int MaxVisibleRows = 9;
+        private const int CheckboxSize = 12;
+        private const int QuestCheckboxOffset = 20; // Offset for quest name when checkboxes visible
+
+        // Hit areas for checkboxes
+        private Rectangle _trackerCheckboxRect;
+        private readonly Dictionary<int, Rectangle> _questCheckboxRects = new Dictionary<int, Rectangle>();
+        private bool _wasMouseDown = false; // For direct click detection
 
         public CodeDrawnQuestWindow(
             ICharacterProvider characterProvider,
@@ -95,6 +108,11 @@ namespace EndlessClient.HUD.Windows
             Visible = false;
         }
 
+        public void SetQuestTrackerWindow(CodeDrawnQuestTrackerWindow trackerWindow)
+        {
+            _questTrackerWindow = trackerWindow;
+        }
+
         public override void Initialize()
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
@@ -113,10 +131,19 @@ namespace EndlessClient.HUD.Windows
         protected override void OnUpdateControl(GameTime gameTime)
         {
             // Check for data updates
-            if (_questDataProvider.QuestProgress != _cachedProgress)
+            var currentProgress = _questDataProvider.QuestProgress;
+            var progressChanged = currentProgress != _cachedProgress;
+
+            if (progressChanged)
             {
-                _cachedProgress = _questDataProvider.QuestProgress;
+                _cachedProgress = currentProgress;
                 _scrollOffset = 0;
+            }
+
+            // Always update tracker if visible to catch content changes
+            if (_questTrackerWindow != null && _questTrackerWindow.Visible)
+            {
+                _questTrackerWindow.UpdateQuestProgress(_cachedProgress);
             }
 
             if (_questDataProvider.QuestHistory != _cachedHistory)
@@ -125,7 +152,69 @@ namespace EndlessClient.HUD.Windows
                 _scrollOffset = 0;
             }
 
+            // Direct mouse click detection for checkboxes (bypasses XNAControl event system)
+            var mouseState = Mouse.GetState();
+            var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
+            var mousePos = TransformMousePosition(new Point(mouseState.X, mouseState.Y));
+
+            // Detect click (mouse up after mouse was down)
+            if (_wasMouseDown && !isMouseDown && Visible)
+            {
+                HandleCheckboxClick(mousePos);
+            }
+            _wasMouseDown = isMouseDown;
+
             base.OnUpdateControl(gameTime);
+        }
+
+        private void HandleCheckboxClick(Point mousePos)
+        {
+            // Check tracker checkbox click
+            if (_trackerCheckboxRect.Contains(mousePos))
+            {
+                _questTrackerEnabled = !_questTrackerEnabled;
+                if (_questTrackerWindow != null)
+                {
+                    _questTrackerWindow.Visible = _questTrackerEnabled;
+                    if (_questTrackerEnabled)
+                    {
+                        UpdateTrackerWindow();
+                    }
+                }
+                return;
+            }
+
+            // Check quest checkboxes (only on Progress page when tracker enabled)
+            if (_questTrackerEnabled && _currentPage == QuestPage.Progress)
+            {
+                foreach (var kvp in _questCheckboxRects)
+                {
+                    if (kvp.Value.Contains(mousePos))
+                    {
+                        var questIndex = kvp.Key;
+                        if (questIndex < _cachedProgress.Count)
+                        {
+                            var questName = _cachedProgress[questIndex].Name;
+                            if (_trackedQuestNames.Contains(questName))
+                                _trackedQuestNames.Remove(questName);
+                            else
+                                _trackedQuestNames.Add(questName);
+
+                            UpdateTrackerWindow();
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void UpdateTrackerWindow()
+        {
+            if (_questTrackerWindow != null)
+            {
+                _questTrackerWindow.SetTrackedQuests(_trackedQuestNames);
+                _questTrackerWindow.UpdateQuestProgress(_cachedProgress);
+            }
         }
 
         // IPostScaleDrawable implementation
@@ -134,13 +223,38 @@ namespace EndlessClient.HUD.Windows
 
         protected override void OnDrawControl(GameTime gameTime)
         {
+            // Always update hit areas in game coordinates (not scaled)
+            var pos = DrawPositionWithParentOffset;
+            _trackerCheckboxRect = new Rectangle(
+                (int)(pos.X + WindowWidth - 90),
+                (int)(pos.Y + HeaderHeight + 6),
+                CheckboxSize,
+                CheckboxSize);
+
+            _questCheckboxRects.Clear();
+            if (_questTrackerEnabled && _currentPage == QuestPage.Progress)
+            {
+                var startY = pos.Y + HeaderHeight + TabHeight + Padding;
+                for (int i = _scrollOffset; i < _cachedProgress.Count && i < _scrollOffset + MaxVisibleRows; i++)
+                {
+                    var rowIndex = i - _scrollOffset;
+                    var y = startY + rowIndex * RowHeight;
+                    var checkRect = new Rectangle(
+                        (int)(pos.X + Padding),
+                        (int)(y + 2),
+                        CheckboxSize,
+                        CheckboxSize);
+                    _questCheckboxRects[i] = checkRect;
+                }
+            }
+
             if (SkipRenderTargetDraw)
             {
-                DrawFills(DrawPositionWithParentOffset);
+                DrawFills(pos);
             }
             else
             {
-                DrawComplete(DrawPositionWithParentOffset);
+                DrawComplete(pos);
             }
 
             base.OnDrawControl(gameTime);
@@ -198,10 +312,35 @@ namespace EndlessClient.HUD.Windows
             var titleX = scaledPos.X + (scaledWidth - titleSize.Width) / 2;
             _spriteBatch.DrawString(font, title, new Vector2(titleX, scaledPos.Y + 4 * scale), _styleProvider.TextPrimary);
 
+            // Draw Quest Tracker checkbox (right side of tab area)
+            DrawTrackerCheckboxScaled(scaledPos, scale, font);
+
             // Draw quest list
             DrawQuestListScaled(scaledPos, scale, font);
 
             _spriteBatch.End();
+        }
+
+        private void DrawTrackerCheckboxScaled(Vector2 scaledPos, float scale, BitmapFont font)
+        {
+            var checkboxX = scaledPos.X + (WindowWidth - 90) * scale;
+            var checkboxY = scaledPos.Y + (HeaderHeight + 6) * scale;
+            var checkboxSize = (int)(CheckboxSize * scale);
+
+            var checkRect = new Rectangle((int)checkboxX, (int)checkboxY, checkboxSize, checkboxSize);
+
+            // Checkbox background
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, new Color(40, 40, 40));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, checkRect, _styleProvider.PanelBorder, 1);
+
+            // Checkmark if enabled
+            if (_questTrackerEnabled)
+            {
+                _spriteBatch.DrawString(font, "x", new Vector2(checkboxX + 2, checkboxY), new Color(100, 200, 100));
+            }
+
+            // Label
+            _spriteBatch.DrawString(font, "Tracker", new Vector2(checkboxX + checkboxSize + 4, checkboxY), _styleProvider.TextSecondary);
         }
 
         private void DrawComplete(Vector2 pos)
@@ -225,10 +364,34 @@ namespace EndlessClient.HUD.Windows
             var titleX = pos.X + (WindowWidth - titleSize.Width) / 2;
             _spriteBatch.DrawString(_labelFont, title, new Vector2(titleX, pos.Y + 4), _styleProvider.TextPrimary);
 
+            // Draw Quest Tracker checkbox
+            DrawTrackerCheckbox(pos);
+
             // Quest list
             DrawQuestList(pos);
 
             _spriteBatch.End();
+        }
+
+        private void DrawTrackerCheckbox(Vector2 pos)
+        {
+            var checkboxX = pos.X + WindowWidth - 90;
+            var checkboxY = pos.Y + HeaderHeight + 6;
+
+            _trackerCheckboxRect = new Rectangle((int)checkboxX, (int)checkboxY, CheckboxSize, CheckboxSize);
+
+            // Checkbox background
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, _trackerCheckboxRect, new Color(40, 40, 40));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, _trackerCheckboxRect, _styleProvider.PanelBorder, 1);
+
+            // Checkmark if enabled
+            if (_questTrackerEnabled)
+            {
+                _spriteBatch.DrawString(_font, "x", new Vector2(checkboxX + 2, checkboxY), new Color(100, 200, 100));
+            }
+
+            // Label
+            _spriteBatch.DrawString(_font, "Tracker", new Vector2(checkboxX + CheckboxSize + 4, checkboxY), _styleProvider.TextSecondary);
         }
 
         private void DrawQuestList(Vector2 pos)
@@ -249,9 +412,28 @@ namespace EndlessClient.HUD.Windows
                 for (int i = _scrollOffset; i < _cachedProgress.Count && i < _scrollOffset + MaxVisibleRows; i++)
                 {
                     var quest = _cachedProgress[i];
-                    var y = startY + (i - _scrollOffset) * RowHeight;
+                    var rowIndex = i - _scrollOffset;
+                    var y = startY + rowIndex * RowHeight;
 
-                    _spriteBatch.DrawString(_labelFont, quest.Name, new Vector2(pos.X + Padding, y), valueColor);
+                    // Draw quest checkbox if tracker is enabled
+                    if (_questTrackerEnabled)
+                    {
+                        var checkX = (int)(pos.X + Padding);
+                        var checkY = (int)(y + 2);
+                        var checkRect = new Rectangle(checkX, checkY, CheckboxSize, CheckboxSize);
+                        _questCheckboxRects[i] = checkRect;
+
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, new Color(40, 40, 40));
+                        DrawingPrimitives.DrawRectBorder(_spriteBatch, checkRect, _styleProvider.PanelBorder, 1);
+
+                        if (_trackedQuestNames.Contains(quest.Name))
+                        {
+                            _spriteBatch.DrawString(_font, "x", new Vector2(checkX + 2, checkY), new Color(100, 200, 100));
+                        }
+                    }
+
+                    var nameX = pos.X + Padding + (_questTrackerEnabled ? QuestCheckboxOffset : 0);
+                    _spriteBatch.DrawString(_labelFont, quest.Name, new Vector2(nameX, y), valueColor);
 
                     var progressText = quest.Target > 0 ? $"{quest.Progress} / {quest.Target}" : "n / a";
                     var progressSize = _font.MeasureString(progressText);
@@ -299,9 +481,28 @@ namespace EndlessClient.HUD.Windows
                 for (int i = _scrollOffset; i < _cachedProgress.Count && i < _scrollOffset + MaxVisibleRows; i++)
                 {
                     var quest = _cachedProgress[i];
-                    var y = startY + (i - _scrollOffset) * RowHeight * scale;
+                    var rowIndex = i - _scrollOffset;
+                    var y = startY + rowIndex * RowHeight * scale;
 
-                    _spriteBatch.DrawString(font, quest.Name, new Vector2(scaledPos.X + Padding * scale, y), valueColor);
+                    // Draw quest checkbox if tracker is enabled
+                    if (_questTrackerEnabled)
+                    {
+                        var checkboxSize = (int)(CheckboxSize * scale);
+                        var checkX = (int)(scaledPos.X + Padding * scale);
+                        var checkY = (int)(y + 2 * scale);
+                        var checkRect = new Rectangle(checkX, checkY, checkboxSize, checkboxSize);
+
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, new Color(40, 40, 40));
+                        DrawingPrimitives.DrawRectBorder(_spriteBatch, checkRect, _styleProvider.PanelBorder, 1);
+
+                        if (_trackedQuestNames.Contains(quest.Name))
+                        {
+                            _spriteBatch.DrawString(font, "x", new Vector2(checkX + 2, checkY), new Color(100, 200, 100));
+                        }
+                    }
+
+                    var nameX = scaledPos.X + (Padding + (_questTrackerEnabled ? QuestCheckboxOffset : 0)) * scale;
+                    _spriteBatch.DrawString(font, quest.Name, new Vector2(nameX, y), valueColor);
 
                     var progressText = quest.Target > 0 ? $"{quest.Progress} / {quest.Target}" : "n / a";
                     var progressSize = font.MeasureString(progressText);
@@ -363,15 +564,25 @@ namespace EndlessClient.HUD.Windows
             }
         }
 
-        protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
+        private Point TransformMousePosition(Point position)
         {
-            return true;
+            if (!_clientWindowSizeProvider.IsScaledMode)
+                return position;
+
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+
+            int gameX = (int)((position.X - offset.X) / scale);
+            int gameY = (int)((position.Y - offset.Y) / scale);
+
+            return new Point(
+                Math.Max(0, Math.Min(gameX, _clientWindowSizeProvider.GameWidth - 1)),
+                Math.Max(0, Math.Min(gameY, _clientWindowSizeProvider.GameHeight - 1)));
         }
 
-        protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
-        {
-            return true;
-        }
+        // NOTE: HandleClick and HandleMouseDown intentionally not overridden
+        // Click detection is handled directly in OnUpdateControl via _wasMouseDown tracking
+        // to avoid XNAControl event system issues with child controls
 
         protected override bool HandleMouseWheelMoved(IXNAControl control, MouseEventArgs eventArgs)
         {

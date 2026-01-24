@@ -152,6 +152,11 @@ namespace EndlessClient.HUD
             if (_hudControlProvider.IsInGame)
             {
                 var window = _hudControlProvider.GetComponent<CodeDrawnQuestWindow>(Controls.HudControlIdentifier.QuestWindow);
+                var tracker = _hudControlProvider.GetComponent<CodeDrawnQuestTrackerWindow>(Controls.HudControlIdentifier.QuestTrackerWindow);
+
+                // Link the windows together (idempotent)
+                window.SetQuestTrackerWindow(tracker);
+
                 window.Toggle();
             }
         }
