@@ -5,6 +5,7 @@ using EndlessClient.Content;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Chat;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
@@ -23,7 +24,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnChatPanel : DraggableHudPanel, IChatPanel, IPostScaleDrawable
+    public class CodeDrawnChatPanel : DraggableHudPanel, IChatPanel, IZOrderedWindow
     {
         private readonly IChatActions _chatActions;
         private readonly IChatRenderableGenerator _chatRenderableGenerator;
@@ -228,17 +229,23 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode: draw only fills to render target
-                // Text and borders will be drawn post-scale for crispness
-                DrawPanelFills(DrawPositionWithParentOffset, 1.0f);
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
+                // so each panel draws fills + text together for correct z-ordering
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -258,6 +265,9 @@ namespace EndlessClient.HUD.Panels
             var scaledPos = new Vector2(
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
+
+            // Draw fills first, then text/borders - each panel complete before next
+            DrawPanelFills(scaledPos, scaleFactor);
 
             // Draw borders/frame post-scale for crispness
             DrawPanelBordersOnly(scaledPos, scaleFactor);
@@ -315,32 +325,29 @@ namespace EndlessClient.HUD.Panels
         /// </summary>
         private void DrawPanelBordersOnly(Vector2 scaledPos, float scale)
         {
-            // IMPORTANT: To align with the render target blit, we calculate positions in game-space
-            // first (same as DrawPanelFills), then scale the final coordinates.
-            // This avoids accumulated rounding errors from scaling individual dimensions.
-
-            // Game-space dimensions (same as DrawPanelFills with scale=1.0)
-            const int gamePadding = 4;
-            const int gameVisibleLinesHeight = VisibleLines * 13 + 8; // 10 * 13 + 8 = 138
-            const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 4 + 130 + 4 = 138
-            const int gameInputBarWidth = PanelWidth - 12; // 489 - 12 = 477
+            // Calculate dimensions the same way as DrawPanelFills to ensure alignment
+            var panelWidth = (int)(PanelWidth * scale);
+            var panelHeight = (int)(PanelHeight * scale);
+            var lineHeight = (int)(13 * scale);
+            var visibleLinesHeight = VisibleLines * lineHeight + (int)(8 * scale);
+            var inputHeight = (int)(InputBarHeight * scale);
+            var padding = (int)(4 * scale);
 
             var borderWidth = Math.Max(1, (int)(2 * scale));
 
             _spriteBatch.Begin();
 
-            // Draw panel border - this is straightforward
-            var panelWidth = (int)(PanelWidth * scale);
-            var panelHeight = (int)(PanelHeight * scale);
+            // Draw panel border
             var bgRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, panelWidth, panelHeight);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, borderWidth);
 
-            // Draw input bar border - calculate game-space position first, then scale
+            // Draw input bar border - use same calculation as DrawPanelFills for alignment
+            var inputBarY = (int)scaledPos.Y + padding + visibleLinesHeight + padding;
             var inputBarRect = new Rectangle(
-                (int)scaledPos.X + (int)(gamePadding * scale),
-                (int)scaledPos.Y + (int)(gameInputBarY * scale),
-                (int)(gameInputBarWidth * scale),
-                (int)(InputBarHeight * scale));
+                (int)scaledPos.X + padding,
+                inputBarY,
+                panelWidth - (int)(12 * scale),
+                inputHeight);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
 
             // Draw tabs (scaled) - they have their own fills/borders
@@ -483,12 +490,14 @@ namespace EndlessClient.HUD.Panels
 
         private void DrawInputTextScaled(Vector2 scaledPos, float scaleFactor)
         {
-            // Calculate input text position to match DrawPanelFills layout
-            const int gamePadding = 4;
-            const int gameVisibleLinesHeight = VisibleLines * 13 + 8; // 138 (130 + 8 buffer)
-            const int gameInputBarY = gamePadding + gameVisibleLinesHeight + gamePadding; // 146
-            const int gamePromptWidth = 18; // Width of "> " prompt area
-            const int gameInputTextWidth = 440; // Available width for text (panel width - prompt - scrollbar - padding)
+            // Calculate using same approach as DrawPanelFills/DrawPanelBordersOnly for alignment
+            var lineHeight = (int)(13 * scaleFactor);
+            var visibleLinesHeight = VisibleLines * lineHeight + (int)(8 * scaleFactor);
+            var padding = (int)(4 * scaleFactor);
+            var inputBarY = (int)scaledPos.Y + padding + visibleLinesHeight + padding;
+
+            const int gamePromptWidth = 18; // Width of ">" prompt area
+            const int gameInputTextWidth = 440; // Available width for text
 
             // Get the text from the input textbox
             var text = _inputTextBox?.Text ?? "";
@@ -507,13 +516,13 @@ namespace EndlessClient.HUD.Panels
             }
 
             var inputTextPos = new Vector2(
-                scaledPos.X + (gamePadding + gamePromptWidth) * scaleFactor + textOffsetX,
-                scaledPos.Y + (gameInputBarY + 3) * scaleFactor);
+                scaledPos.X + padding + (int)(gamePromptWidth * scaleFactor) + textOffsetX,
+                inputBarY + (int)(3 * scaleFactor));
 
             // Set up scissor rectangle to clip text that overflows
             var scissorRect = new Rectangle(
-                (int)(scaledPos.X + (gamePadding + gamePromptWidth) * scaleFactor),
-                (int)(scaledPos.Y + gameInputBarY * scaleFactor),
+                (int)(scaledPos.X + padding + gamePromptWidth * scaleFactor),
+                inputBarY,
                 (int)(gameInputTextWidth * scaleFactor),
                 (int)(20 * scaleFactor)); // Height of input bar text area
 

@@ -18,8 +18,9 @@ namespace EndlessClient.HUD.Windows
     /// Code-drawn experience tracker window showing session statistics.
     /// Implements IPostScaleDrawable for crisp text rendering at any scale.
     /// </summary>
-    public class CodeDrawnExpTrackerWindow : XNAControl, IPostScaleDrawable
+    public class CodeDrawnExpTrackerWindow : XNAControl, IZOrderedWindow
     {
+        public event Action Activated;
         private readonly ICharacterProvider _characterProvider;
         private readonly ICharacterSessionProvider _sessionProvider;
         private readonly IExperienceTableProvider _experienceTableProvider;
@@ -71,8 +72,10 @@ namespace EndlessClient.HUD.Windows
             base.Initialize();
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 100; // Draw above panels
+        // IZOrderedWindow implementation
+        private int _zOrder = 100;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
 
         protected override void OnDrawControl(GameTime gameTime)
@@ -255,8 +258,15 @@ namespace EndlessClient.HUD.Windows
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
         {
-            // Consume mouse events to prevent clicking through
+            // Bring to front on click and consume mouse events
+            Activated?.Invoke();
             return true;
+        }
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+            Activated?.Invoke();
         }
 
         protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)

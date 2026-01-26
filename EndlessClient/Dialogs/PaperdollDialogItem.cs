@@ -55,15 +55,7 @@ namespace EndlessClient.Dialogs
             if (!_isMainCharacter || !_itemInfo.HasValue)
                 return false;
 
-            if (eventArgs.Button == MouseButton.Left)
-            {
-                if (_inventoryPanel.MouseOver && _inventoryPanel.MouseOverPreviously)
-                {
-                    StopDragging();
-                    _itemInfo.MatchSome(itemInfo => UnequipAction?.Invoke(itemInfo));
-                }
-            }
-            else if (eventArgs.Button == MouseButton.Right)
+            if (eventArgs.Button == MouseButton.Right)
             {
                 if (_beingDragged)
                     StopDragging();
@@ -103,9 +95,6 @@ namespace EndlessClient.Dialogs
         {
             if (!_isMainCharacter || !_itemInfo.HasValue)
                 return false;
-
-            if (_inventoryPanel.MouseOver && _inventoryPanel.MouseOverPreviously)
-                _itemInfo.MatchSome(itemInfo => UnequipAction?.Invoke(itemInfo));
 
             StopDragging();
 

@@ -6,6 +6,7 @@ using EndlessClient.Content;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Controls;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.Services;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
@@ -27,7 +28,7 @@ namespace EndlessClient.HUD.Panels
     /// Code-drawn Online Players panel with styled table layout.
     /// Shows online players with Name, Title, Guild, Class columns.
     /// </summary>
-    public class CodeDrawnOnlineListPanel : DraggableHudPanel, IPostScaleDrawable
+    public class CodeDrawnOnlineListPanel : DraggableHudPanel, IZOrderedWindow
     {
         private enum Filter { All, Friends, Admins, Party, Max }
 
@@ -151,6 +152,12 @@ namespace EndlessClient.HUD.Panels
             var panelRect = new Rectangle(DrawArea.X, DrawArea.Y, PanelWidth, PanelHeight);
             if (panelRect.Contains(mousePos))
             {
+                // Fire Activated when mouse is pressed inside panel to trigger z-order update
+                if (isMouseDown && !_wasMouseDown)
+                {
+                    OnActivated();
+                }
+
                 var scrollDelta = mouseState.ScrollWheelValue - _previousScrollWheelValue;
                 if (scrollDelta > 0 && _scrollOffset > 0)
                 {
@@ -215,16 +222,34 @@ namespace EndlessClient.HUD.Panels
             base.OnUpdateControl(gameTime);
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
+            // Always set hit detection rects (in game-space coordinates)
+            var pos = DrawPositionWithParentOffset;
+            _filterButtonRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 3, 50, 14);
+
+            var scrollX = (int)pos.X + PanelWidth - 20;
+            var scrollAreaTop = (int)pos.Y + HeaderHeight + 2;
+            var scrollAreaHeight = PanelHeight - HeaderHeight - 6;
+            _scrollTrackRect = new Rectangle(scrollX, scrollAreaTop, 16, scrollAreaHeight);
+            _scrollUpRect = new Rectangle(scrollX, scrollAreaTop, 16, 16);
+            _scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - 16, 16, 16);
+
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode: draw only fills to render target
-                DrawPanelFills(DrawPositionWithParentOffset);
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
+                // so that each panel draws fills + text together for correct z-ordering
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -244,8 +269,79 @@ namespace EndlessClient.HUD.Panels
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
-            // Draw borders and text post-scale for crispness
+            // Draw fills first (at scaled coordinates), then text/borders
+            // This ensures each panel is complete before the next panel draws,
+            // so higher z-order panels fully cover lower z-order panels
+            DrawPanelFillsScaled(scaledPos, scaleFactor);
             DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        /// <summary>
+        /// Draws fills at scaled coordinates for post-scale rendering
+        /// </summary>
+        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            var scaledWidth = (int)(PanelWidth * scale);
+            var scaledHeight = (int)(PanelHeight * scale);
+            var scaledHeaderHeight = (int)(HeaderHeight * scale);
+            var scaledRowHeight = (int)(RowHeight * scale);
+
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+
+            // Header bar fill
+            var headerRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeaderHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+
+            // Filter button fill
+            var scaledFilterX = (int)(4 * scale);
+            var scaledFilterY = (int)(3 * scale);
+            var scaledFilterW = (int)(50 * scale);
+            var scaledFilterH = (int)(14 * scale);
+            var filterRect = new Rectangle((int)pos.X + scaledFilterX, (int)pos.Y + scaledFilterY, scaledFilterW, scaledFilterH);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, filterRect, _styleProvider.ButtonNormal);
+
+            // Row fills
+            var listAreaY = (int)pos.Y + scaledHeaderHeight + (int)(2 * scale);
+            for (int i = 0; i < VisibleRows && _scrollOffset + i < _filteredList.Count; i++)
+            {
+                var rowY = listAreaY + (i * scaledRowHeight);
+                var rowRect = new Rectangle((int)pos.X + (int)(2 * scale), rowY, scaledWidth - (int)(4 * scale), scaledRowHeight);
+                var rowColor = i % 2 == 0 ? new Color(70, 60, 50, 150) : new Color(60, 50, 40, 150);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowColor);
+            }
+
+            // Scrollbar fills
+            var scrollX = (int)pos.X + scaledWidth - (int)(20 * scale);
+            var scrollAreaTop = (int)pos.Y + scaledHeaderHeight + (int)(2 * scale);
+            var scrollAreaHeight = scaledHeight - scaledHeaderHeight - (int)(6 * scale);
+
+            var scrollTrackRect = new Rectangle(scrollX, scrollAreaTop, (int)(16 * scale), scrollAreaHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollTrackRect, new Color(40, 35, 30, 200));
+
+            var scrollUpRect = new Rectangle(scrollX, scrollAreaTop, (int)(16 * scale), (int)(16 * scale));
+            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollUpRect, upColor);
+
+            var scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - (int)(16 * scale), (int)(16 * scale), (int)(16 * scale));
+            var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollDownRect, downColor);
+
+            // Scroll thumb fill
+            if (_filteredList.Count > VisibleRows)
+            {
+                var thumbTrackHeight = scrollAreaHeight - (int)(36 * scale);
+                var thumbHeight = Math.Max((int)(10 * scale), thumbTrackHeight * VisibleRows / _filteredList.Count);
+                var maxOffset = _filteredList.Count - VisibleRows;
+                var thumbY = scrollAreaTop + (int)(17 * scale) + (int)((thumbTrackHeight - thumbHeight) * _scrollOffset / (float)maxOffset);
+                var thumbRect = new Rectangle(scrollX + (int)(2 * scale), thumbY, (int)(12 * scale), thumbHeight);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, thumbRect, _styleProvider.ButtonNormal);
+            }
+
+            _spriteBatch.End();
         }
 
         /// <summary>

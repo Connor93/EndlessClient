@@ -3,6 +3,7 @@ using EndlessClient.Audio;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Panels;
 using EndlessClient.Input;
+using EndlessClient.Rendering;
 using EOLib.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -20,6 +21,7 @@ namespace EndlessClient.HUD.Macros
         private readonly INativeGraphicsManager _nativeGraphicsManager;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly Texture2D _whitePixel;
         private Texture2D _iconGraphic;
 
@@ -49,6 +51,7 @@ namespace EndlessClient.HUD.Macros
                               INativeGraphicsManager nativeGraphicsManager,
                               ISfxPlayer sfxPlayer,
                               IUserInputProvider userInputProvider,
+                              IClientWindowSizeProvider clientWindowSizeProvider,
                               int slot,
                               MacroSlot data)
             : base(macroPanel)
@@ -57,6 +60,7 @@ namespace EndlessClient.HUD.Macros
             _nativeGraphicsManager = nativeGraphicsManager;
             _sfxPlayer = sfxPlayer;
             _userInputProvider = userInputProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
 
             Slot = DisplaySlot = slot;
             Data = data;
@@ -110,8 +114,18 @@ namespace EndlessClient.HUD.Macros
             return _macroPanel.GetSlotFromPosition(transformedPos.ToVector2());
         }
 
+        // True when in scaled mode - parent handles drawing icons in correct order
+        private bool SkipRenderTargetDraw => _clientWindowSizeProvider?.IsScaledMode ?? false;
+
         protected override void OnDrawControl(GameTime gameTime)
         {
+            if (SkipRenderTargetDraw)
+            {
+                // In scaled mode: skip drawing here - icons will be drawn in DrawPostScale
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
             _spriteBatch.Begin();
 
             DrawHighlight();
@@ -120,6 +134,20 @@ namespace EndlessClient.HUD.Macros
             _spriteBatch.End();
 
             base.OnDrawControl(gameTime);
+        }
+
+        /// <summary>
+        /// Called by parent panel to draw icons at the correct layer (after fills, before borders).
+        /// </summary>
+        public void DrawIconPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+
+            _spriteBatch.Begin();
+
+            DrawHighlightScaled(scaleFactor, renderOffset);
+            DrawIconScaled(scaleFactor, renderOffset);
+
+            _spriteBatch.End();
         }
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
@@ -174,6 +202,34 @@ namespace EndlessClient.HUD.Macros
             }
         }
 
+        private void DrawHighlightScaled(float scale, Point renderOffset)
+        {
+            if (MouseOver)
+            {
+                if (!IsDragging)
+                {
+                    var pos = DrawAreaWithParentOffset;
+                    var scaledRect = new Rectangle(
+                        (int)(pos.X * scale + renderOffset.X),
+                        (int)(pos.Y * scale + renderOffset.Y),
+                        (int)(pos.Width * scale),
+                        (int)(pos.Height * scale));
+                    _spriteBatch.Draw(_whitePixel, scaledRect, Color.FromNonPremultiplied(200, 200, 200, 60));
+                }
+                else
+                {
+                    // When dragging in scaled mode, draw highlight at current mouse position
+                    var mousePos = _userInputProvider.CurrentMouseState.Position;
+                    var highlightRect = new Rectangle(
+                        mousePos.X - (int)(DrawArea.Width * scale / 2),
+                        mousePos.Y - (int)(DrawArea.Height * scale / 2),
+                        (int)(DrawArea.Width * scale),
+                        (int)(DrawArea.Height * scale));
+                    _spriteBatch.Draw(_whitePixel, highlightRect, Color.FromNonPremultiplied(200, 200, 200, 60));
+                }
+            }
+        }
+
         private void DrawIcon()
         {
             if (_iconGraphic == null)
@@ -206,6 +262,49 @@ namespace EndlessClient.HUD.Macros
                 srcRect,
                 Color.FromNonPremultiplied(255, 255, 255, IsDragging ? 127 : 255));
         }
+
+        private void DrawIconScaled(float scale, Point renderOffset)
+        {
+            if (_iconGraphic == null)
+                return;
+
+            var halfWidth = _iconGraphic.Width / 2;
+            var srcRect = new Rectangle(MouseOver ? halfWidth : 0, 0, halfWidth, _iconGraphic.Height);
+
+            Rectangle targetDrawArea;
+            if (!IsDragging)
+            {
+                var pos = DrawAreaWithParentOffset;
+                var scaledX = pos.X * scale + renderOffset.X;
+                var scaledY = pos.Y * scale + renderOffset.Y;
+                var scaledWidth = pos.Width * scale;
+                var scaledHeight = pos.Height * scale;
+
+                targetDrawArea = new Rectangle(
+                    (int)(scaledX + (scaledWidth - srcRect.Width * scale) / 2),
+                    (int)(scaledY + (scaledHeight - srcRect.Height * scale) / 2),
+                    (int)(srcRect.Width * scale),
+                    (int)(srcRect.Height * scale));
+            }
+            else
+            {
+                // When dragging, icons follow hardware mouse cursor (not scaled)
+                var mousePos = _userInputProvider.CurrentMouseState.Position;
+                var iconWidth = (int)(srcRect.Width * scale);
+                var iconHeight = (int)(srcRect.Height * scale);
+                targetDrawArea = new Rectangle(
+                    mousePos.X - iconWidth / 2,
+                    mousePos.Y - iconHeight / 2,
+                    iconWidth,
+                    iconHeight);
+            }
+
+            _spriteBatch.Draw(_iconGraphic,
+                targetDrawArea,
+                srcRect,
+                Color.FromNonPremultiplied(255, 255, 255, IsDragging ? 127 : 255));
+        }
     }
 }
+
 

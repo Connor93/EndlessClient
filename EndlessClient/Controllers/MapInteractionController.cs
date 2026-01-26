@@ -26,6 +26,7 @@ using EOLib.Domain.Spells;
 using EOLib.IO.Extensions;
 using EOLib.IO.Map;
 using EOLib.Localization;
+using Moffat.EndlessOnline.SDK.Protocol;
 using Optional;
 using Optional.Collections;
 
@@ -253,7 +254,9 @@ namespace EndlessClient.Controllers
                 _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);
                 _userInputTimeRepository.LastInputTime = DateTime.Now;
             }
-            else if (target is Character character && _characterRendererProvider.CharacterRenderers.ContainsKey(character.ID))
+            else if (target is Character character
+                     && _characterRendererProvider.CharacterRenderers.ContainsKey(character.ID)
+                     && (!character.RenderProperties.IsHidden || _characterProvider.MainCharacter.AdminLevel != AdminLevel.Player))
             {
                 _contextMenuRepository.ContextMenu = _contextMenuRepository.ContextMenu.Match(
                     some: cmr =>

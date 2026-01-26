@@ -20,6 +20,11 @@ namespace EndlessClient.HUD.Panels
             _enableDragging = enableDragging;
         }
 
+        /// <summary>
+        /// Raises the Activated event. Call from derived classes when the panel is clicked.
+        /// </summary>
+        protected void OnActivated() => Activated?.Invoke();
+
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
         {
             Activated?.Invoke();

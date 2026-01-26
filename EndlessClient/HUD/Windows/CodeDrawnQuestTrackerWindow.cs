@@ -21,7 +21,7 @@ namespace EndlessClient.HUD.Windows
     /// A small, draggable floating window that shows tracked quest progress.
     /// Implements IPostScaleDrawable for crisp text rendering at any scale.
     /// </summary>
-    public class CodeDrawnQuestTrackerWindow : DraggableHudPanel, IPostScaleDrawable
+    public class CodeDrawnQuestTrackerWindow : DraggableHudPanel, IZOrderedWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
@@ -76,6 +76,12 @@ namespace EndlessClient.HUD.Windows
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
             base.Initialize();
+        }
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+            // DraggableHudPanel already has Activated event from HandleMouseDown
         }
 
         public void SetTrackedQuests(HashSet<string> trackedNames)
@@ -138,8 +144,10 @@ namespace EndlessClient.HUD.Windows
             DrawArea = new Rectangle(DrawArea.X, DrawArea.Y, TrackerWidth, height);
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 110; // Draw above quest window
+        // IZOrderedWindow implementation
+        private int _zOrder = 110;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
 
         protected override void OnDrawControl(GameTime gameTime)

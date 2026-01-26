@@ -126,6 +126,44 @@ Interaction=false";
             });
         }
 
+        [Test]
+        public void WASDMovementFalse_LoadsCorrectly()
+        {
+            const string contents = @"[CONNECTION]
+Host=localhost
+Port=8078
+[VERSION]
+Major=0
+Minor=0
+Client=28
+[CUSTOM]
+WASDMovement=false #enable/disable WASD keys for movement";
+            CreateTestConfigurationInDirectory(contents);
+
+            _configFileLoadActions.LoadConfigFile();
+
+            Assert.That(_configurationRepository.WASDMovement, Is.False);
+        }
+
+        [Test]
+        public void WASDMovementTrue_LoadsCorrectly()
+        {
+            const string contents = @"[CONNECTION]
+Host=localhost
+Port=8078
+[VERSION]
+Major=0
+Minor=0
+Client=28
+[CUSTOM]
+WASDMovement=true #enable/disable WASD keys for movement";
+            CreateTestConfigurationInDirectory(contents);
+
+            _configFileLoadActions.LoadConfigFile();
+
+            Assert.That(_configurationRepository.WASDMovement, Is.True);
+        }
+
         private static void CreateTestConfigurationInDirectory(string contents)
         {
             if (!Directory.Exists(_configDirectory))

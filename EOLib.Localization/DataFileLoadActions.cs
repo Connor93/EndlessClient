@@ -25,6 +25,7 @@ namespace EOLib.Localization
                 throw new DataFileLoadException($"Data directory not found: {Constants.DataFilePath}");
 
             var files = Directory.GetFiles(Constants.DataFilePath, "*.edf")
+                                 .Where(f => !Path.GetFileName(f).StartsWith(".")) // Exclude hidden files (macOS resource forks, Linux hidden files)
                                  .OrderBy(x => x)
                                  .ToArray();
             if (files.Length != Constants.ExpectedNumberOfDataFiles)

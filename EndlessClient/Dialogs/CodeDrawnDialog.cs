@@ -240,10 +240,12 @@ namespace EndlessClient.Dialogs
             var borderThickness = _styleProvider.BorderThickness;
             var titleBarHeight = _styleProvider.TitleBarHeight;
 
-            // Calculate scaled position
+            // Calculate scaled position (include renderOffset for letterboxing/pillarboxing)
             var logicalX = DrawAreaWithParentOffset.X;
             var logicalY = DrawAreaWithParentOffset.Y;
-            var scaledPos = new Vector2(logicalX * scaleFactor, logicalY * scaleFactor);
+            var scaledPos = new Vector2(
+                logicalX * scaleFactor + renderOffset.X,
+                logicalY * scaleFactor + renderOffset.Y);
 
             // Choose font based on scale factor
             BitmapFont font;

@@ -194,8 +194,21 @@ namespace EndlessClient.Dialogs
         {
             base.CenterInGameView();
 
-            var centerX = (Game.GraphicsDevice.Viewport.Width - DialogWidth) / 2;
-            var centerY = (Game.GraphicsDevice.Viewport.Height - DialogHeight) / 2;
+            // Use logical game dimensions (640x480 equivalent) for proper centering in scaled mode
+            int centerWidth, centerHeight;
+            if (XNADialog.GameViewportProvider != null)
+            {
+                centerWidth = XNADialog.GameViewportProvider.GameWidth;
+                centerHeight = XNADialog.GameViewportProvider.GameHeight;
+            }
+            else
+            {
+                centerWidth = Game.GraphicsDevice.Viewport.Width;
+                centerHeight = Game.GraphicsDevice.Viewport.Height;
+            }
+
+            var centerX = (centerWidth - DialogWidth) / 2;
+            var centerY = (centerHeight - DialogHeight) / 2;
             DrawPosition = new Vector2(centerX, centerY);
         }
 
@@ -530,6 +543,10 @@ namespace EndlessClient.Dialogs
         protected override bool HandleClick(IXNAControl control, MonoGame.Extended.Input.InputListeners.MouseEventArgs eventArgs)
         {
             if (!_isMainCharacter) return base.HandleClick(control, eventArgs);
+
+            // Only unequip on right-click
+            if (eventArgs.Button != MonoGame.Extended.Input.MouseButton.Right)
+                return base.HandleClick(control, eventArgs);
 
             _itemRecord.MatchSome(rec =>
             {

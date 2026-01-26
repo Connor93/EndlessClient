@@ -219,7 +219,7 @@ namespace EndlessClient.HUD.Panels
             {
                 _macroSlotDataRepository.MacroSlots[i].MatchSome(macroSlot =>
                 {
-                    var newItem = new HUD.Macros.MacroPanelItem(this, _nativeGraphicsManager, _sfxPlayer, _userInputProvider, i, macroSlot);
+                    var newItem = new HUD.Macros.MacroPanelItem(this, _nativeGraphicsManager, _sfxPlayer, _userInputProvider, _clientWindowSizeProvider, i, macroSlot);
                     newItem.Initialize();
                     newItem.SetParentControl(this);
 

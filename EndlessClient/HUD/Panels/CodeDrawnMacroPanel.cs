@@ -3,6 +3,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.Input;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
@@ -22,7 +23,7 @@ namespace EndlessClient.HUD.Panels
     /// Code-drawn Macro/Hotkey panel that extends the base MacroPanel.
     /// Shows 16 slots for F1-F8 and Shift+F1-F8 hotkeys.
     /// </summary>
-    public class CodeDrawnMacroPanel : MacroPanel, IPostScaleDrawable
+    public class CodeDrawnMacroPanel : MacroPanel, IZOrderedWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
@@ -110,6 +111,13 @@ namespace EndlessClient.HUD.Panels
             // Update button hover state
             _okButtonHovered = _okButtonRect.Contains(transformedPos);
 
+            // Fire Activated when mouse is pressed inside panel to trigger z-order update
+            var panelRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
+            if (isMouseDown && !_wasMouseDown && panelRect.Contains(transformedPos))
+            {
+                OnActivated();
+            }
+
             // Handle button click
             if (_wasMouseDown && !isMouseDown && _okButtonHovered)
             {
@@ -122,15 +130,23 @@ namespace EndlessClient.HUD.Panels
             base.OnUpdateControl(gameTime);
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                DrawPanelFills(DrawPositionWithParentOffset);
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
+                // This ensures proper z-ordering between overlapping panels
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -148,7 +164,74 @@ namespace EndlessClient.HUD.Panels
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
+            // Draw fills first
+            DrawPanelFillsScaled(scaledPos, scaleFactor);
+
+            // Draw child icons (between fills and borders for correct layering)
+            foreach (var child in ChildControls)
+            {
+                if (child is HUD.Macros.MacroPanelItem item && item.Visible)
+                {
+                    item.DrawIconPostScale(_spriteBatch, scaleFactor, renderOffset);
+                }
+            }
+
+            // Draw borders and text last
             DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            var scaledWidth = (int)(PanelWidth * scale);
+            var scaledHeight = (int)(PanelHeight * scale);
+
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+
+            // Left panel area fill
+            var leftX = (int)(pos.X + (LeftPanelStartX - 4) * scale);
+            var leftY = (int)(pos.Y + 4 * scale);
+            var leftRect = new Rectangle(leftX, leftY, (int)((SlotsPerRow * SlotWidth + 8) * scale), (int)(96 * scale));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftRect, new Color(40, 35, 30, 180));
+
+            // Right panel area fill
+            var rightX = (int)(pos.X + (RightPanelStartX - 4) * scale);
+            var rightRect = new Rectangle(rightX, leftY, (int)((SlotsPerRow * SlotWidth + 8) * scale), (int)(96 * scale));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightRect, new Color(40, 35, 30, 180));
+
+            // NOTE: Slot grid fills intentionally omitted - icons are drawn to render target
+            // and would be covered by fills drawn in post-scale phase
+
+            // OK button fill
+            var buttonWidth = (int)(80 * scale);
+            var buttonHeight = (int)(24 * scale);
+            var buttonRect = new Rectangle(
+                (int)pos.X + (scaledWidth - buttonWidth) / 2,
+                (int)pos.Y + scaledHeight - buttonHeight - (int)(8 * scale),
+                buttonWidth, buttonHeight);
+            var buttonColor = _okButtonHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, buttonRect, buttonColor);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawSlotGridFillsScaled(Vector2 pos, int startX, float scale)
+        {
+            var scaledSlotWidth = (int)(SlotWidth * scale);
+            var scaledSlotHeight = (int)(SlotHeight * scale);
+            for (int row = 0; row < 2; row++)
+            {
+                for (int col = 0; col < SlotsPerRow; col++)
+                {
+                    var x = (int)(pos.X + startX * scale) + col * scaledSlotWidth;
+                    var y = (int)(pos.Y + GridStartY * scale) + row * scaledSlotHeight;
+                    var slotRect = new Rectangle(x, y, scaledSlotWidth - (int)(2 * scale), scaledSlotHeight - (int)(2 * scale));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, new Color(30, 25, 20, 200));
+                }
+            }
         }
 
         private void DrawPanelFills(Vector2 pos)

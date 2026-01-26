@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using EOLib.IO.Pub;
 using EOLib.IO.Services.Serializers;
 using EOLib.Shared;
@@ -29,7 +30,9 @@ namespace EOLib.IO.Services
             if (!Directory.Exists(directory))
                 throw new DirectoryNotFoundException($"Pub directory not found: {directory}");
 
-            var files = Directory.GetFiles(directory, searchPattern, SearchOption.TopDirectoryOnly);
+            var files = Directory.GetFiles(directory, searchPattern, SearchOption.TopDirectoryOnly)
+                .Where(f => !Path.GetFileName(f).StartsWith(".")) // Exclude hidden files
+                .ToArray();
             if (files.Length == 0)
                 throw new ArgumentException($"No pub files matching {searchPattern} were found in {directory}", nameof(searchPattern));
 

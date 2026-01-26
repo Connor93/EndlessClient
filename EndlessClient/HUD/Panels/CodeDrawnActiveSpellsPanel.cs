@@ -8,6 +8,7 @@ using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Spells;
 using EndlessClient.Input;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
@@ -26,7 +27,7 @@ namespace EndlessClient.HUD.Panels
     /// Code-drawn Active Spells panel that extends the base ActiveSpellsPanel.
     /// Overrides drawing to use styled visuals while preserving all functionality.
     /// </summary>
-    public class CodeDrawnActiveSpellsPanel : ActiveSpellsPanel, IPostScaleDrawable
+    public class CodeDrawnActiveSpellsPanel : ActiveSpellsPanel, IZOrderedWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
@@ -87,15 +88,23 @@ namespace EndlessClient.HUD.Panels
             base.Initialize();
         }
 
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode: only draw fills to render target
-                DrawPanelFills();
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
+                // so each panel draws fills + text together for correct z-ordering
             }
             else
             {
@@ -112,7 +121,33 @@ namespace EndlessClient.HUD.Panels
             if (!Visible)
                 return;
 
+            var gamePos = DrawPositionWithParentOffset;
+            var scaledPos = new Vector2(
+                gamePos.X * scaleFactor + renderOffset.X,
+                gamePos.Y * scaleFactor + renderOffset.Y);
+
+            // Draw fills first, then text/borders - each panel complete before next
+            DrawPanelFillsScaled(scaledPos, scaleFactor);
             DrawPanelBordersAndText(scaleFactor, renderOffset);
+        }
+
+        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            var scaledWidth = (int)(PanelWidth * scale);
+            var scaledHeight = (int)(PanelHeight * scale);
+            var scaledLeftWidth = (int)(LeftPanelWidth * scale);
+
+            // Draw main panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+
+            // Draw left info panel fill
+            var leftPanelRect = new Rectangle((int)pos.X, (int)pos.Y, scaledLeftWidth, scaledHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(50, 45, 40, 220));
+
+            _spriteBatch.End();
         }
 
         private void DrawPanelFills()

@@ -6,6 +6,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
@@ -21,7 +22,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnSettingsPanel : DraggableHudPanel, IPostScaleDrawable
+    public class CodeDrawnSettingsPanel : DraggableHudPanel, IZOrderedWindow
     {
         private enum KeyboardLayout
         {
@@ -195,15 +196,22 @@ namespace EndlessClient.HUD.Panels
             return base.HandleClick(control, eventArgs);
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                DrawPanelFills(DrawPositionWithParentOffset);
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -221,7 +229,40 @@ namespace EndlessClient.HUD.Panels
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
+            // Draw fills first, then text/borders - each panel complete before next
+            DrawPanelFillsScaled(scaledPos, scaleFactor);
             DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            var scaledWidth = (int)(PanelWidth * scale);
+            var scaledHeight = (int)(PanelHeight * scale);
+
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+
+            // Row hover highlight fills
+            foreach (var pair in _settingLabels)
+            {
+                var setting = pair.Key;
+                var hitArea = _settingHitAreas[setting];
+                var scaledHitX = (int)(hitArea.X * scale);
+                var scaledHitY = (int)(hitArea.Y * scale);
+                var scaledHitW = (int)(hitArea.Width * scale);
+                var scaledHitH = (int)(hitArea.Height * scale);
+                var rowRect = new Rectangle((int)pos.X + scaledHitX, (int)pos.Y + scaledHitY, scaledHitW, scaledHitH);
+
+                if (_hoveredSetting == setting)
+                {
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, new Color(100, 90, 80, 150));
+                }
+            }
+
+            _spriteBatch.End();
         }
 
         private void DrawPanelFills(Vector2 pos)

@@ -87,6 +87,15 @@ namespace EndlessClient.Rendering.Character
 
         public bool IsAlive => !Character.RenderProperties.IsDead;
 
+        /// <summary>
+        /// Returns true if this character should be rendered for the current player.
+        /// Hidden characters are only visible to admins.
+        /// </summary>
+        private bool ShouldRenderForCurrentPlayer()
+        {
+            return !Character.RenderProperties.IsHidden || _characterProvider.MainCharacter.AdminLevel > 0;
+        }
+
         public CharacterRenderer(Game game,
                                  IRenderTargetFactory renderTargetFactory,
                                  IHealthBarRendererFactory healthBarRendererFactory,
@@ -263,6 +272,11 @@ namespace EndlessClient.Rendering.Character
 
         public void DrawToSpriteBatch(SpriteBatch spriteBatch)
         {
+            // Don't draw hidden characters for non-admin players (root cause fix)
+            // This method is called directly by OtherCharacterEntityRenderer, bypassing Draw()
+            if (!ShouldRenderForCurrentPlayer())
+                return;
+
             _effectRenderer.DrawBehindTarget(spriteBatch);
 
             if (Visible)
@@ -370,6 +384,13 @@ namespace EndlessClient.Rendering.Character
         {
             if (_isUiControl || _healthBarRenderer == null || _nameLabel == null)
                 return;
+
+            // Don't show name label for hidden characters unless viewer is an admin
+            if (!ShouldRenderForCurrentPlayer())
+            {
+                _nameLabel.Visible = false;
+                return;
+            }
 
             if (_healthBarRenderer.Visible)
             {
@@ -544,6 +565,10 @@ namespace EndlessClient.Rendering.Character
 
         public void ShowDamageCounter(int damage, int percentHealth, bool isHeal)
         {
+            // Don't show damage counter for hidden characters unless viewer is an admin (Bug #2 fix)
+            if (!ShouldRenderForCurrentPlayer())
+                return;
+
             if (isHeal)
                 _healthBarRenderer.SetHealth(damage, percentHealth, () => _chatBubble.Value.Show());
             else

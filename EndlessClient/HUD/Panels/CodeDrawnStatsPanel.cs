@@ -5,6 +5,7 @@ using EndlessClient.Controllers;
 using EndlessClient.Dialogs;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
@@ -18,7 +19,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnStatsPanel : DraggableHudPanel, IPostScaleDrawable
+    public class CodeDrawnStatsPanel : DraggableHudPanel, IZOrderedWindow
     {
         private readonly ICharacterProvider _characterProvider;
         private readonly ICharacterInventoryProvider _characterInventoryProvider;
@@ -121,16 +122,22 @@ namespace EndlessClient.HUD.Panels
             base.OnUpdateControl(gameTime);
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode: draw only fills to render target
-                DrawPanelFills(DrawPositionWithParentOffset);
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -149,7 +156,19 @@ namespace EndlessClient.HUD.Panels
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
+            // Draw fills first, then text/borders - each panel complete before next
+            DrawPanelFillsScaled(scaledPos, scaleFactor);
             DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        {
+            _spriteBatch.Begin();
+            var scaledWidth = (int)(PanelWidth * scale);
+            var scaledHeight = (int)(PanelHeight * scale);
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
+            _spriteBatch.End();
         }
 
         private void DrawPanelFills(Vector2 pos)

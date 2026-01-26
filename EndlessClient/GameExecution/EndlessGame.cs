@@ -386,15 +386,12 @@ namespace EndlessClient.GameExecution
 
         private void DrawPostScaleControls(float scaleFactor, Point renderOffset)
         {
-            // Find all post-scale drawable controls and sort by draw order
+            // Find all post-scale drawable controls (including nested children) and sort by draw order
             // Lower order values are drawn first (background), higher values are drawn later (foreground)
             var postScaleDrawables = new List<IPostScaleDrawable>();
             foreach (var component in Components)
             {
-                if (component is IPostScaleDrawable postScaleDrawable)
-                {
-                    postScaleDrawables.Add(postScaleDrawable);
-                }
+                CollectPostScaleDrawables(component, postScaleDrawables);
             }
 
             // Sort by PostScaleDrawOrder - lower values first, dialogs (100) on top of HUD panels (0)
@@ -403,6 +400,23 @@ namespace EndlessClient.GameExecution
             foreach (var postScaleDrawable in postScaleDrawables)
             {
                 postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
+            }
+        }
+
+        private void CollectPostScaleDrawables(object component, List<IPostScaleDrawable> drawables)
+        {
+            if (component is IPostScaleDrawable postScaleDrawable)
+            {
+                drawables.Add(postScaleDrawable);
+            }
+
+            // Recursively check child controls
+            if (component is XNAControls.IXNAControl xnaControl)
+            {
+                foreach (var child in xnaControl.ChildControls)
+                {
+                    CollectPostScaleDrawables(child, drawables);
+                }
             }
         }
     }

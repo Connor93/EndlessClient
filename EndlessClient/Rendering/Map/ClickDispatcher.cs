@@ -14,6 +14,7 @@ using EOLib.Domain.Extensions;
 using EOLib.Domain.Interact;
 using EOLib.Domain.Map;
 using EOLib.IO.Map;
+using Moffat.EndlessOnline.SDK.Protocol;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Input;
 using MonoGame.Extended.Input.InputListeners;
@@ -116,6 +117,13 @@ namespace EndlessClient.Rendering.Map
         private bool CheckForEntityClicks(MouseEventArgs eventArgs)
         {
             var entities = new List<IMapEntity>(_currentMapStateProvider.Characters);
+
+            // Filter out hidden characters for non-admin players (Bug #3 fix)
+            if (_characterProvider.MainCharacter.AdminLevel == AdminLevel.Player)
+            {
+                entities.RemoveAll(e => e is DomainCharacter c && c.RenderProperties.IsHidden);
+            }
+
             entities.Add(_characterProvider.MainCharacter);
             entities.AddRange(_currentMapStateProvider.NPCs);
             entities.AddRange(_currentMapProvider.CurrentMap.Signs);

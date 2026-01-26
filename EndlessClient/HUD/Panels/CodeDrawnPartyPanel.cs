@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.Rendering;
+using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
@@ -22,7 +23,7 @@ namespace EndlessClient.HUD.Panels
     /// Vertical MMO-style party panel that floats on the left side of the screen.
     /// Shows party members stacked with Name, Level, Class, and Health bar.
     /// </summary>
-    public class CodeDrawnPartyPanel : DraggableHudPanel, IPostScaleDrawable
+    public class CodeDrawnPartyPanel : DraggableHudPanel, IZOrderedWindow
     {
         private readonly IPartyActions _partyActions;
         private readonly IPartyDataProvider _partyDataProvider;
@@ -97,6 +98,13 @@ namespace EndlessClient.HUD.Panels
             var mousePos = new Point(mouseState.X, mouseState.Y);
             var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
 
+            // Fire Activated when mouse is pressed inside panel to trigger z-order update
+            var panelRect = new Rectangle(DrawArea.X, DrawArea.Y, PanelWidth, DrawArea.Height);
+            if (isMouseDown && !_wasMouseDown && panelRect.Contains(mousePos))
+            {
+                OnActivated();
+            }
+
             // Detect click (mouse up after mouse down)
             if (_wasMouseDown && !isMouseDown)
             {
@@ -136,9 +144,16 @@ namespace EndlessClient.HUD.Panels
             base.OnVisibleChanged(sender, args);
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 0;
+        // IZOrderedWindow implementation
+        private int _zOrder = 0;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -152,7 +167,7 @@ namespace EndlessClient.HUD.Panels
 
             if (SkipRenderTargetDraw)
             {
-                DrawPanelFills(DrawPositionWithParentOffset);
+                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -170,7 +185,66 @@ namespace EndlessClient.HUD.Panels
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
+            // Draw fills first, then text/borders - each panel complete before next
+            DrawPanelFillsScaled(scaledPos, scaleFactor);
             DrawPanelBordersAndText(scaledPos, scaleFactor);
+        }
+
+        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        {
+            _spriteBatch.Begin();
+
+            var panelHeight = (int)((HeaderHeight + (_cachedParty.Count * MemberRowHeight) + Padding) * scale);
+            var scaledWidth = (int)(PanelWidth * scale);
+            var scaledHeaderHeight = (int)(HeaderHeight * scale);
+            var scaledRowHeight = (int)(MemberRowHeight * scale);
+
+            // Panel background fill
+            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, panelHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, new Color(_styleProvider.PanelBackground, 0.9f));
+
+            // Header fill
+            var headerRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeaderHeight);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+
+            // Leave button fill
+            var scaledBtnSize = (int)(RemoveButtonSize * scale);
+            var leaveRect = new Rectangle((int)pos.X + scaledWidth - scaledBtnSize - (int)(4 * scale), (int)pos.Y + (int)(3 * scale), scaledBtnSize, scaledBtnSize);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leaveRect, new Color(180, 60, 60));
+
+            // Member row fills and health bar backgrounds
+            var memberIndex = 0;
+            var isLeader = _cachedParty.Any(m => m.IsLeader && m.CharacterID == _characterProvider.MainCharacter.ID);
+            foreach (var member in _cachedParty.OrderByDescending(m => m.IsLeader))
+            {
+                var rowY = (int)pos.Y + scaledHeaderHeight + (memberIndex * scaledRowHeight);
+                var rowRect = new Rectangle((int)pos.X + (int)(2 * scale), rowY, scaledWidth - (int)(4 * scale), scaledRowHeight - (int)(2 * scale));
+                var rowBgColor = memberIndex % 2 == 0 ? new Color(80, 70, 60, 180) : new Color(70, 60, 50, 180);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowBgColor);
+
+                // Remove button fill
+                if (isLeader && member.CharacterID != _characterProvider.MainCharacter.ID)
+                {
+                    var removeRect = new Rectangle((int)pos.X + scaledWidth - scaledBtnSize - (int)(8 * scale), rowY + (int)(2 * scale), scaledBtnSize, scaledBtnSize);
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, removeRect, new Color(140, 50, 50));
+                }
+
+                // Health bar background
+                var healthBarY = rowY + scaledRowHeight - (int)(HealthBarHeight * scale) - (int)(4 * scale);
+                var healthBarRect = new Rectangle((int)pos.X + (int)(Padding * scale), healthBarY, scaledWidth - (int)((Padding * 2 + 4) * scale), (int)(HealthBarHeight * scale));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, new Color(40, 40, 40, 200));
+
+                // Health bar foreground
+                var healthPercent = member.PercentHealth;
+                var healthColor = healthPercent > 0.5f ? new Color(60, 180, 60) : healthPercent > 0.25f ? new Color(200, 180, 60) : new Color(200, 60, 60);
+                var healthWidth = (int)((healthBarRect.Width - 4) * healthPercent);
+                var healthFillRect = new Rectangle(healthBarRect.X + 2, healthBarRect.Y + 2, healthWidth, healthBarRect.Height - 4);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, healthFillRect, healthColor);
+
+                memberIndex++;
+            }
+
+            _spriteBatch.End();
         }
 
         private void DrawPanelFills(Vector2 pos)

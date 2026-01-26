@@ -23,8 +23,9 @@ namespace EndlessClient.HUD.Windows
     /// Code-drawn quest status window showing quest progress and history.
     /// Implements IPostScaleDrawable for crisp text rendering at any scale.
     /// </summary>
-    public class CodeDrawnQuestWindow : XNAControl, IPostScaleDrawable
+    public class CodeDrawnQuestWindow : XNAControl, IZOrderedWindow
     {
+        public event Action Activated;
         private readonly ICharacterProvider _characterProvider;
         private readonly IQuestDataProvider _questDataProvider;
         private readonly IQuestActions _questActions;
@@ -157,6 +158,20 @@ namespace EndlessClient.HUD.Windows
             var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
             var mousePos = TransformMousePosition(new Point(mouseState.X, mouseState.Y));
 
+            // Fire Activated on mouse down inside window to bring to front
+            if (isMouseDown && !_wasMouseDown && Visible)
+            {
+                var windowBounds = new Rectangle(
+                    (int)DrawPositionWithParentOffset.X,
+                    (int)DrawPositionWithParentOffset.Y,
+                    DrawArea.Width,
+                    DrawArea.Height);
+                if (windowBounds.Contains(mousePos))
+                {
+                    Activated?.Invoke();
+                }
+            }
+
             // Detect click (mouse up after mouse was down)
             if (_wasMouseDown && !isMouseDown && Visible)
             {
@@ -217,8 +232,10 @@ namespace EndlessClient.HUD.Windows
             }
         }
 
-        // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 100;
+        // IZOrderedWindow implementation
+        private int _zOrder = 100;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
         public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
 
         protected override void OnDrawControl(GameTime gameTime)
@@ -583,6 +600,12 @@ namespace EndlessClient.HUD.Windows
         // NOTE: HandleClick and HandleMouseDown intentionally not overridden
         // Click detection is handled directly in OnUpdateControl via _wasMouseDown tracking
         // to avoid XNAControl event system issues with child controls
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+            Activated?.Invoke();
+        }
 
         protected override bool HandleMouseWheelMoved(IXNAControl control, MouseEventArgs eventArgs)
         {

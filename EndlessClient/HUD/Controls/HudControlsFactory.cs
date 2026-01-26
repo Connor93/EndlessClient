@@ -33,6 +33,7 @@ using EOLib.Domain.Pathing;
 using EOLib.Graphics;
 using EOLib.Localization;
 using EOLib.Shared;
+using EndlessClient.HUD.Windows;
 using Microsoft.Xna.Framework;
 using XNAControls;
 
@@ -84,6 +85,7 @@ namespace EndlessClient.HUD.Controls
         private readonly ICharacterSessionProvider _characterSessionProvider;
         private readonly IQuestDataProvider _questDataProvider;
         private readonly IQuestActions _questActions;
+        private readonly IWindowZOrderManager _windowZOrderManager;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -126,7 +128,8 @@ namespace EndlessClient.HUD.Controls
                                   IUIStyleProvider styleProvider,
                                   ICharacterSessionProvider characterSessionProvider,
                                   IQuestDataProvider questDataProvider,
-                                  IQuestActions questActions)
+                                  IQuestActions questActions,
+                                  IWindowZOrderManager windowZOrderManager)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -168,6 +171,7 @@ namespace EndlessClient.HUD.Controls
             _characterSessionProvider = characterSessionProvider;
             _questDataProvider = questDataProvider;
             _questActions = questActions;
+            _windowZOrderManager = windowZOrderManager;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -446,6 +450,13 @@ namespace EndlessClient.HUD.Controls
 
             retPanel.Activated += () => retPanel.DrawOrder = _hudControlProvider.HudPanels.Select(x => x.DrawOrder).Max() + 1;
 
+            // Register panels with WindowZOrderManager for dynamic PostScaleDrawOrder
+            if (retPanel is IZOrderedWindow zOrderedPanel)
+            {
+                _windowZOrderManager.Register(zOrderedPanel);
+                retPanel.Activated += () => _windowZOrderManager.BringToFront(zOrderedPanel);
+            }
+
             // For Code UI mode with integrated chat panel, chat is always visible
             // Otherwise, show news if available, or chat if no news
             if (_configurationProvider.UIMode == UIMode.Code && whichState == InGameStates.Chat)
@@ -557,7 +568,7 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateExpTrackerWindow()
         {
-            return new Windows.CodeDrawnExpTrackerWindow(
+            var window = new Windows.CodeDrawnExpTrackerWindow(
                 (ICharacterProvider)_characterRepository,
                 _characterSessionProvider,
                 _experienceTableProvider,
@@ -568,11 +579,16 @@ namespace EndlessClient.HUD.Controls
             {
                 DrawOrder = HUD_CONTROL_LAYER + 20
             };
+
+            _windowZOrderManager.Register(window);
+            window.Activated += () => _windowZOrderManager.BringToFront(window);
+
+            return window;
         }
 
         private IGameComponent CreateQuestTrackerWindow()
         {
-            return new Windows.CodeDrawnQuestTrackerWindow(
+            var window = new Windows.CodeDrawnQuestTrackerWindow(
                 _styleProvider,
                 _graphicsDeviceProvider,
                 _contentProvider,
@@ -582,6 +598,11 @@ namespace EndlessClient.HUD.Controls
             {
                 DrawOrder = HUD_CONTROL_LAYER + 25
             };
+
+            _windowZOrderManager.Register(window);
+            window.Activated += () => _windowZOrderManager.BringToFront(window);
+
+            return window;
         }
 
         private IGameComponent CreateQuestWindow()
@@ -598,6 +619,9 @@ namespace EndlessClient.HUD.Controls
             {
                 DrawOrder = HUD_CONTROL_LAYER + 20
             };
+
+            _windowZOrderManager.Register(questWindow);
+            questWindow.Activated += () => _windowZOrderManager.BringToFront(questWindow);
 
             // Link the quest window to the tracker window after controls are created
             // This will be done via Initialize or a separate linking step
