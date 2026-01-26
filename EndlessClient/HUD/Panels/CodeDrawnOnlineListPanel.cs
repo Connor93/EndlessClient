@@ -6,7 +6,6 @@ using EndlessClient.Content;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Controls;
 using EndlessClient.Rendering;
-using EndlessClient.HUD.Windows;
 using EndlessClient.Services;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
@@ -28,7 +27,7 @@ namespace EndlessClient.HUD.Panels
     /// Code-drawn Online Players panel with styled table layout.
     /// Shows online players with Name, Title, Guild, Class columns.
     /// </summary>
-    public class CodeDrawnOnlineListPanel : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnOnlineListPanel : CodeDrawnHudPanelBase
     {
         private enum Filter { All, Friends, Admins, Party, Max }
 
@@ -40,7 +39,6 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
-        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _headerFont;
         private readonly BitmapFont _scaledFont;      // Larger font for scaled mode
@@ -83,7 +81,7 @@ namespace EndlessClient.HUD.Panels
                                         IGraphicsDeviceProvider graphicsDeviceProvider,
                                         IContentProvider contentProvider,
                                         IClientWindowSizeProvider clientWindowSizeProvider)
-            : base(clientWindowSizeProvider.Resizable)
+            : base(clientWindowSizeProvider)
         {
             _hudControlProvider = hudControlProvider;
             _onlinePlayerProvider = onlinePlayerProvider;
@@ -93,7 +91,6 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
-            _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _headerFont = contentProvider.Fonts[Constants.FontSize09];
             _scaledFont = contentProvider.Fonts[Constants.FontSize10];      // 13px for scaled mode
@@ -222,16 +219,6 @@ namespace EndlessClient.HUD.Panels
             base.OnUpdateControl(gameTime);
         }
 
-        // IZOrderedWindow implementation
-        private int _zOrder = 0;
-        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
-        public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
-
-        public void BringToFront()
-        {
-            // Z-order is set externally by WindowZOrderManager
-        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -246,40 +233,15 @@ namespace EndlessClient.HUD.Panels
             _scrollUpRect = new Rectangle(scrollX, scrollAreaTop, 16, 16);
             _scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - 16, 16, 16);
 
-            if (SkipRenderTargetDraw)
-            {
-                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
-                // so that each panel draws fills + text together for correct z-ordering
-                base.OnDrawControl(gameTime);
-                return;
-            }
-
-            // Normal mode: draw everything
-            DrawPanelComplete(DrawPositionWithParentOffset, 1.0f, _font, _headerFont);
+            // Delegate to base class for the actual draw dispatch
             base.OnDrawControl(gameTime);
         }
 
-        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
-        {
-            if (!Visible) return;
-
-            // Calculate scaled position
-            var gamePos = DrawPositionWithParentOffset;
-            var scaledPos = new Vector2(
-                gamePos.X * scaleFactor + renderOffset.X,
-                gamePos.Y * scaleFactor + renderOffset.Y);
-
-            // Draw fills first (at scaled coordinates), then text/borders
-            // This ensures each panel is complete before the next panel draws,
-            // so higher z-order panels fully cover lower z-order panels
-            DrawPanelFillsScaled(scaledPos, scaleFactor);
-            DrawPanelBordersAndText(scaledPos, scaleFactor);
-        }
 
         /// <summary>
         /// Draws fills at scaled coordinates for post-scale rendering
         /// </summary>
-        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        protected override void DrawFillsScaled(Vector2 pos, float scale)
         {
             _spriteBatch.Begin();
 
@@ -406,7 +368,7 @@ namespace EndlessClient.HUD.Panels
         /// <summary>
         /// Draws only borders and text post-scale for crisp rendering
         /// </summary>
-        private void DrawPanelBordersAndText(Vector2 scaledPos, float scale)
+        protected override void DrawBordersAndTextScaled(Vector2 scaledPos, float scale)
         {
             _spriteBatch.Begin();
 
@@ -510,7 +472,7 @@ namespace EndlessClient.HUD.Panels
         /// <summary>
         /// Original complete drawing - used in non-scaled mode
         /// </summary>
-        private void DrawPanelComplete(Vector2 pos, float scale, BitmapFont font, BitmapFont headerFont)
+        protected override void DrawComplete(Vector2 pos)
         {
             _spriteBatch.Begin();
 
@@ -528,18 +490,18 @@ namespace EndlessClient.HUD.Panels
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _filterButtonRect, _styleProvider.ButtonNormal);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, _filterButtonRect, Color.Black, 1);
             var filterText = _filter.ToString();
-            _spriteBatch.DrawString(font, filterText, new Vector2(_filterButtonRect.X + 4, _filterButtonRect.Y + 1), Color.White);
+            _spriteBatch.DrawString(_font, filterText, new Vector2(_filterButtonRect.X + 4, _filterButtonRect.Y + 1), Color.White);
 
             // Column headers
-            _spriteBatch.DrawString(headerFont, "Name", new Vector2(pos.X + ColName, pos.Y + 3), Color.White);
-            _spriteBatch.DrawString(headerFont, "Title", new Vector2(pos.X + ColTitle, pos.Y + 3), Color.White);
-            _spriteBatch.DrawString(headerFont, "Guild", new Vector2(pos.X + ColGuild, pos.Y + 3), Color.White);
-            _spriteBatch.DrawString(headerFont, "Class", new Vector2(pos.X + ColClass, pos.Y + 3), Color.White);
+            _spriteBatch.DrawString(_headerFont, "Name", new Vector2(pos.X + ColName, pos.Y + 3), Color.White);
+            _spriteBatch.DrawString(_headerFont, "Title", new Vector2(pos.X + ColTitle, pos.Y + 3), Color.White);
+            _spriteBatch.DrawString(_headerFont, "Guild", new Vector2(pos.X + ColGuild, pos.Y + 3), Color.White);
+            _spriteBatch.DrawString(_headerFont, "Class", new Vector2(pos.X + ColClass, pos.Y + 3), Color.White);
 
             // Player count
             var countText = $"{_filteredList.Count}";
-            var countSize = headerFont.MeasureString(countText);
-            _spriteBatch.DrawString(headerFont, countText, new Vector2(pos.X + PanelWidth - countSize.Width - 8, pos.Y + 3), Color.White);
+            var countSize = _headerFont.MeasureString(countText);
+            _spriteBatch.DrawString(_headerFont, countText, new Vector2(pos.X + PanelWidth - countSize.Width - 8, pos.Y + 3), Color.White);
 
             // Draw player rows
             var listAreaY = (int)pos.Y + HeaderHeight + 2;
@@ -555,10 +517,10 @@ namespace EndlessClient.HUD.Panels
 
                 // Player info
                 var textColor = IsAdminIcon(player) ? new Color(255, 215, 0) : Color.White;
-                _spriteBatch.DrawString(font, player.Name, new Vector2(pos.X + ColName, rowY), textColor);
-                _spriteBatch.DrawString(font, player.Title, new Vector2(pos.X + ColTitle, rowY), _styleProvider.TextSecondary);
-                _spriteBatch.DrawString(font, player.Guild, new Vector2(pos.X + ColGuild, rowY), _styleProvider.TextSecondary);
-                _spriteBatch.DrawString(font, player.Class, new Vector2(pos.X + ColClass, rowY), _styleProvider.TextSecondary);
+                _spriteBatch.DrawString(_font, player.Name, new Vector2(pos.X + ColName, rowY), textColor);
+                _spriteBatch.DrawString(_font, player.Title, new Vector2(pos.X + ColTitle, rowY), _styleProvider.TextSecondary);
+                _spriteBatch.DrawString(_font, player.Guild, new Vector2(pos.X + ColGuild, rowY), _styleProvider.TextSecondary);
+                _spriteBatch.DrawString(_font, player.Class, new Vector2(pos.X + ColClass, rowY), _styleProvider.TextSecondary);
             }
 
             // Draw scrollbar on right side
@@ -576,14 +538,14 @@ namespace EndlessClient.HUD.Panels
             var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollUpRect, upColor);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollUpRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▲", new Vector2(_scrollUpRect.X + 3, _scrollUpRect.Y + 2), Color.White);
+            _spriteBatch.DrawString(_font, "▲", new Vector2(_scrollUpRect.X + 3, _scrollUpRect.Y + 2), Color.White);
 
             // Down button
             _scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - 16, 16, 16);
             var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollDownRect, downColor);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollDownRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▼", new Vector2(_scrollDownRect.X + 3, _scrollDownRect.Y + 2), Color.White);
+            _spriteBatch.DrawString(_font, "▼", new Vector2(_scrollDownRect.X + 3, _scrollDownRect.Y + 2), Color.White);
 
             // Scroll thumb (position indicator)
             if (_filteredList.Count > VisibleRows)
@@ -633,18 +595,18 @@ namespace EndlessClient.HUD.Panels
 
         private Point TransformMousePosition(Point position)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode)
+            if (!SkipRenderTargetDraw)
                 return position;
 
-            var offset = _clientWindowSizeProvider.RenderOffset;
-            var scale = _clientWindowSizeProvider.ScaleFactor;
+            var offset = WindowSizeProvider.RenderOffset;
+            var scale = WindowSizeProvider.ScaleFactor;
 
             int gameX = (int)((position.X - offset.X) / scale);
             int gameY = (int)((position.Y - offset.Y) / scale);
 
             return new Point(
-                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
-                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
+                Math.Clamp(gameX, 0, WindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, WindowSizeProvider.GameHeight - 1));
         }
     }
 }

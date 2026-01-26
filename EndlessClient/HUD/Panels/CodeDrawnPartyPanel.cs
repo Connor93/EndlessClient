@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.Rendering;
-using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
@@ -23,14 +22,13 @@ namespace EndlessClient.HUD.Panels
     /// Vertical MMO-style party panel that floats on the left side of the screen.
     /// Shows party members stacked with Name, Level, Class, and Health bar.
     /// </summary>
-    public class CodeDrawnPartyPanel : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnPartyPanel : CodeDrawnHudPanelBase
     {
         private readonly IPartyActions _partyActions;
         private readonly IPartyDataProvider _partyDataProvider;
         private readonly ICharacterProvider _characterProvider;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
-        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _nameFont;
         private readonly BitmapFont _detailFont;
         private readonly BitmapFont _scaledNameFont;
@@ -55,14 +53,13 @@ namespace EndlessClient.HUD.Panels
                                    IGraphicsDeviceProvider graphicsDeviceProvider,
                                    IContentProvider contentProvider,
                                    IClientWindowSizeProvider clientWindowSizeProvider)
-            : base(true) // Enable dragging so player can move the panel
+            : base(clientWindowSizeProvider)
         {
             _partyActions = partyActions;
             _partyDataProvider = partyDataProvider;
             _characterProvider = characterProvider;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
-            _clientWindowSizeProvider = clientWindowSizeProvider;
             _nameFont = contentProvider.Fonts[Constants.FontSize09];
             _detailFont = contentProvider.Fonts[Constants.FontSize08];
             _scaledNameFont = contentProvider.Fonts[Constants.FontSize10];
@@ -144,16 +141,6 @@ namespace EndlessClient.HUD.Panels
             base.OnVisibleChanged(sender, args);
         }
 
-        // IZOrderedWindow implementation
-        private int _zOrder = 0;
-        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
-        public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
-
-        public void BringToFront()
-        {
-            // Z-order is set externally by WindowZOrderManager
-        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -165,32 +152,22 @@ namespace EndlessClient.HUD.Panels
 
             _removeButtonRects.Clear();
 
-            if (SkipRenderTargetDraw)
-            {
-                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
-                base.OnDrawControl(gameTime);
-                return;
-            }
-
-            DrawPanelComplete(DrawPositionWithParentOffset, _nameFont, _detailFont);
+            // Delegate to base class for draw dispatch
             base.OnDrawControl(gameTime);
         }
 
-        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        public override void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
             if (!Visible || _cachedParty.Count == 0) return;
 
-            var gamePos = DrawPositionWithParentOffset;
-            var scaledPos = new Vector2(
-                gamePos.X * scaleFactor + renderOffset.X,
-                gamePos.Y * scaleFactor + renderOffset.Y);
+            var scaledPos = CalculateScaledPosition(scaleFactor, renderOffset);
 
-            // Draw fills first, then text/borders - each panel complete before next
-            DrawPanelFillsScaled(scaledPos, scaleFactor);
-            DrawPanelBordersAndText(scaledPos, scaleFactor);
+            // Draw fills first, then text/borders
+            DrawFillsScaled(scaledPos, scaleFactor);
+            DrawBordersAndTextScaled(scaledPos, scaleFactor);
         }
 
-        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        protected override void DrawFillsScaled(Vector2 pos, float scale)
         {
             _spriteBatch.Begin();
 
@@ -303,7 +280,7 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        private void DrawPanelBordersAndText(Vector2 scaledPos, float scale)
+        protected override void DrawBordersAndTextScaled(Vector2 scaledPos, float scale)
         {
             _spriteBatch.Begin();
 
@@ -375,7 +352,7 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        private void DrawPanelComplete(Vector2 pos, BitmapFont nameFont, BitmapFont detailFont)
+        protected override void DrawComplete(Vector2 pos)
         {
             _spriteBatch.Begin();
 
@@ -389,12 +366,12 @@ namespace EndlessClient.HUD.Panels
             // Draw header with leave button
             var headerRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, HeaderHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
-            _spriteBatch.DrawString(nameFont, $"Party ({_cachedParty.Count})",
+            _spriteBatch.DrawString(_nameFont, $"Party ({_cachedParty.Count})",
                 new Vector2(pos.X + Padding, pos.Y + 2), Color.White);
 
             // Leave button (X in top right corner)
             _leaveButtonRect = new Rectangle((int)pos.X + PanelWidth - RemoveButtonSize - 4, (int)pos.Y + 3, RemoveButtonSize, RemoveButtonSize);
-            DrawRemoveButton(_leaveButtonRect, "X", new Color(180, 60, 60), detailFont);
+            DrawRemoveButton(_leaveButtonRect, "X", new Color(180, 60, 60), _detailFont);
 
             // Check if current character is leader
             var isLeader = _cachedParty.Any(m => m.IsLeader && m.CharacterID == _characterProvider.MainCharacter.ID);
@@ -403,7 +380,7 @@ namespace EndlessClient.HUD.Panels
             var memberIndex = 0;
             foreach (var member in _cachedParty.OrderByDescending(m => m.IsLeader))
             {
-                DrawPartyMemberComplete(pos, member, memberIndex, isLeader, nameFont, detailFont);
+                DrawPartyMemberComplete(pos, member, memberIndex, isLeader, _nameFont, _detailFont);
                 memberIndex++;
             }
 

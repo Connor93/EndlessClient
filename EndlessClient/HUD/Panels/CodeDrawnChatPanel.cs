@@ -5,7 +5,6 @@ using EndlessClient.Content;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Chat;
 using EndlessClient.Rendering;
-using EndlessClient.HUD.Windows;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
@@ -24,7 +23,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnChatPanel : DraggableHudPanel, IChatPanel, IZOrderedWindow
+    public class CodeDrawnChatPanel : CodeDrawnHudPanelBase, IChatPanel
     {
         private readonly IChatActions _chatActions;
         private readonly IChatRenderableGenerator _chatRenderableGenerator;
@@ -32,7 +31,6 @@ namespace EndlessClient.HUD.Panels
         private readonly IHudControlProvider _hudControlProvider;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
-        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _chatFont;
         private readonly BitmapFont _scaledChatFont; // Larger font for post-scale rendering
         private readonly BitmapFont _labelFont;
@@ -79,7 +77,7 @@ namespace EndlessClient.HUD.Panels
                                   IContentProvider contentProvider,
                                   IClientWindowSizeProvider clientWindowSizeProvider,
                                   IConfigurationProvider configurationProvider)
-            : base(clientWindowSizeProvider.Resizable)
+            : base(clientWindowSizeProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _chatActions = chatActions;
@@ -88,7 +86,6 @@ namespace EndlessClient.HUD.Panels
             _hudControlProvider = hudControlProvider;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
-            _clientWindowSizeProvider = clientWindowSizeProvider;
             _chatFont = contentProvider.Fonts[Constants.FontSize08];
             _scaledChatFont = contentProvider.Fonts[Constants.FontSize10]; // Larger 13px font for scaled mode
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
@@ -229,23 +226,11 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        // IZOrderedWindow implementation
-        private int _zOrder = 0;
-        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
-        public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
-
-        public void BringToFront()
-        {
-            // Z-order is set externally by WindowZOrderManager
-        }
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
-                // so each panel draws fills + text together for correct z-ordering
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -256,15 +241,11 @@ namespace EndlessClient.HUD.Panels
             base.OnDrawControl(gameTime);
         }
 
-        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        public override void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
             if (!Visible) return;
 
-            // Calculate scaled position: game position * scale + render offset
-            var gamePos = DrawPositionWithParentOffset;
-            var scaledPos = new Vector2(
-                gamePos.X * scaleFactor + renderOffset.X,
-                gamePos.Y * scaleFactor + renderOffset.Y);
+            var scaledPos = CalculateScaledPosition(scaleFactor, renderOffset);
 
             // Draw fills first, then text/borders - each panel complete before next
             DrawPanelFills(scaledPos, scaleFactor);
@@ -278,6 +259,11 @@ namespace EndlessClient.HUD.Panels
             // Draw input textbox text post-scale for crisp text
             DrawInputTextScaled(scaledPos, scaleFactor);
         }
+
+        // Required by base class but not used since we override DrawPostScale completely with custom drawing
+        protected override void DrawComplete(Vector2 pos) { }
+        protected override void DrawFillsScaled(Vector2 pos, float scale) { }
+        protected override void DrawBordersAndTextScaled(Vector2 pos, float scale) { }
 
         /// <summary>
         /// Draws only the filled backgrounds (no borders) - for render target phase in scaled mode
@@ -699,18 +685,18 @@ namespace EndlessClient.HUD.Panels
 
         private Point TransformMousePosition(Point position)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode)
+            if (!SkipRenderTargetDraw)
                 return position;
 
-            var offset = _clientWindowSizeProvider.RenderOffset;
-            var scale = _clientWindowSizeProvider.ScaleFactor;
+            var offset = WindowSizeProvider.RenderOffset;
+            var scale = WindowSizeProvider.ScaleFactor;
 
             int gameX = (int)((position.X - offset.X) / scale);
             int gameY = (int)((position.Y - offset.Y) / scale);
 
             return new Point(
-                Math.Clamp(gameX, 0, _clientWindowSizeProvider.GameWidth - 1),
-                Math.Clamp(gameY, 0, _clientWindowSizeProvider.GameHeight - 1));
+                Math.Clamp(gameX, 0, WindowSizeProvider.GameWidth - 1),
+                Math.Clamp(gameY, 0, WindowSizeProvider.GameHeight - 1));
         }
     }
 }

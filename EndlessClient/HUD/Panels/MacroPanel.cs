@@ -248,7 +248,7 @@ namespace EndlessClient.HUD.Panels
                         }
                     };
 
-                    newItem.DraggingFinishing += HandleItemDoneDragging;
+                    newItem.DraggingFinished += HandleItemDoneDragging;
 
                     _childItems.Add(newItem);
                 });

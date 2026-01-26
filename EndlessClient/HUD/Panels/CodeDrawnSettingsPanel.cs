@@ -6,7 +6,6 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs;
 using EndlessClient.Dialogs.Factories;
 using EndlessClient.Rendering;
-using EndlessClient.HUD.Windows;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
@@ -22,7 +21,7 @@ using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnSettingsPanel : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnSettingsPanel : CodeDrawnHudPanelBase
     {
         private enum KeyboardLayout
         {
@@ -57,7 +56,6 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
-        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
         private readonly BitmapFont _scaledFont;
@@ -87,7 +85,7 @@ namespace EndlessClient.HUD.Panels
                                       IGraphicsDeviceProvider graphicsDeviceProvider,
                                       IContentProvider contentProvider,
                                       IClientWindowSizeProvider clientWindowSizeProvider)
-            : base(clientWindowSizeProvider.Resizable)
+            : base(clientWindowSizeProvider)
         {
             _chatActions = chatActions;
             _audioActions = audioActions;
@@ -98,7 +96,6 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
-            _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
             _scaledFont = contentProvider.Fonts[Constants.FontSize10];
@@ -172,18 +169,18 @@ namespace EndlessClient.HUD.Panels
 
         private Point TransformMousePosition(Point position)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode)
+            if (!SkipRenderTargetDraw)
                 return position;
 
-            var offset = _clientWindowSizeProvider.RenderOffset;
-            var scale = _clientWindowSizeProvider.ScaleFactor;
+            var offset = WindowSizeProvider.RenderOffset;
+            var scale = WindowSizeProvider.ScaleFactor;
 
             int gameX = (int)((position.X - offset.X) / scale);
             int gameY = (int)((position.Y - offset.Y) / scale);
 
             return new Point(
-                Math.Max(0, Math.Min(gameX, _clientWindowSizeProvider.GameWidth - 1)),
-                Math.Max(0, Math.Min(gameY, _clientWindowSizeProvider.GameHeight - 1)));
+                Math.Max(0, Math.Min(gameX, WindowSizeProvider.GameWidth - 1)),
+                Math.Max(0, Math.Min(gameY, WindowSizeProvider.GameHeight - 1)));
         }
 
         protected override bool HandleClick(IXNAControl control, MonoGame.Extended.Input.InputListeners.MouseEventArgs eventArgs)
@@ -196,45 +193,8 @@ namespace EndlessClient.HUD.Panels
             return base.HandleClick(control, eventArgs);
         }
 
-        // IZOrderedWindow implementation
-        private int _zOrder = 0;
-        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
-        public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
 
-        public void BringToFront()
-        {
-            // Z-order is set externally by WindowZOrderManager
-        }
-
-        protected override void OnDrawControl(GameTime gameTime)
-        {
-            if (SkipRenderTargetDraw)
-            {
-                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
-                base.OnDrawControl(gameTime);
-                return;
-            }
-
-            DrawPanelComplete(DrawPositionWithParentOffset, _font, _labelFont);
-            base.OnDrawControl(gameTime);
-        }
-
-        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
-        {
-            if (!Visible) return;
-
-            var gamePos = DrawPositionWithParentOffset;
-            var scaledPos = new Vector2(
-                gamePos.X * scaleFactor + renderOffset.X,
-                gamePos.Y * scaleFactor + renderOffset.Y);
-
-            // Draw fills first, then text/borders - each panel complete before next
-            DrawPanelFillsScaled(scaledPos, scaleFactor);
-            DrawPanelBordersAndText(scaledPos, scaleFactor);
-        }
-
-        private void DrawPanelFillsScaled(Vector2 pos, float scale)
+        protected override void DrawFillsScaled(Vector2 pos, float scale)
         {
             _spriteBatch.Begin();
 
@@ -289,7 +249,7 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        private void DrawPanelBordersAndText(Vector2 scaledPos, float scale)
+        protected override void DrawBordersAndTextScaled(Vector2 scaledPos, float scale)
         {
             _spriteBatch.Begin();
 
@@ -353,7 +313,7 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        private void DrawPanelComplete(Vector2 pos, BitmapFont font, BitmapFont labelFont)
+        protected override void DrawComplete(Vector2 pos)
         {
             _spriteBatch.Begin();
 
@@ -391,16 +351,16 @@ namespace EndlessClient.HUD.Panels
                 var valueX = pos.X + 90 + col * ColWidth;
                 var y = pos.Y + 9 + row * RowHeight;
 
-                _spriteBatch.DrawString(labelFont, label, new Vector2(labelX, y), labelColor);
+                _spriteBatch.DrawString(_labelFont, label, new Vector2(labelX, y), labelColor);
 
                 // Draw value with color based on state
                 var value = _settingValues[setting];
                 var valueColor = GetValueColor(setting, value);
-                _spriteBatch.DrawString(font, value, new Vector2(valueX, y), valueColor);
+                _spriteBatch.DrawString(_font, value, new Vector2(valueX, y), valueColor);
 
                 // Draw toggle indicator arrow
                 var arrowX = pos.X + 205 + col * ColWidth;
-                _spriteBatch.DrawString(font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
+                _spriteBatch.DrawString(_font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
             }
 
             _spriteBatch.End();
