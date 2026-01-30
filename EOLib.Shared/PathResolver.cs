@@ -31,23 +31,7 @@ namespace EOLib.Shared
 
         public static string GetModifiablePath(string inputPath)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                var home = Environment.GetEnvironmentVariable("HOME");
-                if (home != null)
-                {
-                    var homePath = Path.Combine(home, LocalFilesRoot, inputPath);
-                    // Only use home path if the actual file exists there
-                    // This allows development builds to use the local config/settings.ini
-                    if (File.Exists(homePath))
-                    {
-                        return homePath;
-                    }
-                }
-                // Fallback: use local path for development
-                return inputPath;
-            }
-
+            // Always use the local path (from ClientAssets via build output)
             return inputPath;
         }
     }
