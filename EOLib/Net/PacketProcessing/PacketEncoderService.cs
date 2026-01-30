@@ -46,13 +46,18 @@ namespace EOLib.Net.PacketProcessing
                 decodedBytes = DataEncrypter.SwapMultiples(decodedBytes, decodeMultiplier);
             }
 
-            // Try SDK factory first
+            // Try custom packets FIRST for packets that might have custom versions
+            // (The SDK factory would otherwise successfully parse them as standard packets)
+            var customResult = TryCreateCustomPacket(decodedBytes);
+            if (customResult.HasValue)
+                return customResult;
+
+            // Try SDK factory for standard packets
             var result = _packetFactory.Create(decodedBytes);
             if (result.HasValue)
                 return result;
 
-            // Fallback for custom packets not in SDK
-            return TryCreateCustomPacket(decodedBytes);
+            return Option.None<IPacket>();
         }
 
         private Option<IPacket> TryCreateCustomPacket(byte[] data)
@@ -94,8 +99,67 @@ namespace EOLib.Net.PacketProcessing
                 return Option.Some<IPacket>(packet);
             }
 
+            // Handle AdminInteract+Spec (INI editor file content)
+            if (family == PacketFamily.AdminInteract && (PacketAction)action == PacketAction.Spec)
+            {
+                int payloadStart = 2;
+                var payloadData = new byte[data.Length - payloadStart];
+                Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+
+                var reader = new EoReader(payloadData);
+                var packet = new EOLib.PacketHandlers.IniEditor.IniEditorOpenResponsePacket();
+                packet.Deserialize(reader);
+                return Option.Some<IPacket>(packet);
+            }
+
+            // Handle AdminInteract+Msg (INI editor save result)
+            if (family == PacketFamily.AdminInteract && (PacketAction)action == PacketAction.Msg)
+            {
+                int payloadStart = 2;
+                var payloadData = new byte[data.Length - payloadStart];
+                Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+
+                var reader = new EoReader(payloadData);
+                var packet = new EOLib.PacketHandlers.IniEditor.IniEditorSaveResponsePacket();
+                packet.Deserialize(reader);
+                return Option.Some<IPacket>(packet);
+            }
+
+            // Handle AdminInteract+List (INI editor file list)
+            // Note: This may conflict with SDK's AdminInteractListServerPacket
+            // We differentiate by checking if first byte is alphabetic (player name for inventory) vs numeric (count for INI editor)
+            if (family == PacketFamily.AdminInteract && (PacketAction)action == PacketAction.List)
+            {
+                int payloadStart = 2;
+                if (data.Length > payloadStart)
+                {
+                    // INI editor format starts with a file count byte (0-255, typically small)
+                    // Inventory lookup format starts with a player name (first char is a letter: A-Z = 0x41-0x5A, a-z = 0x61-0x7A)
+                    // EO encodes chars by adding 1, so 'a' (0x61) becomes 0x62, etc.
+                    // Player names start with letters, so first encoded byte would be >= 0x42 (A+1) and typically in alpha range
+                    var firstByte = data[payloadStart];
+
+                    // Check if first byte looks like an encoded letter (inventory) or a small number (INI editor)
+                    // Encoded letters would be: A+1=0x42 through Z+1=0x5B, or a+1=0x62 through z+1=0x7B
+                    var looksLikeEncodedLetter = (firstByte >= 0x42 && firstByte <= 0x5B) ||
+                                                 (firstByte >= 0x62 && firstByte <= 0x7B);
+
+                    if (!looksLikeEncodedLetter) // Not a letter, so likely INI editor response
+                    {
+                        var payloadData = new byte[data.Length - payloadStart];
+                        Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+
+                        var reader = new EoReader(payloadData);
+                        var packet = new EOLib.PacketHandlers.IniEditor.IniEditorListResponsePacket();
+                        packet.Deserialize(reader);
+                        return Option.Some<IPacket>(packet);
+                    }
+                }
+            }
+
             return Option.None<IPacket>();
         }
+
 
         private static bool PacketValidForEncode(IPacket pkt)
         {

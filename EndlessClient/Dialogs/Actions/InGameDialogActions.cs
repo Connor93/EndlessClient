@@ -46,6 +46,7 @@ namespace EndlessClient.Dialogs.Actions
         private readonly IShopDialogFactory _shopDialogFactory;
         private readonly IQuestDialogFactory _questDialogFactory;
         private readonly IBarberDialogFactory _barberDialogFactory;
+        private readonly IIniEditorDialogFactory _iniEditorDialogFactory;
 
         public InGameDialogActions(IFriendIgnoreListDialogFactory friendIgnoreListDialogFactory,
                                    IPaperdollDialogFactory paperdollDialogFactory,
@@ -73,7 +74,8 @@ namespace EndlessClient.Dialogs.Actions
                                    IHelpDialogFactory helpDialogFactory,
                                    ISfxPlayer sfxPlayer,
                                    IStatusLabelSetter statusLabelSetter,
-                                   IBarberDialogFactory barberDialogFactory)
+                                   IBarberDialogFactory barberDialogFactory,
+                                   IIniEditorDialogFactory iniEditorDialogFactory)
         {
             _friendIgnoreListDialogFactory = friendIgnoreListDialogFactory;
             _paperdollDialogFactory = paperdollDialogFactory;
@@ -102,6 +104,7 @@ namespace EndlessClient.Dialogs.Actions
             _shopDialogFactory = shopDialogFactory;
             _questDialogFactory = questDialogFactory;
             _barberDialogFactory = barberDialogFactory;
+            _iniEditorDialogFactory = iniEditorDialogFactory;
         }
 
         public void ShowFriendListDialog()
@@ -491,6 +494,23 @@ namespace EndlessClient.Dialogs.Actions
             });
         }
 
+        public void ShowIniEditorDialog()
+        {
+            _activeDialogRepository.IniEditorDialog.MatchNone(() =>
+            {
+                var dlg = _iniEditorDialogFactory.Create();
+                dlg.DialogClosed += (_, _) =>
+                {
+                    _activeDialogRepository.IniEditorDialog = Option.None<IniEditorDialog>();
+                };
+                _activeDialogRepository.IniEditorDialog = Option.Some(dlg);
+
+                UseDefaultDialogSounds(dlg);
+
+                dlg.Show();
+            });
+        }
+
         private void UseDefaultDialogSounds(IXNADialog dialog)
         {
             dialog.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
@@ -584,5 +604,7 @@ namespace EndlessClient.Dialogs.Actions
         void ShowHelpDialog();
 
         void ShowBarberDialog();
+
+        void ShowIniEditorDialog();
     }
 }
