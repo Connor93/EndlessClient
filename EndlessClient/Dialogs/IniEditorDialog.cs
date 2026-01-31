@@ -4,22 +4,25 @@ using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Factories;
-using EndlessClient.Dialogs.Services;
+using EndlessClient.GameExecution;
 using EndlessClient.HUD.Controls;
+using EndlessClient.Rendering;
+using EndlessClient.UI.Controls;
+using EndlessClient.UI.Styles;
 using EndlessClient.UIControls;
 using EOLib.Domain.IniEditor;
-using EOLib.Domain.Login;
 using EOLib.Domain.Notifiers;
 using EOLib.Graphics;
-using EOLib.Localization;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
 
 namespace EndlessClient.Dialogs
 {
-    public class IniEditorDialog : ScrollingListDialog, IIniEditorNotifier
+    public class IniEditorDialog : CodeDrawnScrollingListDialog, IIniEditorNotifier
     {
         private enum IniEditorState
         {
@@ -31,46 +34,77 @@ namespace EndlessClient.Dialogs
         private readonly IIniEditorProvider _iniEditorProvider;
         private readonly IEOMessageBoxFactory _messageBoxFactory;
         private readonly IHudControlProvider _hudControlProvider;
+        private readonly IContentProvider _contentProvider;
 
         private readonly XNATextBox _contentEditor;
+        private readonly BitmapFont _scaledFont;
 
         private IniEditorState _state;
         private string _currentFilename;
         private int _currentDirType;
         private bool _contentModified;
 
-        public IniEditorDialog(INativeGraphicsManager nativeGraphicsManager,
-                               IEODialogButtonService dialogButtonService,
+        // Editor content for post-scale drawing
+        private string _editorContent = string.Empty;
+        private int _editorScrollOffset;
+        private readonly Texture2D _caretTexture;
+        private double _caretBlinkTimer;
+
+        public IniEditorDialog(IUIStyleProvider styleProvider,
+                               IGameStateProvider gameStateProvider,
+                               IClientWindowSizeProvider clientWindowSizeProvider,
+                               IGraphicsDeviceProvider graphicsDeviceProvider,
                                IIniEditorActions iniEditorActions,
                                IIniEditorProvider iniEditorProvider,
                                IEOMessageBoxFactory messageBoxFactory,
                                IContentProvider contentProvider,
-                               IHudControlProvider hudControlProvider)
-            : base(nativeGraphicsManager, dialogButtonService, DialogType.Shop)
+                               IHudControlProvider hudControlProvider,
+                               BitmapFont font,
+                               BitmapFont scaledFont)
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider, font, scaledFont)
         {
             _iniEditorActions = iniEditorActions;
             _iniEditorProvider = iniEditorProvider;
             _messageBoxFactory = messageBoxFactory;
             _hudControlProvider = hudControlProvider;
+            _contentProvider = contentProvider;
+            _scaledFont = scaledFont;
 
-            ListItemType = ListDialogItem.ListItemStyle.Small;
             Title = "INI Editor";
             _state = IniEditorState.FileList;
-            Buttons = ScrollingListDialogButtons.Cancel;
+            DialogWidth = 450;
+            DialogHeight = 320;
+            ListAreaTop = 45;
+            ListAreaHeight = 230;
+            ItemHeight = 18;
+            UpdateScrollBarLayout();
 
-            _contentEditor = new ClearableTextBox(new Rectangle(18, 44, 430, 204), Constants.FontSize08, caretTexture: contentProvider.Textures[ContentProvider.Cursor])
+            SetupButtons(showOk: false, showCancel: true, showBack: false);
+
+            // Store caret texture for post-scale drawing
+            _caretTexture = contentProvider.Textures[ContentProvider.Cursor];
+
+            // Create the content editor textbox (text and caret invisible - we draw them post-scale for crispness)
+            _contentEditor = new ClearableTextBox(new Rectangle(18, 44, DialogWidth - 56, ListAreaHeight), Constants.FontSize08)
             {
                 TextAlignment = LabelAlignment.TopLeft,
-                TextColor = ColorConstants.LightGrayText,
+                TextColor = Color.Transparent, // Invisible text - we draw post-scale
                 Visible = false,
-                MaxWidth = 400,
+                MaxWidth = DialogWidth - 70,
+                HardBreak = DialogWidth - 70,
                 Multiline = true,
-                ScrollHandler = _scrollBar,
                 RowSpacing = 14,
             };
-            _contentEditor.SetScrollWheelHandler(_scrollBar);
             _contentEditor.SetParentControl(this);
-            _contentEditor.OnTextChanged += (_, _) => _contentModified = true;
+            _contentEditor.OnTextChanged += (_, _) =>
+            {
+                _contentModified = true;
+                _editorContent = _contentEditor.Text;
+            };
+
+            // Override button click events
+            OkAction += OnOkClick;
+            CancelAction += OnCancelClick;
 
             // Request file list on open
             _iniEditorActions.RequestFileList();
@@ -87,10 +121,19 @@ namespace EndlessClient.Dialogs
             if (_state == IniEditorState.FileList)
             {
                 var allFiles = _iniEditorProvider.ConfigFiles.Concat(_iniEditorProvider.DataFiles).ToList();
-                if (allFiles.Count > 0 && ChildControls.OfType<ListDialogItem>().Count() == 0)
+                if (allFiles.Count > 0 && NamesList.Count == 0)
                 {
                     RefreshFileList();
                 }
+            }
+
+            // Track scroll offset and blink timer for editor post-scale rendering
+            if (_state == IniEditorState.EditFile)
+            {
+                if (_contentEditor.ScrollHandler != null)
+                    _editorScrollOffset = _contentEditor.ScrollHandler.ScrollOffset;
+
+                _caretBlinkTimer = gameTime.TotalGameTime.TotalMilliseconds;
             }
 
             base.OnUpdateControl(gameTime);
@@ -98,95 +141,36 @@ namespace EndlessClient.Dialogs
 
         private void RefreshFileList()
         {
-            ClearItemList();
-
-            var index = 0;
+            ClearItems();
 
             // Config files header
             if (_iniEditorProvider.ConfigFiles.Count > 0)
             {
-                var configHeader = new ListDialogItem(this, ListDialogItem.ListItemStyle.Small, index++)
-                {
-                    PrimaryText = "=== Config Files ===",
-                    Visible = true,
-                    UnderlineLinks = false,
-                    OffsetX = 2,
-                    OffsetY = 44,
-                };
-                configHeader.DrawArea = new Rectangle(configHeader.DrawArea.Location, new Point(427, 16));
-                configHeader.SetScrollWheelHandler(this);
-                AddItemToList(configHeader, sortList: false);
+                AddItem("=== Config Files ===", isLink: false);
 
                 foreach (var file in _iniEditorProvider.ConfigFiles)
                 {
-                    var item = new ListDialogItem(this, ListDialogItem.ListItemStyle.Small, index++)
-                    {
-                        PrimaryText = file,
-                        Data = (0, file), // 0 = config dir
-                        Visible = true,
-                        UnderlineLinks = true,
-                        OffsetX = 12,
-                        OffsetY = 44,
-                    };
-                    item.DrawArea = new Rectangle(item.DrawArea.Location, new Point(427, 16));
-                    item.SetPrimaryClickAction(FileItem_Click);
-                    item.SetScrollWheelHandler(this);
-                    AddItemToList(item, sortList: false);
+                    AddItem(file, data: (0, file), isLink: true, onClick: item => FileItem_Click(item));
                 }
             }
 
             // Data files header
             if (_iniEditorProvider.DataFiles.Count > 0)
             {
-                var dataHeader = new ListDialogItem(this, ListDialogItem.ListItemStyle.Small, index++)
-                {
-                    PrimaryText = "=== Data Files ===",
-                    Visible = true,
-                    UnderlineLinks = false,
-                    OffsetX = 2,
-                    OffsetY = 44,
-                };
-                dataHeader.DrawArea = new Rectangle(dataHeader.DrawArea.Location, new Point(427, 16));
-                dataHeader.SetScrollWheelHandler(this);
-                AddItemToList(dataHeader, sortList: false);
+                AddItem("=== Data Files ===", isLink: false);
 
                 foreach (var file in _iniEditorProvider.DataFiles)
                 {
-                    var item = new ListDialogItem(this, ListDialogItem.ListItemStyle.Small, index++)
-                    {
-                        PrimaryText = file,
-                        Data = (1, file), // 1 = data dir
-                        Visible = true,
-                        UnderlineLinks = true,
-                        OffsetX = 12,
-                        OffsetY = 44,
-                    };
-                    item.DrawArea = new Rectangle(item.DrawArea.Location, new Point(427, 16));
-                    item.SetPrimaryClickAction(FileItem_Click);
-                    item.SetScrollWheelHandler(this);
-                    AddItemToList(item, sortList: false);
+                    AddItem(file, data: (1, file), isLink: true, onClick: item => FileItem_Click(item));
                 }
             }
-
-            _scrollBar.ScrollToTop();
         }
 
-        private void FileItem_Click(object sender, MouseEventArgs e)
+        private void FileItem_Click(CodeDrawnListItem item)
         {
-            // Get the data tuple from either the ListDialogItem directly
-            // or from its parent if the click came from the XNAHyperLink child
-            (int dirType, string filename)? fileData = sender switch
-            {
-                ListDialogItem item => item.Data as (int, string)?,
-                XNAControls.IXNAHyperLink link when link.ImmediateParent is ListDialogItem parentItem
-                    => parentItem.Data as (int, string)?,
-                _ => null
-            };
-
-            if (fileData == null)
+            if (item.Data is not (int dirType, string filename))
                 return;
 
-            var (dirType, filename) = fileData.Value;
             _currentDirType = dirType;
             _currentFilename = filename;
             _iniEditorActions.RequestFileContent(dirType, filename);
@@ -204,15 +188,19 @@ namespace EndlessClient.Dialogs
                 case IniEditorState.FileList:
                     _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox).Selected = true;
 
-                    Buttons = ScrollingListDialogButtons.Cancel;
                     Title = "INI Editor";
                     _contentEditor.Visible = false;
                     _contentEditor.Selected = false;
                     _contentModified = false;
+                    _editorContent = string.Empty;
 
-                    _scrollBar.DrawArea = new Rectangle(
-                        _scrollBar.DrawArea.X, 44,
-                        _scrollBar.DrawArea.Width, GetScrollBarHeight(DialogType));
+                    // Reset buttons for file list - cancel should close dialog
+                    CancelClosesDialog = true;
+                    SetupButtons(showOk: false, showCancel: true, showBack: false);
+
+                    // Reset scrollbar for list items (ItemHeight)
+                    ScrollHandler.LinesToRender = ItemsToShow;
+                    ScrollHandler.ScrollToTop();
 
                     RefreshFileList();
                     break;
@@ -221,7 +209,6 @@ namespace EndlessClient.Dialogs
                     // Deselect chat textbox so it doesn't steal focus
                     _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox).Selected = false;
 
-                    Buttons = ScrollingListDialogButtons.OkCancel;
                     Title = _currentFilename;
 
                     _contentEditor.TabOrder = 0;
@@ -230,28 +217,39 @@ namespace EndlessClient.Dialogs
                     _contentEditor.Selected = true;
                     _contentModified = false;
 
-                    _scrollBar.DrawArea = new Rectangle(
-                        _scrollBar.DrawArea.X, 44,
-                        _scrollBar.DrawArea.Width, GetScrollBarHeight(DialogType));
+                    // Wire content editor to use dialog's scrollbar for scrolling
+                    _contentEditor.ScrollHandler = ScrollHandler;
 
-                    ClearItemList();
+                    // Configure scrollbar for editor lines (14px line height)
+                    ScrollHandler.LinesToRender = ListAreaHeight / 14;
+                    ScrollHandler.ScrollToTop();
+
+                    // Change to OK/Cancel for editing - cancel should go back to file list, not close
+                    CancelClosesDialog = false;
+                    SetupButtons(showOk: true, showCancel: true, showBack: false);
+
+                    ClearItems();
                     break;
             }
         }
 
-        protected override void CloseButton_Click(object sender, MouseEventArgs e)
+        private void OnCancelClick(object sender, EventArgs e)
         {
-            if (sender == _cancel && _state == IniEditorState.FileList)
+            if (_state == IniEditorState.FileList)
             {
-                Close(XNADialogResult.Cancel);
+                // Close dialog - already handled by base class
             }
-            else if (sender == _cancel && _state == IniEditorState.EditFile)
+            else if (_state == IniEditorState.EditFile)
             {
                 if (_contentModified)
                 {
+                    // Temporarily suppress post-scale rendering so message box appears on top
+                    SuppressPostScaleRendering = true;
+
                     var dlg = _messageBoxFactory.CreateMessageBox("Discard changes?", "Changes have been made. Discard them?", EODialogButtons.OkCancel);
                     dlg.DialogClosing += (_, e) =>
                     {
+                        SuppressPostScaleRendering = false;
                         if (e.Result == XNADialogResult.OK)
                         {
                             SetState(IniEditorState.FileList);
@@ -264,19 +262,240 @@ namespace EndlessClient.Dialogs
                     SetState(IniEditorState.FileList);
                 }
             }
-            else if (sender == _ok && _state == IniEditorState.EditFile)
+        }
+
+        private void OnOkClick(object sender, EventArgs e)
+        {
+            if (_state == IniEditorState.EditFile)
             {
+                // Temporarily suppress post-scale rendering so message box appears on top
+                SuppressPostScaleRendering = true;
+
                 // Save the file
                 var dlg = _messageBoxFactory.CreateMessageBox("Save changes?", $"Save changes to {_currentFilename}?", EODialogButtons.OkCancel);
-                dlg.DialogClosing += (_, e) =>
+                dlg.DialogClosing += (_, closingArgs) =>
                 {
-                    if (e.Result == XNADialogResult.OK)
+                    SuppressPostScaleRendering = false;
+                    if (closingArgs.Result == XNADialogResult.OK)
                     {
                         _iniEditorActions.SaveFileContent(_currentDirType, _currentFilename, _contentEditor.Text);
                     }
                 };
                 dlg.ShowDialog();
             }
+        }
+
+        /// <summary>
+        /// Override DrawBordersAndText to also draw editor content post-scale
+        /// </summary>
+        protected override void DrawBordersAndText(Vector2 scaledPos, float scale)
+        {
+            // Draw base dialog borders and text (title, list items)
+            base.DrawBordersAndText(scaledPos, scale);
+
+            // Draw editor content post-scale for crisp text
+            if (_state == IniEditorState.EditFile && !string.IsNullOrEmpty(_editorContent))
+            {
+                DrawEditorContentPostScale(scaledPos, scale);
+            }
+        }
+
+        /// <summary>
+        /// Override to draw editor content in pre-scale mode (for message box z-ordering fallback)
+        /// </summary>
+        protected override void DrawCustomContentComplete(Rectangle drawPos)
+        {
+            // Draw editor content if in edit mode
+            if (_state == IniEditorState.EditFile && !string.IsNullOrEmpty(_editorContent))
+            {
+                DrawEditorContentPreScale();
+            }
+        }
+
+        /// <summary>
+        /// Draws editor content in pre-scale mode (at 1:1 scale within the render target)
+        /// </summary>
+        private void DrawEditorContentPreScale()
+        {
+            var font = Font;
+            var editorX = 12;
+            var editorY = ListAreaTop;
+            var editorWidth = DialogWidth - 48;
+            var editorHeight = ListAreaHeight;
+            var lineHeight = 14;
+
+            // Word wrap the content to fit the editor width
+            var lines = WrapText(_editorContent, font, editorWidth);
+
+            // Draw each visible line
+            var startLine = Math.Max(0, _editorScrollOffset);
+            var linesPerPage = editorHeight / lineHeight;
+            var endLine = Math.Min(lines.Count, startLine + linesPerPage);
+
+            for (var i = startLine; i < endLine; i++)
+            {
+                var lineY = editorY + (i - startLine) * lineHeight;
+                _spriteBatch.DrawString(font, lines[i], new Vector2(editorX, lineY), StyleProvider.TextPrimary);
+            }
+
+            // Draw blinking caret if textbox is selected
+            if (_contentEditor.Selected && _caretTexture != null)
+            {
+                // Blink every 500ms (same as XNATextBox)
+                var showCaret = !(_caretBlinkTimer % 1000 < 500);
+                if (showCaret)
+                {
+                    // Calculate cursor row/col based on OUR wrapping (not textbox's)
+                    var cursorPos = _contentEditor.CursorPosition;
+                    var (cursorRow, cursorCol) = GetCursorRowColFromPosition(cursorPos, lines);
+
+                    // Only draw if cursor is in visible area
+                    if (cursorRow >= startLine && cursorRow < endLine)
+                    {
+                        var visibleRow = cursorRow - startLine;
+                        var lineText = lines.Count > cursorRow ? lines[cursorRow] : "";
+                        var charsToMeasure = Math.Min(cursorCol, lineText.Length);
+                        var textWidth = charsToMeasure > 0
+                            ? font.MeasureString(lineText.Substring(0, charsToMeasure)).Width
+                            : 0;
+
+                        var caretX = editorX + (int)textWidth;
+                        var caretY = editorY + visibleRow * lineHeight;
+                        var caretHeight = lineHeight - 2;
+
+                        _spriteBatch.Draw(_caretTexture, new Rectangle(caretX, caretY, 1, caretHeight), Color.White);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Draws the editor text content in post-scale phase for crisp rendering
+        /// </summary>
+        private void DrawEditorContentPostScale(Vector2 scaledPos, float scale)
+        {
+            BitmapFont font;
+            if (scale >= 1.25f) font = _scaledFont;
+            else font = Font;
+
+            var editorX = (int)(scaledPos.X + 12 * scale);
+            var editorY = (int)(scaledPos.Y + ListAreaTop * scale);
+            var editorWidth = (int)((DialogWidth - 48) * scale);
+            var editorHeight = (int)(ListAreaHeight * scale);
+            var lineHeight = (int)(14 * scale);
+
+            // Word wrap the content to fit the editor width
+            var lines = WrapText(_editorContent, font, editorWidth);
+
+            _spriteBatch.Begin();
+
+            // Draw each visible line
+            var startLine = Math.Max(0, _editorScrollOffset);
+            var linesPerPage = editorHeight / lineHeight;
+            var endLine = Math.Min(lines.Count, startLine + linesPerPage);
+
+            for (var i = startLine; i < endLine; i++)
+            {
+                var lineY = editorY + (i - startLine) * lineHeight;
+                _spriteBatch.DrawString(font, lines[i], new Vector2(editorX, lineY), StyleProvider.TextPrimary);
+            }
+
+            // Draw blinking caret if textbox is selected
+            if (_contentEditor.Selected && _caretTexture != null)
+            {
+                // Blink every 500ms (same as XNATextBox)
+                var showCaret = !(_caretBlinkTimer % 1000 < 500);
+                if (showCaret)
+                {
+                    // Calculate cursor row/col based on OUR wrapping (not textbox's)
+                    var cursorPos = _contentEditor.CursorPosition;
+                    var (cursorRow, cursorCol) = GetCursorRowColFromPosition(cursorPos, lines);
+
+                    // Only draw if cursor is in visible area
+                    if (cursorRow >= startLine && cursorRow < endLine)
+                    {
+                        var visibleRow = cursorRow - startLine;
+                        var lineText = lines.Count > cursorRow ? lines[cursorRow] : "";
+                        var charsToMeasure = Math.Min(cursorCol, lineText.Length);
+                        var textWidth = charsToMeasure > 0
+                            ? font.MeasureString(lineText.Substring(0, charsToMeasure)).Width
+                            : 0;
+
+                        var caretX = editorX + (int)textWidth;
+                        var caretY = editorY + visibleRow * lineHeight;
+
+                        _spriteBatch.Draw(_caretTexture, new Vector2(caretX, caretY), Color.White);
+                    }
+                }
+            }
+
+            _spriteBatch.End();
+        }
+
+        /// <summary>
+        /// Converts a raw cursor position (character index) to row/column based on wrapped lines
+        /// </summary>
+        private (int row, int col) GetCursorRowColFromPosition(int cursorPos, List<string> lines)
+        {
+            var charsProcessed = 0;
+            for (var row = 0; row < lines.Count; row++)
+            {
+                var lineLen = lines[row].Length;
+                // Account for newline that we processed during wrapping
+                var lineEnd = charsProcessed + lineLen;
+
+                if (cursorPos <= lineEnd)
+                {
+                    return (row, cursorPos - charsProcessed);
+                }
+
+                charsProcessed = lineEnd + 1; // +1 for newline
+            }
+
+            // Cursor at end of text
+            return (Math.Max(0, lines.Count - 1), lines.Count > 0 ? lines[^1].Length : 0);
+        }
+
+        /// <summary>
+        /// Word-wraps text to fit within the specified width
+        /// </summary>
+        private List<string> WrapText(string text, BitmapFont font, float maxWidth)
+        {
+            var result = new List<string>();
+            var paragraphs = text.Split('\n');
+
+            foreach (var paragraph in paragraphs)
+            {
+                if (string.IsNullOrEmpty(paragraph))
+                {
+                    result.Add(string.Empty);
+                    continue;
+                }
+
+                var currentLine = string.Empty;
+
+                // For hard wrapping, check character by character if needed
+                foreach (var ch in paragraph)
+                {
+                    var testLine = currentLine + ch;
+                    var size = font.MeasureString(testLine);
+
+                    if (size.Width > maxWidth && currentLine.Length > 0)
+                    {
+                        result.Add(currentLine);
+                        currentLine = ch.ToString();
+                    }
+                    else
+                    {
+                        currentLine = testLine;
+                    }
+                }
+
+                if (currentLine.Length > 0)
+                    result.Add(currentLine);
+            }
+
+            return result;
         }
 
         // IIniEditorNotifier implementation
@@ -290,14 +509,19 @@ namespace EndlessClient.Dialogs
             _currentDirType = dirType;
             _currentFilename = filename;
             _contentEditor.Text = content;
+            _editorContent = content;
             SetState(IniEditorState.EditFile);
         }
 
         public void NotifyIniFileSaveResult(bool success, string message)
         {
+            // Temporarily suppress post-scale rendering so message box appears on top
+            SuppressPostScaleRendering = true;
+
             if (success)
             {
                 var dlg = _messageBoxFactory.CreateMessageBox("Save Successful", $"File saved successfully.\n\nNote: Run $rehash to apply changes.");
+                dlg.DialogClosing += (_, _) => SuppressPostScaleRendering = false;
                 dlg.ShowDialog();
                 _contentModified = false;
                 SetState(IniEditorState.FileList);
@@ -305,6 +529,7 @@ namespace EndlessClient.Dialogs
             else
             {
                 var dlg = _messageBoxFactory.CreateMessageBox("Save Failed", $"Failed to save file: {message}");
+                dlg.DialogClosing += (_, _) => SuppressPostScaleRendering = false;
                 dlg.ShowDialog();
             }
         }

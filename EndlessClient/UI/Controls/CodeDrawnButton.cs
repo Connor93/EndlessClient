@@ -121,6 +121,8 @@ namespace EndlessClient.UI.Controls
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
+            // Check if we've been disposed (spritebatch becomes null after dispose)
+            if (_spriteBatch == null) return;
             // Check both our visibility AND parent visibility to avoid drawing orphaned buttons
             if (!Visible) return;
             if (ImmediateParent != null && !ImmediateParent.Visible) return;

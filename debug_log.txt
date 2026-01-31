@@ -2367,3 +2367,63 @@ REGISTERED: EndlessClientInitializer as IGameInitializer
 Manual Registration Completed. Total: 689 registrations.
 EndlessGame Constructor START
 EndlessClientInitializer Constructor START
+Registry Type: AutomaticTypeMapper.UnityRegistry
+Property: UnityContainer (Unity.IUnityContainer)
+Found container object. Registering...
+Starting Manual Registration...
+Container Runtime Type: Unity.UnityContainer
+Added Unity Diagnostic extension.
+Found 1 RegisterType methods:
+ - Unity.IUnityContainer RegisterType(System.Type, System.Type, System.String, Unity.Lifetime.ITypeLifetimeManager, Unity.Injection.InjectionMember[])
+   Params: Type, Type, String, ITypeLifetimeManager, InjectionMember[]
+Selected RegisterType with 5 params.
+Registered List<IGameComponent> instance.
+REGISTERED: EndlessClientInitializer as IGameInitializer
+Manual Registration Completed. Total: 690 registrations.
+EndlessGame Constructor START
+EndlessClientInitializer Constructor START
+Registry Type: AutomaticTypeMapper.UnityRegistry
+Property: UnityContainer (Unity.IUnityContainer)
+Found container object. Registering...
+Starting Manual Registration...
+Container Runtime Type: Unity.UnityContainer
+Added Unity Diagnostic extension.
+Found 1 RegisterType methods:
+ - Unity.IUnityContainer RegisterType(System.Type, System.Type, System.String, Unity.Lifetime.ITypeLifetimeManager, Unity.Injection.InjectionMember[])
+   Params: Type, Type, String, ITypeLifetimeManager, InjectionMember[]
+Selected RegisterType with 5 params.
+Registered List<IGameComponent> instance.
+REGISTERED: EndlessClientInitializer as IGameInitializer
+Manual Registration Completed. Total: 690 registrations.
+EndlessGame Constructor START
+EndlessClientInitializer Constructor START
+Registry Type: AutomaticTypeMapper.UnityRegistry
+Property: UnityContainer (Unity.IUnityContainer)
+Found container object. Registering...
+Starting Manual Registration...
+Container Runtime Type: Unity.UnityContainer
+Added Unity Diagnostic extension.
+Found 1 RegisterType methods:
+ - Unity.IUnityContainer RegisterType(System.Type, System.Type, System.String, Unity.Lifetime.ITypeLifetimeManager, Unity.Injection.InjectionMember[])
+   Params: Type, Type, String, ITypeLifetimeManager, InjectionMember[]
+Selected RegisterType with 5 params.
+Registered List<IGameComponent> instance.
+REGISTERED: EndlessClientInitializer as IGameInitializer
+Manual Registration Completed. Total: 690 registrations.
+EndlessGame Constructor START
+EndlessClientInitializer Constructor START
+Registry Type: AutomaticTypeMapper.UnityRegistry
+Property: UnityContainer (Unity.IUnityContainer)
+Found container object. Registering...
+Starting Manual Registration...
+Container Runtime Type: Unity.UnityContainer
+Added Unity Diagnostic extension.
+Found 1 RegisterType methods:
+ - Unity.IUnityContainer RegisterType(System.Type, System.Type, System.String, Unity.Lifetime.ITypeLifetimeManager, Unity.Injection.InjectionMember[])
+   Params: Type, Type, String, ITypeLifetimeManager, InjectionMember[]
+Selected RegisterType with 5 params.
+Registered List<IGameComponent> instance.
+REGISTERED: EndlessClientInitializer as IGameInitializer
+Manual Registration Completed. Total: 690 registrations.
+EndlessGame Constructor START
+EndlessClientInitializer Constructor START

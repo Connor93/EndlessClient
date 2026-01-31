@@ -46,6 +46,11 @@ namespace EndlessClient.Dialogs
         public int ItemsToShow => ListAreaHeight / ItemHeight;
         public int ScrollOffset => _scrollBar?.ScrollOffset ?? 0;
 
+        /// <summary>
+        /// Exposes the scrollbar as an IScrollHandler for derived classes (e.g., for text editor integration).
+        /// </summary>
+        protected IScrollHandler ScrollHandler => _scrollBar;
+
         public string Title
         {
             get => _titleText?.Text ?? string.Empty;
@@ -57,6 +62,18 @@ namespace EndlessClient.Dialogs
         public event EventHandler BackAction;
         public event EventHandler OkAction;
         public event EventHandler CancelAction;
+
+        /// <summary>
+        /// When true (default), clicking Cancel will close the dialog. Set to false to handle cancel without closing.
+        /// </summary>
+        public bool CancelClosesDialog { get; set; } = true;
+
+        /// <summary>
+        /// When true, reverts to pre-scale rendering mode even in scaled mode.
+        /// This allows child dialogs (like message boxes) to appear on top using normal XNA z-ordering.
+        /// The trade-off is that text will appear blurry during this time.
+        /// </summary>
+        public bool SuppressPostScaleRendering { get; set; }
 
         // Expose for child classes
         protected IUIStyleProvider StyleProvider => _styleProvider;
@@ -147,6 +164,24 @@ namespace EndlessClient.Dialogs
 
         public void SetupButtons(bool showOk = true, bool showCancel = true, bool showBack = false)
         {
+            // Hide existing buttons (don't dispose - they may still be in draw queue)
+            if (_okButton != null)
+            {
+                _okButton.Visible = false;
+            }
+            if (_cancelButton != null)
+            {
+                _cancelButton.Visible = false;
+            }
+            if (_backButton != null)
+            {
+                _backButton.Visible = false;
+            }
+            // Clear references so we create new ones
+            _okButton = null;
+            _cancelButton = null;
+            _backButton = null;
+
             var buttonWidth = 72;
             var buttonHeight = 28;
             var buttonY = DialogHeight - buttonHeight - 12;
@@ -164,7 +199,7 @@ namespace EndlessClient.Dialogs
                 _okButton.OnClick += (_, _) => { OkAction?.Invoke(this, EventArgs.Empty); Close(XNADialogResult.OK); };
 
                 _cancelButton = CreateButton("Cancel", new Vector2(DialogWidth / 2 + buttonSpacing / 2, buttonY), buttonWidth, buttonHeight);
-                _cancelButton.OnClick += (_, _) => { CancelAction?.Invoke(this, EventArgs.Empty); Close(XNADialogResult.Cancel); };
+                _cancelButton.OnClick += (_, _) => { var shouldClose = CancelClosesDialog; CancelAction?.Invoke(this, EventArgs.Empty); if (shouldClose) Close(XNADialogResult.Cancel); };
             }
             else if (showOk)
             {
@@ -174,7 +209,7 @@ namespace EndlessClient.Dialogs
             else if (showCancel)
             {
                 _cancelButton = CreateButton("Cancel", new Vector2((DialogWidth - buttonWidth) / 2, buttonY), buttonWidth, buttonHeight);
-                _cancelButton.OnClick += (_, _) => { CancelAction?.Invoke(this, EventArgs.Empty); Close(XNADialogResult.Cancel); };
+                _cancelButton.OnClick += (_, _) => { var shouldClose = CancelClosesDialog; CancelAction?.Invoke(this, EventArgs.Empty); if (shouldClose) Close(XNADialogResult.Cancel); };
             }
 
             CenterInGameView();
@@ -323,7 +358,12 @@ namespace EndlessClient.Dialogs
 
         // IPostScaleDrawable implementation
         public int PostScaleDrawOrder => 100;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider?.IsScaledMode ?? false;
+
+        /// <summary>
+        /// Returns true when this dialog should skip rendering to the render target.
+        /// Returns false when SuppressPostScaleRendering is true, to allow pre-scale fallback.
+        /// </summary>
+        public bool SkipRenderTargetDraw => (_clientWindowSizeProvider?.IsScaledMode ?? false) && !SuppressPostScaleRendering;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -335,7 +375,7 @@ namespace EndlessClient.Dialogs
                 return;
             }
 
-            // Non-scaled mode: draw everything together
+            // Non-scaled mode or suppressed post-scale: draw everything together
             DrawComplete(DrawAreaWithParentOffset);
             base.OnDrawControl(gameTime);
         }
@@ -343,6 +383,9 @@ namespace EndlessClient.Dialogs
         public virtual void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
             if (!Visible) return;
+
+            // When SuppressPostScaleRendering is true, content was already drawn in pre-scale OnDrawControl
+            if (SuppressPostScaleRendering) return;
 
             var gamePos = DrawAreaWithParentOffset;
             var scaledPos = new Vector2(
@@ -519,15 +562,16 @@ namespace EndlessClient.Dialogs
                 y + (height - textSize.Height) / 2);
             _spriteBatch.DrawString(font, text, textPos, Color.White);
         }
-
         /// <summary>
-        /// Complete drawing for non-scaled mode
+        /// Complete drawing for non-scaled mode or when SuppressPostScaleRendering is active.
+        /// This mirrors DrawBordersAndText but at scale=1 for the render target phase.
         /// </summary>
         private void DrawComplete(Rectangle drawPos)
         {
             var cornerRadius = _styleProvider.CornerRadius;
             var borderThickness = _styleProvider.BorderThickness;
             var titleBarHeight = _styleProvider.TitleBarHeight;
+            var font = _font;
 
             var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
 
@@ -544,12 +588,126 @@ namespace EndlessClient.Dialogs
                 new Rectangle(borderThickness, borderThickness, DrawArea.Width - borderThickness * 2, titleBarHeight - borderThickness),
                 _styleProvider.TitleBarBackground);
 
+            // Title text
+            var title = Title;
+            if (!string.IsNullOrEmpty(title))
+            {
+                _spriteBatch.DrawString(font, title, new Vector2(16, 12), _styleProvider.TitleBarText);
+            }
+
             // List area background (slightly darker)
             var listBounds = new Rectangle(8, ListAreaTop, DialogWidth - 40, ListAreaHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, listBounds, new Color(0, 0, 0, 60));
             DrawingPrimitives.DrawRectBorder(_spriteBatch, listBounds, _styleProvider.PanelBorder, 1);
 
+            // Draw visible list items
+            for (int i = 0; i < _listItems.Count; i++)
+            {
+                var item = _listItems[i];
+                if (i >= ScrollOffset && i < ScrollOffset + ItemsToShow)
+                {
+                    var visualIndex = i - ScrollOffset;
+                    var itemY = ListAreaTop + visualIndex * ItemHeight;
+
+                    // Item hover background
+                    if (item.IsHovered && item.IsLink)
+                    {
+                        var hoverRect = new Rectangle(8, itemY, DialogWidth - 48, ItemHeight);
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, hoverRect, new Color(255, 255, 255, 30));
+                    }
+
+                    // Item text
+                    var textColor = item.IsLink
+                        ? (item.IsHovered ? new Color(150, 230, 255) : _styleProvider.TextHighlight)
+                        : _styleProvider.TextPrimary;
+
+                    var textOffsetX = item.IconGraphic != null ? 40 : 4;
+                    _spriteBatch.DrawString(font, item.PrimaryText,
+                        new Vector2(8 + textOffsetX, itemY + 2), textColor);
+
+                    // Sub text (right aligned)
+                    if (!string.IsNullOrEmpty(item.SubText))
+                    {
+                        var subSize = font.MeasureString(item.SubText);
+                        var subX = DialogWidth - 40 - 4 - subSize.Width;
+                        _spriteBatch.DrawString(font, item.SubText, new Vector2(subX, itemY + 2), _styleProvider.TextSecondary);
+                    }
+
+                    // Icon
+                    if (item.IconGraphic != null)
+                    {
+                        var iconSize = Math.Min(32, ItemHeight - 2);
+                        var iconY = itemY + (ItemHeight - iconSize) / 2;
+                        _spriteBatch.Draw(item.IconGraphic,
+                            new Rectangle(12, iconY, iconSize, iconSize), Color.White);
+                    }
+                }
+            }
+
+            // Hook for derived classes to draw custom content (e.g., editor text)
+            DrawCustomContentComplete(drawPos);
+
+            // Draw buttons at 1:1 scale
+            DrawButtonsComplete();
+
             _spriteBatch.End();
+        }
+
+        /// <summary>
+        /// Virtual hook for derived classes to draw custom content in pre-scale mode.
+        /// Called during DrawComplete, within an active SpriteBatch with transform.
+        /// Override in derived classes that have custom post-scale drawing to provide a pre-scale equivalent.
+        /// </summary>
+        protected virtual void DrawCustomContentComplete(Rectangle drawPos)
+        {
+            // Base implementation does nothing - derived classes can override
+        }
+
+        /// <summary>
+        /// Draws buttons in pre-scale mode (within an active SpriteBatch with transform)
+        /// </summary>
+        private void DrawButtonsComplete()
+        {
+            var font = _font;
+            var buttonWidth = 72;
+            var buttonHeight = 28;
+            var buttonY = DialogHeight - 28 - 12;
+
+            if (_okButton != null && _cancelButton != null)
+            {
+                // Two buttons
+                DrawButtonComplete("OK", DialogWidth / 2 - 72 - 8, buttonY, buttonWidth, buttonHeight, font, _okButton.MouseOver);
+                DrawButtonComplete("Cancel", DialogWidth / 2 + 8, buttonY, buttonWidth, buttonHeight, font, _cancelButton.MouseOver);
+            }
+            else if (_okButton != null)
+            {
+                // Single OK button
+                DrawButtonComplete("OK", (DialogWidth - 72) / 2, buttonY, buttonWidth, buttonHeight, font, _okButton.MouseOver);
+            }
+            else if (_cancelButton != null)
+            {
+                // Single Cancel button
+                DrawButtonComplete("Cancel", (DialogWidth - 72) / 2, buttonY, buttonWidth, buttonHeight, font, _cancelButton.MouseOver);
+            }
+
+            if (_backButton != null)
+            {
+                DrawButtonComplete("Back", DialogWidth / 2 - 72 - 8, buttonY, buttonWidth, buttonHeight, font, _backButton.MouseOver);
+            }
+        }
+
+        private void DrawButtonComplete(string text, int x, int y, int width, int height, BitmapFont font, bool isHovered)
+        {
+            var buttonRect = new Rectangle(x, y, width, height);
+            var buttonColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, buttonRect, buttonColor);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, Color.Black, 1);
+
+            var textSize = font.MeasureString(text);
+            var textPos = new Vector2(
+                x + (width - textSize.Width) / 2,
+                y + (height - textSize.Height) / 2);
+            _spriteBatch.DrawString(font, text, textPos, Color.White);
         }
 
         /// <summary>
