@@ -288,11 +288,17 @@ namespace EndlessClient.HUD.Controls
             };
         }
 
-        private IXNAButton CreateStateChangeButton(InGameStates whichState)
+        private IGameComponent CreateStateChangeButton(InGameStates whichState)
         {
             if (whichState == InGameStates.News)
                 throw new ArgumentOutOfRangeException(nameof(whichState), "News state does not have a button associated with it");
             var buttonIndex = (int)whichState;
+
+            // Code UI mode: use procedurally-drawn buttons with text labels
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return CreateCodeDrawnStateChangeButton(whichState, buttonIndex);
+            }
 
             var mainButtonTexture = _nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 25);
             var widthDelta = mainButtonTexture.Width / 2;
@@ -342,13 +348,59 @@ namespace EndlessClient.HUD.Controls
                 EOResourceID.STATUS_LABEL_TYPE_BUTTON,
                 EOResourceID.STATUS_LABEL_HUD_BUTTON_HOVER_FIRST + buttonIndex);
 
-            // Hide chat button in code UI mode (chat panel is always visible with integrated input)
-            if (whichState == InGameStates.Chat && _configurationProvider.UIMode == UIMode.Code)
-            {
-                ((XNAButton)retButton).Visible = false;
-            }
-
             return retButton;
+        }
+
+        private IGameComponent CreateCodeDrawnStateChangeButton(InGameStates whichState, int buttonIndex)
+        {
+            const int ButtonWidth = 55;
+            const int ButtonHeight = 18;
+
+            var label = whichState switch
+            {
+                InGameStates.ViewMapToggle => "Map",
+                InGameStates.Inventory => "Inv",
+                InGameStates.ActiveSpells => "Spells",
+                InGameStates.PassiveSpells => "Passive",
+                InGameStates.Chat => "Chat",
+                InGameStates.Stats => "Stats",
+                InGameStates.Paperdoll => "Equip",
+                InGameStates.Macro => "Macro",
+                InGameStates.OnlineList => "Online",
+                InGameStates.Party => "Party",
+                InGameStates.Settings => "Config",
+                InGameStates.Help => "Help",
+                _ => whichState.ToString()
+            };
+
+            var yIndex = buttonIndex % 6 - 3;
+            var xPosition = buttonIndex < 6 ? 0 : _clientWindowSizeRepository.Width - ButtonWidth;
+            var yPosition = _clientWindowSizeRepository.Height / 2 + ButtonHeight * yIndex;
+
+            var btn = new UI.Controls.CodeDrawnButton(
+                _styleProvider,
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
+                _clientWindowSizeRepository)
+            {
+                Text = label,
+                DrawArea = new Rectangle(xPosition, yPosition, ButtonWidth, ButtonHeight),
+                DrawOrder = HUD_CONTROL_LAYER,
+                // Hide chat button in code UI mode (chat panel is always visible with integrated input)
+                Visible = whichState != InGameStates.Chat
+            };
+
+            btn.OnClick += (_, _) => DoHudStateChangeClick(whichState);
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var capturedXPos = buttonIndex < 6 ? 0 : _clientWindowSizeRepository.Width - ButtonWidth;
+                var capturedYPos = _clientWindowSizeRepository.Height / 2 + ButtonHeight * yIndex;
+                btn.DrawPosition = new Vector2(capturedXPos, capturedYPos);
+            };
+
+            return btn;
         }
 
         private IXNAButton CreateFriendListButton()

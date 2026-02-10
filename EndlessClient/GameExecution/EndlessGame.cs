@@ -386,12 +386,22 @@ namespace EndlessClient.GameExecution
 
         private void DrawPostScaleControls(float scaleFactor, Point renderOffset)
         {
-            // Find all post-scale drawable controls (including nested children) and sort by draw order
+            // Find all post-scale drawable controls and sort by draw order
             // Lower order values are drawn first (background), higher values are drawn later (foreground)
+            var seen = new HashSet<IPostScaleDrawable>();
             var postScaleDrawables = new List<IPostScaleDrawable>();
+
+            // Collect from Game.Components (non-IXNAControl game components)
             foreach (var component in Components)
             {
-                CollectPostScaleDrawables(component, postScaleDrawables);
+                CollectPostScaleDrawables(component, postScaleDrawables, seen);
+            }
+
+            // Also collect from control set's AllComponents, which includes IXNAControl instances
+            // that are excluded from Game.Components by GameStateActions.AddNewComponents
+            foreach (var component in _controlSetRepository.CurrentControlSet.AllComponents)
+            {
+                CollectPostScaleDrawables(component, postScaleDrawables, seen);
             }
 
             // Sort by PostScaleDrawOrder - lower values first, dialogs (100) on top of HUD panels (0)
@@ -403,9 +413,9 @@ namespace EndlessClient.GameExecution
             }
         }
 
-        private void CollectPostScaleDrawables(object component, List<IPostScaleDrawable> drawables)
+        private void CollectPostScaleDrawables(object component, List<IPostScaleDrawable> drawables, HashSet<IPostScaleDrawable> seen)
         {
-            if (component is IPostScaleDrawable postScaleDrawable)
+            if (component is IPostScaleDrawable postScaleDrawable && seen.Add(postScaleDrawable))
             {
                 drawables.Add(postScaleDrawable);
             }
@@ -415,7 +425,7 @@ namespace EndlessClient.GameExecution
             {
                 foreach (var child in xnaControl.ChildControls)
                 {
-                    CollectPostScaleDrawables(child, drawables);
+                    CollectPostScaleDrawables(child, drawables, seen);
                 }
             }
         }

@@ -117,7 +117,7 @@ namespace EndlessClient.UI.Controls
                 rect.Right - thickness, rect.Y + cornerRadius,
                 thickness, rect.Height - cornerRadius * 2), color);
 
-            // Corner arcs (approximated)
+            // Corner arcs - uses same scanline math as DrawCorner for perfect alignment
             DrawCornerArc(spriteBatch, rect.X, rect.Y, cornerRadius, color, thickness, Corner.TopLeft);
             DrawCornerArc(spriteBatch, rect.Right - cornerRadius, rect.Y, cornerRadius, color, thickness, Corner.TopRight);
             DrawCornerArc(spriteBatch, rect.X, rect.Bottom - cornerRadius, cornerRadius, color, thickness, Corner.BottomLeft);
@@ -129,26 +129,27 @@ namespace EndlessClient.UI.Controls
         private static void DrawCorner(SpriteBatch spriteBatch, int x, int y, int radius, Color color, Corner corner)
         {
             // Draw a filled quarter circle using horizontal scanlines
+            // Circle center is at (x+radius, y+radius) for TopLeft, etc.
             for (int row = 0; row < radius; row++)
             {
-                // Calculate the width of this row based on circle equation
-                double angle = Math.Acos((double)(radius - row) / radius);
-                int width = (int)(radius - radius * Math.Cos(angle + Math.PI / 2));
+                int dy = radius - row;
+                int width = (int)Math.Floor(Math.Sqrt(radius * radius - dy * dy));
+
+                if (width <= 0) continue;
 
                 int drawX = x;
                 int drawY = y + row;
-                int drawWidth = width;
 
                 switch (corner)
                 {
                     case Corner.TopLeft:
-                        drawX = x + (radius - width);
+                        drawX = x + radius - width;
                         break;
                     case Corner.TopRight:
                         drawX = x;
                         break;
                     case Corner.BottomLeft:
-                        drawX = x + (radius - width);
+                        drawX = x + radius - width;
                         drawY = y + (radius - row - 1);
                         break;
                     case Corner.BottomRight:
@@ -157,43 +158,63 @@ namespace EndlessClient.UI.Controls
                         break;
                 }
 
-                if (drawWidth > 0)
-                    spriteBatch.Draw(_pixel, new Rectangle(drawX, drawY, drawWidth, 1), color);
+                spriteBatch.Draw(_pixel, new Rectangle(drawX, drawY, width, 1), color);
             }
         }
 
         private static void DrawCornerArc(SpriteBatch spriteBatch, int x, int y, int radius, Color color, int thickness, Corner corner)
         {
-            // Draw quarter circle arc using pixel approximation
-            int steps = Math.Max(8, radius);
-            for (int i = 0; i <= steps; i++)
-            {
-                double angle = (Math.PI / 2) * i / steps;
-                int px = (int)(radius * Math.Cos(angle));
-                int py = (int)(radius * Math.Sin(angle));
+            // Draw quarter circle border using the same scanline math as DrawCorner,
+            // but only drawing the outermost pixel(s) at each row for a clean outline.
+            int prevEdgeX = -1;
 
-                int drawX = x, drawY = y;
+            for (int row = 0; row < radius; row++)
+            {
+                int dy = radius - row;
+                int width = (int)Math.Floor(Math.Sqrt(radius * radius - dy * dy));
+
+                if (width <= 0) continue;
+
+                int edgeX, drawY;
+                int drawThickness = Math.Min(thickness, width);
+
                 switch (corner)
                 {
                     case Corner.TopLeft:
-                        drawX = x + radius - px;
-                        drawY = y + radius - py;
+                        edgeX = x + radius - width;
+                        drawY = y + row;
+                        spriteBatch.Draw(_pixel, new Rectangle(edgeX, drawY, drawThickness, 1), color);
+                        // Fill horizontal gap if edge jumped more than thickness since last row
+                        if (prevEdgeX >= 0 && prevEdgeX > edgeX + drawThickness)
+                            spriteBatch.Draw(_pixel, new Rectangle(edgeX + drawThickness, drawY, prevEdgeX - edgeX - drawThickness, 1), color);
                         break;
                     case Corner.TopRight:
-                        drawX = x + px;
-                        drawY = y + radius - py;
+                        edgeX = x + width - drawThickness;
+                        drawY = y + row;
+                        spriteBatch.Draw(_pixel, new Rectangle(edgeX, drawY, drawThickness, 1), color);
+                        if (prevEdgeX >= 0 && edgeX > prevEdgeX + drawThickness)
+                            spriteBatch.Draw(_pixel, new Rectangle(prevEdgeX + drawThickness, drawY, edgeX - prevEdgeX - drawThickness, 1), color);
                         break;
                     case Corner.BottomLeft:
-                        drawX = x + radius - px;
-                        drawY = y + py;
+                        edgeX = x + radius - width;
+                        drawY = y + (radius - row - 1);
+                        spriteBatch.Draw(_pixel, new Rectangle(edgeX, drawY, drawThickness, 1), color);
+                        if (prevEdgeX >= 0 && prevEdgeX > edgeX + drawThickness)
+                            spriteBatch.Draw(_pixel, new Rectangle(edgeX + drawThickness, drawY, prevEdgeX - edgeX - drawThickness, 1), color);
                         break;
                     case Corner.BottomRight:
-                        drawX = x + px;
-                        drawY = y + py;
+                        edgeX = x + width - drawThickness;
+                        drawY = y + (radius - row - 1);
+                        spriteBatch.Draw(_pixel, new Rectangle(edgeX, drawY, drawThickness, 1), color);
+                        if (prevEdgeX >= 0 && edgeX > prevEdgeX + drawThickness)
+                            spriteBatch.Draw(_pixel, new Rectangle(prevEdgeX + drawThickness, drawY, edgeX - prevEdgeX - drawThickness, 1), color);
+                        break;
+                    default:
+                        edgeX = x;
                         break;
                 }
 
-                spriteBatch.Draw(_pixel, new Rectangle(drawX, drawY, thickness, thickness), color);
+                prevEdgeX = edgeX;
             }
         }
     }

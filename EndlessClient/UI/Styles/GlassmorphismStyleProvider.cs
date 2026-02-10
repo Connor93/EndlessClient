@@ -19,11 +19,11 @@ namespace EndlessClient.UI.Styles
         public Color TitleBarBackground => new Color(40, 50, 70, 220);
         public Color TitleBarText => new Color(220, 225, 235);
 
-        // Buttons
-        public Color ButtonNormal => new Color(60, 70, 100, 180);
-        public Color ButtonHover => new Color(80, 95, 130, 200);
-        public Color ButtonPressed => new Color(40, 50, 70, 220);
-        public Color ButtonBorder => new Color(90, 110, 140, 180);
+        // Buttons - high opacity to prevent map bleed-through and ensure crisp text
+        public Color ButtonNormal => new Color(60, 70, 100, 230);
+        public Color ButtonHover => new Color(80, 95, 130, 235);
+        public Color ButtonPressed => new Color(40, 50, 70, 240);
+        public Color ButtonBorder => new Color(90, 110, 140, 220);
         public Color ButtonText => new Color(220, 225, 235);
 
         // Text

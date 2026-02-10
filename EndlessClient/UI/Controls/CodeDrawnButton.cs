@@ -101,18 +101,21 @@ namespace EndlessClient.UI.Controls
 
         // IPostScaleDrawable implementation
         public int PostScaleDrawOrder => 100;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider?.IsScaledMode ?? false;
+        // Only skip render target draw when there's actual upscaling (ScaleFactor > 1).
+        // When ScaleFactor == 1 (render target matches window), single-pass DrawComplete is preferred.
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider?.ScaleFactor > 1f;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode, skip fills here - draw everything in DrawPostScale
-                // so each control draws fills + borders + text together for correct z-ordering
+                // In scaled mode with upscaling, draw fills into the render target (they scale fine as solid shapes).
+                // Borders and text are drawn later in DrawPostScale at native resolution for crispness.
+                DrawFills();
             }
             else
             {
-                // In normal mode, draw everything
+                // In normal mode or scale=1, draw everything in one pass
                 DrawComplete();
             }
 
@@ -121,9 +124,8 @@ namespace EndlessClient.UI.Controls
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            // Check if we've been disposed (spritebatch becomes null after dispose)
+            if (scaleFactor <= 1f) return; // No upscaling = no need for post-scale drawing
             if (_spriteBatch == null) return;
-            // Check both our visibility AND parent visibility to avoid drawing orphaned buttons
             if (!Visible) return;
             if (ImmediateParent != null && !ImmediateParent.Visible) return;
 
@@ -132,37 +134,7 @@ namespace EndlessClient.UI.Controls
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
-            // Draw fills first, then borders and text - all together for correct z-ordering
-            DrawFillsScaled(scaledPos, scaleFactor);
             DrawBordersAndText(scaledPos, scaleFactor);
-        }
-
-        /// <summary>
-        /// Draw fills at scaled coordinates for post-scale rendering.
-        /// </summary>
-        private void DrawFillsScaled(Vector2 scaledPos, float scale)
-        {
-            var backgroundColor = _state switch
-            {
-                ButtonState.Pressed => _styleProvider.ButtonPressed,
-                ButtonState.Hover => _styleProvider.ButtonHover,
-                _ => _styleProvider.ButtonNormal
-            };
-            var cornerRadius = _styleProvider.CornerRadius;
-
-            var scaledWidth = (int)(DrawArea.Width * scale);
-            var scaledHeight = (int)(DrawArea.Height * scale);
-            var scaledBounds = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, scaledWidth, scaledHeight);
-
-            _spriteBatch.Begin();
-
-            // Draw background
-            if (cornerRadius > 0)
-                DrawingPrimitives.DrawRoundedRect(_spriteBatch, scaledBounds, backgroundColor, (int)(cornerRadius * scale));
-            else
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, scaledBounds, backgroundColor);
-
-            _spriteBatch.End();
         }
 
         /// <summary>
@@ -204,7 +176,7 @@ namespace EndlessClient.UI.Controls
             var borderThickness = _styleProvider.BorderThickness;
 
             // Select font based on scale
-            var font = scale >= 1.75f ? _scaledFont : (scale >= 1.25f ? _scaledFont : _font);
+            var font = scale >= 1.25f ? _scaledFont : _font;
 
             var scaledWidth = (int)(DrawArea.Width * scale);
             var scaledHeight = (int)(DrawArea.Height * scale);
@@ -214,17 +186,23 @@ namespace EndlessClient.UI.Controls
 
             // Draw border
             if (cornerRadius > 0)
-                DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, scaledBounds, borderColor, cornerRadius, Math.Max(1, (int)(borderThickness * scale)));
+                DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, scaledBounds, borderColor, (int)(cornerRadius * scale), Math.Max(1, (int)(borderThickness * scale)));
             else
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, scaledBounds, borderColor, Math.Max(1, (int)(borderThickness * scale)));
 
-            // Draw text centered
+            // Draw text with shadow for contrast
             if (!string.IsNullOrEmpty(_text) && font != null)
             {
                 var textSize = font.MeasureString(_text);
                 var textPos = new Vector2(
-                    scaledPos.X + (scaledWidth - textSize.Width) / 2,
-                    scaledPos.Y + (scaledHeight - textSize.Height) / 2);
+                    (int)(scaledPos.X + (scaledWidth - textSize.Width) / 2),
+                    (int)(scaledPos.Y + (scaledHeight - textSize.Height) / 2));
+
+                // Shadow (1px offset, dark)
+                var shadowColor = new Color(0, 0, 0, 180);
+                _spriteBatch.DrawString(font, _text, textPos + new Vector2(1, 1), shadowColor);
+
+                // Main text
                 _spriteBatch.DrawString(font, _text, textPos, textColor);
             }
 
@@ -265,13 +243,19 @@ namespace EndlessClient.UI.Controls
             else
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, bounds, borderColor, borderThickness);
 
-            // Draw text centered
+            // Draw text with shadow for contrast
             if (!string.IsNullOrEmpty(_text) && _font != null)
             {
                 var textSize = _font.MeasureString(_text);
                 var textPos = new Vector2(
-                    (bounds.Width - textSize.Width) / 2,
-                    (bounds.Height - textSize.Height) / 2);
+                    (int)((bounds.Width - textSize.Width) / 2),
+                    (int)((bounds.Height - textSize.Height) / 2));
+
+                // Shadow (1px offset, dark)
+                var shadowColor = new Color(0, 0, 0, 180);
+                _spriteBatch.DrawString(_font, _text, textPos + new Vector2(1, 1), shadowColor);
+
+                // Main text
                 _spriteBatch.DrawString(_font, _text, textPos, textColor);
             }
 
