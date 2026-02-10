@@ -32,8 +32,24 @@ namespace EndlessClient.HUD.Panels
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly BitmapFont _chatFont;
-        private readonly BitmapFont _scaledChatFont; // Larger font for post-scale rendering
         private readonly BitmapFont _labelFont;
+        private readonly IContentProvider _contentProvider;
+
+        // Base font pixel size for dynamic scaling (14px = FontSize11)
+        private const int BaseFontPixelSize = 14;
+
+        // Available font sizes sorted ascending for binary-search-style selection
+        private static readonly (int pixelSize, string fontKey)[] _availableFonts = new[]
+        {
+            (9,  Constants.FontSize07),
+            (11, Constants.FontSize08),
+            (12, Constants.FontSize09),
+            (13, Constants.FontSize10),
+            (14, Constants.FontSize11),
+            (16, Constants.FontSize12),
+            (18, Constants.FontSize13),
+            (20, Constants.FontSize14),
+        };
 
         private readonly ScrollBar _scrollBar;
         private readonly INativeGraphicsManager _nativeGraphicsManager;
@@ -87,7 +103,7 @@ namespace EndlessClient.HUD.Panels
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _chatFont = contentProvider.Fonts[Constants.FontSize11];
-            _scaledChatFont = contentProvider.Fonts[Constants.FontSize12]; // Larger 16px font for scaled mode
+            _contentProvider = contentProvider;
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
             DrawArea = new Rectangle(102, 280, PanelWidth, PanelHeight); // Y position adjusted for taller panel
@@ -463,7 +479,7 @@ namespace EndlessClient.HUD.Panels
             foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
-                renderable.RenderScaledWithClipping(_spriteBatch, _scaledChatFont, messageAreaPos, scaleFactor);
+                renderable.RenderScaledWithClipping(_spriteBatch, GetScaledFont(scaleFactor), messageAreaPos, scaleFactor);
             }
 
             _spriteBatch.End();
@@ -491,7 +507,8 @@ namespace EndlessClient.HUD.Panels
                 return;
 
             // Calculate the text width and whether we need horizontal scrolling
-            var textSize = _scaledChatFont.MeasureString(text);
+            var scaledFont = GetScaledFont(scaleFactor);
+            var textSize = scaledFont.MeasureString(text);
             var availableWidth = gameInputTextWidth * scaleFactor;
             var textOffsetX = 0f;
 
@@ -518,10 +535,43 @@ namespace EndlessClient.HUD.Panels
             graphicsDevice.ScissorRectangle = scissorRect;
 
             _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
-            _spriteBatch.DrawString(_scaledChatFont, text, inputTextPos, Color.White);
+            _spriteBatch.DrawString(scaledFont, text, inputTextPos, Color.White);
             _spriteBatch.End();
 
             graphicsDevice.ScissorRectangle = previousScissorRectangle;
+        }
+
+        /// <summary>
+        /// Selects the closest available bitmap font to baseFontSize × scaleFactor.
+        /// This ensures text scales proportionally with the UI in post-scale rendering.
+        /// </summary>
+        private BitmapFont GetScaledFont(float scaleFactor)
+        {
+            var targetPx = BaseFontPixelSize * scaleFactor;
+            var bestKey = _availableFonts[_availableFonts.Length - 1].fontKey; // default to largest
+
+            for (int i = 0; i < _availableFonts.Length; i++)
+            {
+                if (_availableFonts[i].pixelSize >= targetPx)
+                {
+                    // Pick whichever is closer: this one or the previous one
+                    if (i > 0)
+                    {
+                        var diffLower = targetPx - _availableFonts[i - 1].pixelSize;
+                        var diffUpper = _availableFonts[i].pixelSize - targetPx;
+                        bestKey = diffLower <= diffUpper
+                            ? _availableFonts[i - 1].fontKey
+                            : _availableFonts[i].fontKey;
+                    }
+                    else
+                    {
+                        bestKey = _availableFonts[0].fontKey;
+                    }
+                    break;
+                }
+            }
+
+            return _contentProvider.Fonts[bestKey];
         }
 
         private void DrawTabs(Vector2 pos)

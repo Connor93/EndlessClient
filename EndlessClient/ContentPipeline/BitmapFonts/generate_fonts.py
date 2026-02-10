@@ -209,10 +209,11 @@ def render_font(font_path, pixel_size, output_dir, padding_top=1, padding_bottom
         if p.get("is_whitespace"):
             continue  # No visible pixels to draw for whitespace
         char = chr(p["code"])
-        # Draw the character
-        # Position: account for padding and the character's own offset
+        # Draw the character at its origin within the fixed-height cell.
+        # Pillow's draw.text uses the glyph's own bbox to position it —
+        # descenders naturally extend below the baseline without extra offsets.
         draw_x = p["x"] + padding_left - p["left"]
-        draw_y = p["y"] + padding_top + (ascent - p["height"] - p["top"])
+        draw_y = p["y"] + padding_top
         draw.text((draw_x, draw_y), char, font=font, fill=(255, 255, 255, 255))
 
     # Save the PNG

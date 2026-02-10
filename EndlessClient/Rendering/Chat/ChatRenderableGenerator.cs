@@ -80,12 +80,12 @@ namespace EndlessClient.Rendering.Chat
 
             var splitter = new TextSplitter("", _chatFont)
             {
-                // LineLength/HardBreak should match the chat panel's message area width (489px panel,
-                // minus scrollbar and padding = ~460px usable). Using consistent font for both
-                // measurement and rendering, so no need for the old reduced values.
-                LineLength = 340,
-                HardBreak = 370,
-                Hyphen = "-",
+                // Compute available text width from panel geometry:
+                // gameMessageAreaWidth (460) = panel area the scissor rect clips to
+                // CHAT_MESSAGE_X_OFF (20) = where text starts (after chat icon)
+                // Without HardBreak, TextSplitter wraps at the previous word boundary
+                // when text exceeds LineLength — no mid-word clipping.
+                LineLength = 460 - 20 - 10, // 430px (with small buffer for measurement rounding)
                 LineIndent = indentForUserName
             };
 
