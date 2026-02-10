@@ -161,6 +161,15 @@ namespace EndlessClient.HUD
             }
         }
 
+        public void ClickBountyTracker()
+        {
+            if (_hudControlProvider.IsInGame)
+            {
+                var window = _hudControlProvider.GetComponent<CodeDrawnBountyTrackerWindow>(Controls.HudControlIdentifier.BountyTrackerWindow);
+                window.Toggle();
+            }
+        }
+
         public void ClickPaperdoll()
         {
             _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);

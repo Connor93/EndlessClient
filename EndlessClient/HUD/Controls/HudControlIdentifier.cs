@@ -56,6 +56,8 @@ namespace EndlessClient.HUD.Controls
         ExpTrackerWindow,
         QuestWindow,
         QuestTrackerWindow,
+        BountyTrackerButton,
+        BountyTrackerWindow,
 
         HPStatusBar,
         TPStatusBar,

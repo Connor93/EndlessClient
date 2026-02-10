@@ -12,16 +12,19 @@ namespace EOLib.PacketHandlers.Quest
     public class QuestListHandler : InGameOnlyPacketHandler<QuestListServerPacket>
     {
         private readonly IQuestDataRepository _questDataRepository;
+        private readonly IBountyDataRepository _bountyDataRepository;
 
         public override PacketFamily Family => PacketFamily.Quest;
 
         public override PacketAction Action => PacketAction.List;
 
         public QuestListHandler(IPlayerInfoProvider playerInfoProvider,
-                                IQuestDataRepository questDataRepository)
+                                IQuestDataRepository questDataRepository,
+                                IBountyDataRepository bountyDataRepository)
             : base(playerInfoProvider)
         {
             _questDataRepository = questDataRepository;
+            _bountyDataRepository = bountyDataRepository;
         }
 
         public override bool HandlePacket(QuestListServerPacket packet)
@@ -29,8 +32,11 @@ namespace EOLib.PacketHandlers.Quest
             switch (packet.Page)
             {
                 case QuestPage.Progress:
-                    _questDataRepository.QuestProgress = ((QuestListServerPacket.PageDataProgress)packet.PageData)
-                        .QuestProgressEntries
+                    var allEntries = ((QuestListServerPacket.PageDataProgress)packet.PageData)
+                        .QuestProgressEntries;
+
+                    _questDataRepository.QuestProgress = allEntries
+                        .Where(x => x.Description != "BOUNTY")
                         .Select(x => new QuestProgressData.Builder
                         {
                             Name = x.Name,
@@ -38,6 +44,17 @@ namespace EOLib.PacketHandlers.Quest
                             Icon = x.Icon,
                             Progress = x.Progress,
                             Target = x.Target,
+                        }.ToImmutable())
+                        .ToList();
+
+                    _bountyDataRepository.Bounties = allEntries
+                        .Where(x => x.Description == "BOUNTY")
+                        .Select(x => new BountyProgressData.Builder
+                        {
+                            Name = x.Name,
+                            Progress = x.Progress,
+                            Target = x.Target,
+                            Status = x.Progress >= x.Target ? BountyStatus.Complete : BountyStatus.InProgress,
                         }.ToImmutable())
                         .ToList();
                     break;
@@ -50,3 +67,4 @@ namespace EOLib.PacketHandlers.Quest
         }
     }
 }
+

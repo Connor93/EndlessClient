@@ -38,6 +38,8 @@
 
         void ClickQuestWindow();
 
+        void ClickBountyTracker();
+
         void ClickPaperdoll();
     }
 }

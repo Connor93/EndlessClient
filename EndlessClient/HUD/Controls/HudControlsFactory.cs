@@ -85,6 +85,7 @@ namespace EndlessClient.HUD.Controls
         private readonly ICharacterSessionProvider _characterSessionProvider;
         private readonly IQuestDataProvider _questDataProvider;
         private readonly IQuestActions _questActions;
+        private readonly IBountyDataProvider _bountyDataProvider;
         private readonly IWindowZOrderManager _windowZOrderManager;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
@@ -129,6 +130,7 @@ namespace EndlessClient.HUD.Controls
                                   ICharacterSessionProvider characterSessionProvider,
                                   IQuestDataProvider questDataProvider,
                                   IQuestActions questActions,
+                                  IBountyDataProvider bountyDataProvider,
                                   IWindowZOrderManager windowZOrderManager)
         {
             _hudButtonController = hudButtonController;
@@ -171,6 +173,7 @@ namespace EndlessClient.HUD.Controls
             _characterSessionProvider = characterSessionProvider;
             _questDataProvider = questDataProvider;
             _questActions = questActions;
+            _bountyDataProvider = bountyDataProvider;
             _windowZOrderManager = windowZOrderManager;
         }
 
@@ -233,6 +236,8 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.ExpTrackerWindow, CreateExpTrackerWindow()},
                 {HudControlIdentifier.QuestTrackerWindow, CreateQuestTrackerWindow()},
                 {HudControlIdentifier.QuestWindow, CreateQuestWindow()},
+                {HudControlIdentifier.BountyTrackerButton, CreateBountyTrackerButton()},
+                {HudControlIdentifier.BountyTrackerWindow, CreateBountyTrackerWindow()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
@@ -597,6 +602,43 @@ namespace EndlessClient.HUD.Controls
                 _questActions)
             {
                 DrawOrder = HUD_CONTROL_LAYER + 25
+            };
+
+            _windowZOrderManager.Register(window);
+            window.Activated += () => _windowZOrderManager.BringToFront(window);
+
+            return window;
+        }
+
+        private IGameComponent CreateBountyTrackerButton()
+        {
+            var btn = new UI.Controls.CodeDrawnHudButton(
+                _styleProvider,
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
+                _clientWindowSizeRepository)
+            {
+                Text = "B",
+                DrawArea = new Rectangle(99, 0, 22, 14),
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = _configurationProvider.UIMode == UIMode.Code
+            };
+            btn.OnClick += (_, _) => _hudButtonController.ClickBountyTracker();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+            return btn;
+        }
+
+        private IGameComponent CreateBountyTrackerWindow()
+        {
+            var window = new Windows.CodeDrawnBountyTrackerWindow(
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository,
+                _bountyDataProvider,
+                _questActions)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 26
             };
 
             _windowZOrderManager.Register(window);
