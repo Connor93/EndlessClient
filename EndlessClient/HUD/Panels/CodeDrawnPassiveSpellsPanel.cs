@@ -1,10 +1,12 @@
 using EndlessClient.Content;
+using EndlessClient.HUD.Windows;
 using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Graphics;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 
 namespace EndlessClient.HUD.Panels
@@ -13,10 +15,11 @@ namespace EndlessClient.HUD.Panels
     /// Code-drawn Passive Spells panel with same visual style as Active Spells.
     /// Currently just displays styled background - passive skills not yet implemented.
     /// </summary>
-    public class CodeDrawnPassiveSpellsPanel : PassiveSpellsPanel
+    public class CodeDrawnPassiveSpellsPanel : PassiveSpellsPanel, IZOrderedWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _headerFont;
 
@@ -25,6 +28,17 @@ namespace EndlessClient.HUD.Panels
         private const int LeftPanelWidth = 95;
         private const int GridStartX = 100;
         private const int SlotSize = 45;
+
+        // IZOrderedWindow implementation
+        private int _zOrder;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         public CodeDrawnPassiveSpellsPanel(INativeGraphicsManager nativeGraphicsManager,
                                            IUIStyleProvider styleProvider,
@@ -35,11 +49,13 @@ namespace EndlessClient.HUD.Panels
         {
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _headerFont = contentProvider.Fonts[Constants.FontSize09];
 
             // Clear the GFX background image - we'll draw our own
             BackgroundImage = null;
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
         }
 
         public override void Initialize()
@@ -49,6 +65,18 @@ namespace EndlessClient.HUD.Panels
         }
 
         protected override void OnDrawControl(GameTime gameTime)
+        {
+            // Always draw in render-target (consistent with other panels that have/may have child controls)
+            DrawPanelComplete();
+            base.OnDrawControl(gameTime);
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            // No-op: draw in render-target via OnDrawControl for consistency
+        }
+
+        private void DrawPanelComplete()
         {
             _spriteBatch.Begin();
 
@@ -93,8 +121,6 @@ namespace EndlessClient.HUD.Panels
             }
 
             _spriteBatch.End();
-
-            base.OnDrawControl(gameTime);
         }
     }
 }

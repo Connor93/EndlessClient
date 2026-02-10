@@ -101,7 +101,7 @@ namespace EndlessClient.HUD.Panels
             _scaledFont = contentProvider.Fonts[Constants.FontSize10];
             _scaledLabelFont = contentProvider.Fonts[Constants.FontSize10];
 
-            DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
 
             _settingLabels = new Dictionary<WhichSetting, string>
             {

@@ -573,9 +573,11 @@ namespace EndlessClient.HUD.Controls
             {
                 if (initialPosition)
                 {
+                    // Non-chat panels spawn one panel height higher so they don't overlap with chat
+                    var yOffset = retPanel is CodeDrawnChatPanel ? 0 : (retPanel.DrawArea.Height + 4) * 2;
                     retPanel.DrawArea = retPanel.DrawArea.WithPosition(new Vector2(
                         (_clientWindowSizeRepository.Width - retPanel.DrawArea.Width) / 2,
-                        _clientWindowSizeRepository.Height - 45 - retPanel.DrawArea.Height));
+                        _clientWindowSizeRepository.Height - 45 - retPanel.DrawArea.Height - yOffset));
                 }
                 else
                 {

@@ -102,7 +102,7 @@ namespace EndlessClient.HUD.Panels
             _filteredList = new List<OnlinePlayerInfo>();
             _friendList = new List<string>();
 
-            DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
         }
 
         public override void Initialize()

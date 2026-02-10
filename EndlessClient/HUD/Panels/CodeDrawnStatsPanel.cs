@@ -67,7 +67,7 @@ namespace EndlessClient.HUD.Panels
             _scaledFont = contentProvider.Fonts[Constants.FontSize10];
             _scaledLabelFont = contentProvider.Fonts[Constants.FontSize10];
 
-            DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
 
             _arrowButtons = new CodeDrawnButton[6];
             for (int i = 0; i < 6; i++)

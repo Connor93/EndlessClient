@@ -3,6 +3,7 @@ using System.Linq;
 using AutomaticTypeMapper;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD.Panels;
+using EndlessClient.HUD.Windows;
 using EndlessClient.Rendering;
 using EOLib.Domain.Map;
 using EOLib.IO.Repositories;
@@ -21,18 +22,21 @@ namespace EndlessClient.HUD
         private readonly ICurrentMapStateRepository _currentMapStateRepository;
         private readonly IMapFileProvider _mapFileProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IWindowZOrderManager _windowZOrderManager;
 
         public HudStateActions(IStatusLabelSetter statusLabelSetter,
                                IHudControlProvider hudControlProvider,
                                ICurrentMapStateRepository currentMapStateRepository,
                                IMapFileProvider mapFileProvider,
-                               IClientWindowSizeProvider clientWindowSizeProvider)
+                               IClientWindowSizeProvider clientWindowSizeProvider,
+                               IWindowZOrderManager windowZOrderManager)
         {
             _statusLabelSetter = statusLabelSetter;
             _hudControlProvider = hudControlProvider;
             _currentMapStateRepository = currentMapStateRepository;
             _mapFileProvider = mapFileProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _windowZOrderManager = windowZOrderManager;
         }
 
         public IHudPanel SwitchToState(InGameStates newState)
@@ -51,6 +55,10 @@ namespace EndlessClient.HUD
 
             if (targetPanel.Visible && _clientWindowSizeProvider.Resizable)
                 targetPanel.DrawOrder = _hudControlProvider.HudPanels.Select(x => x.DrawOrder).Max() + 1;
+
+            // Bring to front in post-scale z-order so newly opened panels appear on top
+            if (targetPanel.Visible && targetPanel is IZOrderedWindow zOrderedPanel)
+                _windowZOrderManager.BringToFront(zOrderedPanel);
 
             return targetPanel;
         }

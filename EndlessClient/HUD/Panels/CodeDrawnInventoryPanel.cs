@@ -7,6 +7,7 @@ using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs;
 using EndlessClient.HUD.Inventory;
+using EndlessClient.HUD.Windows;
 using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
@@ -19,15 +20,17 @@ using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Shared;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using XNAControls;
 
 namespace EndlessClient.HUD.Panels
 {
-    public class CodeDrawnInventoryPanel : InventoryPanel
+    public class CodeDrawnInventoryPanel : InventoryPanel, IZOrderedWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _labelFont;
 
         private const int PanelWidth = 476;
@@ -37,6 +40,17 @@ namespace EndlessClient.HUD.Panels
         // Items are positioned at (13 + 26*col, 9 + 26*row) per InventoryPanelItem.GetPosition
         private const int SlotsStartX = 13;
         private const int SlotsStartY = 9;
+
+        // IZOrderedWindow implementation
+        private int _zOrder;
+        int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
+        public int PostScaleDrawOrder => _zOrder;
+        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+
+        public void BringToFront()
+        {
+            // Z-order is set externally by WindowZOrderManager
+        }
 
         public CodeDrawnInventoryPanel(INativeGraphicsManager nativeGraphicsManager,
                                        IInventoryController inventoryController,
@@ -65,11 +79,12 @@ namespace EndlessClient.HUD.Panels
         {
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
             // Remove the texture-based background
             BackgroundImage = null;
-            DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
         }
 
         public override void Initialize()
@@ -83,6 +98,9 @@ namespace EndlessClient.HUD.Panels
 
         protected override void OnDrawControl(GameTime gameTime)
         {
+            // Always draw background in render-target phase because base class creates
+            // InventoryPanelItem child controls that can only draw in render-target.
+            // DrawPostScale cannot be used for the background as it would cover the children.
             _spriteBatch.Begin();
 
             var pos = DrawPositionWithParentOffset;
@@ -112,6 +130,12 @@ namespace EndlessClient.HUD.Panels
             DrawSideButtons(pos);
 
             _spriteBatch.End();
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            // No-op: this panel has InventoryPanelItem child controls that draw in render-target,
+            // so the background must also be drawn there (in OnDrawControl) to avoid covering them.
         }
 
         private void DrawInventoryGrid(Vector2 pos)
@@ -176,6 +200,63 @@ namespace EndlessClient.HUD.Panels
 
             // Button 4: Junk (X)
             var btn4Rect = new Rectangle(buttonX, (int)pos.Y + 84, buttonWidth, 28);
+            DrawStyledButton(btn4Rect, "X", new Color(140, 60, 60));
+        }
+
+        private void DrawInventoryGridScaled(Vector2 pos, float scale)
+        {
+            var gridColor = new Color(80, 70, 60, 150);
+
+            var gridStartX = 4;
+            var gridStartY = 4;
+            var gridEndX = SlotsStartX + InventoryRowSlots * SlotWidth;
+            var gridEndY = SlotsStartY + InventoryRows * SlotHeight;
+
+            // Draw vertical grid lines
+            for (int col = 0; col <= InventoryRowSlots; col++)
+            {
+                var x = (int)(pos.X + (SlotsStartX + col * SlotWidth) * scale);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch,
+                    new Rectangle(x, (int)(pos.Y + gridStartY * scale), 1, (int)((gridEndY - gridStartY) * scale)),
+                    gridColor);
+            }
+
+            // Draw horizontal grid lines
+            for (int row = 0; row <= InventoryRows; row++)
+            {
+                var y = (int)(pos.Y + (SlotsStartY + row * SlotHeight) * scale);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch,
+                    new Rectangle((int)(pos.X + gridStartX * scale), y, (int)((gridEndX - gridStartX) * scale), 1),
+                    gridColor);
+            }
+
+            // Draw left edge line and top edge line to close the gap
+            DrawingPrimitives.DrawFilledRect(_spriteBatch,
+                new Rectangle((int)(pos.X + gridStartX * scale), (int)(pos.Y + gridStartY * scale),
+                    1, (int)((gridEndY - gridStartY) * scale)),
+                gridColor);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch,
+                new Rectangle((int)(pos.X + gridStartX * scale), (int)(pos.Y + gridStartY * scale),
+                    (int)((gridEndX - gridStartX) * scale), 1),
+                gridColor);
+        }
+
+        private void DrawSideButtonsScaled(Vector2 pos, float scale)
+        {
+            var buttonX = (int)(pos.X + 451 * scale);
+            var buttonWidth = (int)(25 * scale);
+            var buttonHeight = (int)(26 * scale);
+
+            var btn1Rect = new Rectangle(buttonX, (int)(pos.Y + 5 * scale), buttonWidth, buttonHeight);
+            DrawStyledButton(btn1Rect, "1", _styleProvider.ButtonNormal);
+
+            var btn2Rect = new Rectangle(buttonX, (int)(pos.Y + 32 * scale), buttonWidth, (int)(27 * scale));
+            DrawStyledButton(btn2Rect, "2", _styleProvider.ButtonNormal);
+
+            var btn3Rect = new Rectangle(buttonX, (int)(pos.Y + 58 * scale), buttonWidth, buttonHeight);
+            DrawStyledButton(btn3Rect, "v", new Color(80, 140, 80));
+
+            var btn4Rect = new Rectangle(buttonX, (int)(pos.Y + 84 * scale), buttonWidth, (int)(28 * scale));
             DrawStyledButton(btn4Rect, "X", new Color(140, 60, 60));
         }
 

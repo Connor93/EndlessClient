@@ -79,7 +79,7 @@ namespace EndlessClient.HUD.Panels
             BackgroundImage = null;
 
             // Update draw area to include button
-            DrawArea = new Rectangle(102, 330, PanelWidth, PanelHeight);
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
         }
 
         public override void Initialize()

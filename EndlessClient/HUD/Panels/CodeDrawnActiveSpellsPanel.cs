@@ -80,6 +80,7 @@ namespace EndlessClient.HUD.Panels
 
             // Clear the GFX background image - we'll draw our own
             BackgroundImage = null;
+            DrawArea = new Rectangle(102, 212, PanelWidth, PanelHeight);
         }
 
         public override void Initialize()
@@ -101,16 +102,10 @@ namespace EndlessClient.HUD.Panels
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (SkipRenderTargetDraw)
-            {
-                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
-                // so each panel draws fills + text together for correct z-ordering
-            }
-            else
-            {
-                // In normal mode: draw everything in one pass
-                DrawPanelComplete();
-            }
+            // Always draw background in render-target phase because base class creates
+            // SpellPanelItem child controls that can only draw in render-target.
+            // DrawPostScale cannot be used for the background as it would cover the children.
+            DrawPanelComplete();
 
             // Let base class draw the spell icons, labels, and buttons
             base.OnDrawControl(gameTime);
@@ -118,17 +113,9 @@ namespace EndlessClient.HUD.Panels
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            if (!Visible)
-                return;
-
-            var gamePos = DrawPositionWithParentOffset;
-            var scaledPos = new Vector2(
-                gamePos.X * scaleFactor + renderOffset.X,
-                gamePos.Y * scaleFactor + renderOffset.Y);
-
-            // Draw fills first, then text/borders - each panel complete before next
-            DrawPanelFillsScaled(scaledPos, scaleFactor);
-            DrawPanelBordersAndText(scaleFactor, renderOffset);
+            // No-op: this panel has SpellPanelItem child controls that draw in render-target,
+            // so the background must also be drawn there (in OnDrawControl) to avoid covering them.
+            // Z-ordering via IZOrderedWindow still works for PostScaleDrawOrder sorting.
         }
 
         private void DrawPanelFillsScaled(Vector2 pos, float scale)
