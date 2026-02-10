@@ -99,6 +99,15 @@ namespace EndlessClient.HUD.Toast
             AddToast(message, ToastType.Action);
         }
 
+        public void NotifyGuildBounty(string playerName, string bountyName, int guildPoints)
+        {
+            if (!_clientWindowSizeProvider.Resizable)
+                return;
+
+            var message = $"\u2694 {playerName} completed {bountyName}! +{guildPoints} GP";
+            AddToast(message, ToastType.Guild);
+        }
+
         #endregion
 
         private void AddToast(string message, ToastType type)
@@ -231,6 +240,10 @@ namespace EndlessClient.HUD.Toast
                 case ToastType.Action:
                     bgColor = _styleProvider.ToastActionBackground;
                     borderColor = _styleProvider.ToastActionBorder;
+                    break;
+                case ToastType.Guild:
+                    bgColor = _styleProvider.ToastGuildBackground;
+                    borderColor = _styleProvider.ToastGuildBorder;
                     break;
                 default:
                     bgColor = _styleProvider.ToastInfoBackground;

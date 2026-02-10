@@ -13,7 +13,9 @@ namespace EndlessClient.HUD.Toast
         /// <summary>Warnings, errors, can't do that messages</summary>
         Warning,
         /// <summary>Actions taken - XP gained, items picked up, panels switched</summary>
-        Action
+        Action,
+        /// <summary>Guild events - bounty completions, level ups</summary>
+        Guild
     }
 
     /// <summary>

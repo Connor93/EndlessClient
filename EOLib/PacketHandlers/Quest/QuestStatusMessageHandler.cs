@@ -30,6 +30,21 @@ namespace EOLib.PacketHandlers.Quest
 
         public override bool HandlePacket(MessageOpenServerPacket packet)
         {
+            const string bountyPrefix = "[BOUNTY]";
+
+            if (packet.Message.StartsWith(bountyPrefix))
+            {
+                // Parse: [BOUNTY]PlayerName|BountyName|GuildPoints
+                var payload = packet.Message.Substring(bountyPrefix.Length);
+                var parts = payload.Split('|');
+                if (parts.Length >= 3 && int.TryParse(parts[2], out var guildPoints))
+                {
+                    foreach (var notifier in _statusLabelNotifiers)
+                        notifier.NotifyGuildBounty(parts[0], parts[1], guildPoints);
+                }
+                return true;
+            }
+
             foreach (var notifier in _statusLabelNotifiers)
                 notifier.ShowWarning(packet.Message);
 

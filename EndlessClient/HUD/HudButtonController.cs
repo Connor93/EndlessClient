@@ -170,6 +170,15 @@ namespace EndlessClient.HUD
             }
         }
 
+        public void ClickGuildInfo()
+        {
+            if (_hudControlProvider.IsInGame)
+            {
+                var window = _hudControlProvider.GetComponent<CodeDrawnGuildInfoWindow>(Controls.HudControlIdentifier.GuildInfoWindow);
+                window.Toggle();
+            }
+        }
+
         public void ClickPaperdoll()
         {
             _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);

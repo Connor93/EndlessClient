@@ -49,5 +49,7 @@ namespace EndlessClient.UI.Styles
         Color ToastWarningBorder { get; }
         Color ToastActionBackground { get; }
         Color ToastActionBorder { get; }
+        Color ToastGuildBackground { get; }
+        Color ToastGuildBorder { get; }
     }
 }

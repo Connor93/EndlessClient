@@ -238,6 +238,8 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.QuestWindow, CreateQuestWindow()},
                 {HudControlIdentifier.BountyTrackerButton, CreateBountyTrackerButton()},
                 {HudControlIdentifier.BountyTrackerWindow, CreateBountyTrackerWindow()},
+                {HudControlIdentifier.GuildInfoButton, CreateGuildInfoButton()},
+                {HudControlIdentifier.GuildInfoWindow, CreateGuildInfoWindow()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
@@ -639,6 +641,43 @@ namespace EndlessClient.HUD.Controls
                 _questActions)
             {
                 DrawOrder = HUD_CONTROL_LAYER + 26
+            };
+
+            _windowZOrderManager.Register(window);
+            window.Activated += () => _windowZOrderManager.BringToFront(window);
+
+            return window;
+        }
+
+        private IGameComponent CreateGuildInfoButton()
+        {
+            var btn = new UI.Controls.CodeDrawnHudButton(
+                _styleProvider,
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
+                _clientWindowSizeRepository)
+            {
+                Text = "G",
+                DrawArea = new Rectangle(121, 0, 22, 14),
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = _configurationProvider.UIMode == UIMode.Code
+            };
+            btn.OnClick += (_, _) => _hudButtonController.ClickGuildInfo();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+            return btn;
+        }
+
+        private IGameComponent CreateGuildInfoWindow()
+        {
+            var window = new Windows.CodeDrawnGuildInfoWindow(
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository,
+                _bountyDataProvider,
+                _questActions)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 27
             };
 
             _windowZOrderManager.Register(window);

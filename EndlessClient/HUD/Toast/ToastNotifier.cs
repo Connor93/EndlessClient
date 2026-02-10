@@ -50,6 +50,14 @@ namespace EndlessClient.HUD.Toast
             GetToastManager()?.NotifyNPCDrop(playerName, itemName, amount);
         }
 
+        public void NotifyGuildBounty(string playerName, string bountyName, int guildPoints)
+        {
+            if (!_hudControlProvider.IsInGame)
+                return;
+
+            GetToastManager()?.NotifyGuildBounty(playerName, bountyName, guildPoints);
+        }
+
         private CodeDrawnToastManager GetToastManager()
         {
             try

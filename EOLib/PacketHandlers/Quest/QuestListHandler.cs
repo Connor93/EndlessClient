@@ -36,7 +36,7 @@ namespace EOLib.PacketHandlers.Quest
                         .QuestProgressEntries;
 
                     _questDataRepository.QuestProgress = allEntries
-                        .Where(x => x.Description != "BOUNTY")
+                        .Where(x => x.Description != "BOUNTY" && x.Description != "GUILDINFO")
                         .Select(x => new QuestProgressData.Builder
                         {
                             Name = x.Name,
@@ -57,6 +57,26 @@ namespace EOLib.PacketHandlers.Quest
                             Status = x.Progress >= x.Target ? BountyStatus.Complete : BountyStatus.InProgress,
                         }.ToImmutable())
                         .ToList();
+
+                    var guildInfoEntry = allEntries.FirstOrDefault(x => x.Description == "GUILDINFO");
+                    if (guildInfoEntry != null)
+                    {
+                        var parts = guildInfoEntry.Name.Split('|');
+                        if (parts.Length >= 7)
+                        {
+                            _bountyDataRepository.GuildInfo = new GuildInfoData.Builder
+                            {
+                                GuildName = parts[0],
+                                GuildTag = parts[1],
+                                Level = int.TryParse(parts[2], out var lv) ? lv : 0,
+                                Exp = int.TryParse(parts[3], out var exp) ? exp : 0,
+                                ExpToNext = int.TryParse(parts[4], out var next) ? next : 0,
+                                Points = int.TryParse(parts[5], out var pts) ? pts : 0,
+                                Contribution = int.TryParse(parts[6], out var cont) ? cont : 0,
+                                ActiveBuffs = parts.Length >= 8 ? parts[7] : string.Empty,
+                            }.ToImmutable();
+                        }
+                    }
                     break;
                 case QuestPage.History:
                     _questDataRepository.QuestHistory = ((QuestListServerPacket.PageDataHistory)packet.PageData).CompletedQuests;

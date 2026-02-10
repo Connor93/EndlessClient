@@ -40,6 +40,8 @@
 
         void ClickBountyTracker();
 
+        void ClickGuildInfo();
+
         void ClickPaperdoll();
     }
 }

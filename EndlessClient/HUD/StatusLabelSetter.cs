@@ -1,5 +1,6 @@
 using System;
 using AutomaticTypeMapper;
+using EndlessClient.HUD.Toast;
 using EOLib.Domain.Chat;
 using EOLib.Localization;
 
@@ -11,14 +12,17 @@ namespace EndlessClient.HUD
         private readonly IStatusLabelTextRepository _statusLabelTextRepository;
         private readonly IChatRepository _chatRepository;
         private readonly ILocalizedStringFinder _localizedStringFinder;
+        private readonly IToastNotifier _toastNotifier;
 
         public StatusLabelSetter(IStatusLabelTextRepository statusLabelTextRepository,
                                  IChatRepository chatRepository,
-                                 ILocalizedStringFinder localizedStringFinder)
+                                 ILocalizedStringFinder localizedStringFinder,
+                                 IToastNotifier toastNotifier)
         {
             _statusLabelTextRepository = statusLabelTextRepository;
             _chatRepository = chatRepository;
             _localizedStringFinder = localizedStringFinder;
+            _toastNotifier = toastNotifier;
         }
 
         public void SetStatusLabel(EOResourceID type, EOResourceID text, string appended = "", bool showChatError = false)
@@ -55,6 +59,11 @@ namespace EndlessClient.HUD
         public void ShowWarning(string message)
         {
             SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, message);
+        }
+
+        public void NotifyGuildBounty(string playerName, string bountyName, int guildPoints)
+        {
+            _toastNotifier.NotifyGuildBounty(playerName, bountyName, guildPoints);
         }
 
         private void SetStatusLabelText(string type, string text, string extra = "", bool showChatError = false)

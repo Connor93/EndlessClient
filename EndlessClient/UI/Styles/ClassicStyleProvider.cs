@@ -52,5 +52,7 @@ namespace EndlessClient.UI.Styles
         public Color ToastWarningBorder => new Color(192, 0, 0);
         public Color ToastActionBackground => new Color(240, 255, 240);
         public Color ToastActionBorder => new Color(0, 128, 0);
+        public Color ToastGuildBackground => new Color(255, 245, 220);
+        public Color ToastGuildBorder => new Color(180, 140, 30);
     }
 }

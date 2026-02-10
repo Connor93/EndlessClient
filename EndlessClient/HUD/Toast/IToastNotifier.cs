@@ -17,5 +17,8 @@ namespace EndlessClient.HUD.Toast
 
         /// <summary>Show a toast for an NPC dropping an item for the player</summary>
         void NotifyNPCDrop(string playerName, string itemName, int amount);
+
+        /// <summary>Show a toast when a guild member completes a bounty</summary>
+        void NotifyGuildBounty(string playerName, string bountyName, int guildPoints);
     }
 }
