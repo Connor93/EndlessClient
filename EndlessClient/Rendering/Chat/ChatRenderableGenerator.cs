@@ -80,11 +80,11 @@ namespace EndlessClient.Rendering.Chat
 
             var splitter = new TextSplitter("", _chatFont)
             {
-                // Note: Text wrapping is calculated with FontSize08 but may be rendered with FontSize10
-                // in scaled mode. LineLength values are reduced from original 380/425 to ensure text
-                // fits when rendered with the larger font.
-                LineLength = 310,   // Reduced from 380 for FontSize10 rendering compatibility
-                HardBreak = 350,    // Reduced from 425 for FontSize10 rendering compatibility
+                // LineLength/HardBreak should match the chat panel's message area width (489px panel,
+                // minus scrollbar and padding = ~460px usable). Using consistent font for both
+                // measurement and rendering, so no need for the old reduced values.
+                LineLength = 340,
+                HardBreak = 370,
                 Hyphen = "-",
                 LineIndent = indentForUserName
             };

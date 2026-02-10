@@ -149,7 +149,7 @@ namespace EndlessClient.HUD.Panels
 
         public NewsPanel CreateNewsPanel()
         {
-            var chatFont = _contentProvider.Fonts[Constants.FontSize08];
+            var chatFont = _contentProvider.Fonts[Constants.FontSize11];
 
             return new NewsPanel(_nativeGraphicsManager,
                                  new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
@@ -270,7 +270,7 @@ namespace EndlessClient.HUD.Panels
 
         public DraggableHudPanel CreateChatPanel()
         {
-            var chatFont = _contentProvider.Fonts[Constants.FontSize08];
+            var chatFont = _contentProvider.Fonts[Constants.FontSize11];
 
             if (_configurationProvider.UIMode == UIMode.Code)
             {
@@ -345,7 +345,7 @@ namespace EndlessClient.HUD.Panels
             }
             else
             {
-                var chatFont = _contentProvider.Fonts[Constants.FontSize08];
+                var chatFont = _contentProvider.Fonts[Constants.FontSize11];
                 return new OnlineListPanel(_nativeGraphicsManager, _hudControlProvider, _onlinePlayerProvider, _partyDataProvider, _friendIgnoreListService, _sfxPlayer, chatFont, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
             }
         }

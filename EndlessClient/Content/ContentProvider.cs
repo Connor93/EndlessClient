@@ -128,6 +128,10 @@ namespace EndlessClient.Content
             _fonts[Constants.FontSize08pt5] = _content.Load<BitmapFont>(Constants.FontSize08pt5);
             _fonts[Constants.FontSize09] = _content.Load<BitmapFont>(Constants.FontSize09);
             _fonts[Constants.FontSize10] = _content.Load<BitmapFont>(Constants.FontSize10);
+            _fonts[Constants.FontSize11] = _content.Load<BitmapFont>(Constants.FontSize11);
+            _fonts[Constants.FontSize12] = _content.Load<BitmapFont>(Constants.FontSize12);
+            _fonts[Constants.FontSize13] = _content.Load<BitmapFont>(Constants.FontSize13);
+            _fonts[Constants.FontSize14] = _content.Load<BitmapFont>(Constants.FontSize14);
         }
 
         private void LoadSFX()

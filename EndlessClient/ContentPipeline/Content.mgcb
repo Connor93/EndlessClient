@@ -99,6 +99,74 @@
 /processorParam:TextureFormat=Color
 /build:BitmapFonts/sans_13px_0.png
 
+#begin BitmapFonts/sans_14px.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:BitmapFonts/sans_14px.fnt
+
+#begin BitmapFonts/sans_14px_0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:BitmapFonts/sans_14px_0.png
+
+#begin BitmapFonts/sans_16px.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:BitmapFonts/sans_16px.fnt
+
+#begin BitmapFonts/sans_16px_0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:BitmapFonts/sans_16px_0.png
+
+#begin BitmapFonts/sans_18px.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:BitmapFonts/sans_18px.fnt
+
+#begin BitmapFonts/sans_18px_0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:BitmapFonts/sans_18px_0.png
+
+#begin BitmapFonts/sans_20px.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:BitmapFonts/sans_20px.fnt
+
+#begin BitmapFonts/sans_20px_0.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:BitmapFonts/sans_20px_0.png
+
 #begin ChatBubble/ML.png
 /importer:TextureImporter
 /processor:TextureProcessor

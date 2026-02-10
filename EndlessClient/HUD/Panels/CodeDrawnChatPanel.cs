@@ -86,8 +86,8 @@ namespace EndlessClient.HUD.Panels
             _hudControlProvider = hudControlProvider;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
-            _chatFont = contentProvider.Fonts[Constants.FontSize08];
-            _scaledChatFont = contentProvider.Fonts[Constants.FontSize10]; // Larger 13px font for scaled mode
+            _chatFont = contentProvider.Fonts[Constants.FontSize11];
+            _scaledChatFont = contentProvider.Fonts[Constants.FontSize12]; // Larger 16px font for scaled mode
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
             DrawArea = new Rectangle(102, 280, PanelWidth, PanelHeight); // Y position adjusted for taller panel
@@ -104,7 +104,7 @@ namespace EndlessClient.HUD.Panels
             // Create integrated text input box with WASD filtering
             // Position: below message area (130px + 8 buffer) + gap (4) = 146, relative to panel
             var inputY = 4 + VisibleLines * 13 + 8 + 4 + 3; // message area top + height + buffer + gap + padding inside input bar
-            _inputTextBox = new ChatInputTextBox(configurationProvider, Rectangle.Empty, Constants.FontSize08, caretTexture: contentProvider.Textures[ContentProvider.Cursor], clientWindowSizeProvider: clientWindowSizeProvider)
+            _inputTextBox = new ChatInputTextBox(configurationProvider, Rectangle.Empty, Constants.FontSize11, caretTexture: contentProvider.Textures[ContentProvider.Cursor], clientWindowSizeProvider: clientWindowSizeProvider)
             {
                 MaxChars = 140,
                 MaxWidth = PanelWidth - 40,

@@ -65,6 +65,10 @@
         public const string FontSize08pt5 = @"BitmapFonts/sans_11px_103pct";
         public const string FontSize09 = @"BitmapFonts/sans_12px";
         public const string FontSize10 = @"BitmapFonts/sans_13px";
+        public const string FontSize11 = @"BitmapFonts/sans_14px";
+        public const string FontSize12 = @"BitmapFonts/sans_16px";
+        public const string FontSize13 = @"BitmapFonts/sans_18px";
+        public const string FontSize14 = @"BitmapFonts/sans_20px";
 
         public const int OutOfBand_Packets_Handled_Per_Update = 10;
 
