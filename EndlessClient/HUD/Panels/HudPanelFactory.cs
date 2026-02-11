@@ -69,6 +69,7 @@ namespace EndlessClient.HUD.Panels
         private readonly IEODialogButtonService _dialogButtonService;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IConfigFileSaveActions _configFileSaveActions;
 
         public HudPanelFactory(INativeGraphicsManager nativeGraphicsManager,
                                IInventoryController inventoryController,
@@ -106,7 +107,8 @@ namespace EndlessClient.HUD.Panels
                                HUD.Macros.IMacroSlotDataRepository macroSlotDataRepository,
                                IEODialogButtonService dialogButtonService,
                                IUIStyleProvider styleProvider,
-                               IGraphicsDeviceProvider graphicsDeviceProvider)
+                               IGraphicsDeviceProvider graphicsDeviceProvider,
+                               IConfigFileSaveActions configFileSaveActions)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _inventoryController = inventoryController;
@@ -145,6 +147,7 @@ namespace EndlessClient.HUD.Panels
             _dialogButtonService = dialogButtonService;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _configFileSaveActions = configFileSaveActions;
         }
 
         public NewsPanel CreateNewsPanel()
@@ -383,7 +386,8 @@ namespace EndlessClient.HUD.Panels
                     _styleProvider,
                     _graphicsDeviceProvider,
                     _contentProvider,
-                    _clientWindowSizeProvider)
+                    _clientWindowSizeProvider,
+                    _configFileSaveActions)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else

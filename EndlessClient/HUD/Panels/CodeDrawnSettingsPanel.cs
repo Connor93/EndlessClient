@@ -56,6 +56,7 @@ namespace EndlessClient.HUD.Panels
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IConfigFileSaveActions _configFileSaveActions;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
         private readonly BitmapFont _scaledFont;
@@ -84,7 +85,8 @@ namespace EndlessClient.HUD.Panels
                                       IUIStyleProvider styleProvider,
                                       IGraphicsDeviceProvider graphicsDeviceProvider,
                                       IContentProvider contentProvider,
-                                      IClientWindowSizeProvider clientWindowSizeProvider)
+                                      IClientWindowSizeProvider clientWindowSizeProvider,
+                                      IConfigFileSaveActions configFileSaveActions)
             : base(clientWindowSizeProvider)
         {
             _chatActions = chatActions;
@@ -96,6 +98,7 @@ namespace EndlessClient.HUD.Panels
             _sfxPlayer = sfxPlayer;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _configFileSaveActions = configFileSaveActions;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
             _scaledFont = contentProvider.Fonts[Constants.FontSize10];
@@ -452,6 +455,7 @@ namespace EndlessClient.HUD.Panels
             }
 
             UpdateDisplayText();
+            _configFileSaveActions.SaveConfigFile();
         }
 
         private void UpdateDisplayText()
