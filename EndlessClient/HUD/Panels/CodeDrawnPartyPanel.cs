@@ -44,6 +44,7 @@ namespace EndlessClient.HUD.Panels
         private HashSet<PartyMember> _cachedParty;
         private readonly Dictionary<int, Rectangle> _removeButtonRects;
         private Rectangle _leaveButtonRect;
+        private Rectangle _panelScreenRect;
         private bool _wasMouseDown;
 
         public CodeDrawnPartyPanel(IPartyActions partyActions,
@@ -90,14 +91,13 @@ namespace EndlessClient.HUD.Panels
                 DrawArea = new Rectangle(DrawArea.X, DrawArea.Y, PanelWidth, panelHeight);
             }
 
-            // Handle button clicks
+            // Handle button clicks - use screen coordinates since buttons are drawn in post-scale
             var mouseState = Mouse.GetState();
             var mousePos = new Point(mouseState.X, mouseState.Y);
             var isMouseDown = mouseState.LeftButton == ButtonState.Pressed;
 
             // Fire Activated when mouse is pressed inside panel to trigger z-order update
-            var panelRect = new Rectangle(DrawArea.X, DrawArea.Y, PanelWidth, DrawArea.Height);
-            if (isMouseDown && !_wasMouseDown && panelRect.Contains(mousePos))
+            if (isMouseDown && !_wasMouseDown && _panelScreenRect.Contains(mousePos))
             {
                 OnActivated();
             }
@@ -187,6 +187,8 @@ namespace EndlessClient.HUD.Panels
             // Leave button fill
             var scaledBtnSize = (int)(RemoveButtonSize * scale);
             var leaveRect = new Rectangle((int)pos.X + scaledWidth - scaledBtnSize - (int)(4 * scale), (int)pos.Y + (int)(3 * scale), scaledBtnSize, scaledBtnSize);
+            _leaveButtonRect = leaveRect;
+            _panelScreenRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, panelHeight);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, leaveRect, new Color(180, 60, 60));
 
             // Member row fills and health bar backgrounds
@@ -204,6 +206,7 @@ namespace EndlessClient.HUD.Panels
                 {
                     var removeRect = new Rectangle((int)pos.X + scaledWidth - scaledBtnSize - (int)(8 * scale), rowY + (int)(2 * scale), scaledBtnSize, scaledBtnSize);
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, removeRect, new Color(140, 50, 50));
+                    _removeButtonRects[member.CharacterID] = removeRect;
                 }
 
                 // Health bar background
@@ -212,7 +215,7 @@ namespace EndlessClient.HUD.Panels
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, new Color(40, 40, 40, 200));
 
                 // Health bar foreground
-                var healthPercent = member.PercentHealth;
+                var healthPercent = member.PercentHealth / 100f;
                 var healthColor = healthPercent > 0.5f ? new Color(60, 180, 60) : healthPercent > 0.25f ? new Color(200, 180, 60) : new Color(200, 60, 60);
                 var healthWidth = (int)((healthBarRect.Width - 4) * healthPercent);
                 var healthFillRect = new Rectangle(healthBarRect.X + 2, healthBarRect.Y + 2, healthWidth, healthBarRect.Height - 4);

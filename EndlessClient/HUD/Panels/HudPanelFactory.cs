@@ -338,6 +338,7 @@ namespace EndlessClient.HUD.Panels
                     _onlinePlayerProvider,
                     _onlinePlayerActions,
                     _partyDataProvider,
+                    _characterProvider,
                     _friendIgnoreListService,
                     _sfxPlayer,
                     _styleProvider,

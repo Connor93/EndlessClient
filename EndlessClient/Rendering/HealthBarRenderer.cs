@@ -20,6 +20,7 @@ namespace EndlessClient.Rendering
 
         private readonly SpriteBatch _spriteBatch;
         private readonly Texture2D _sourceTexture;
+        private Texture2D _pixelTexture;
 
         private static readonly Point _numberSpritesOffset, _healthBarSpritesOffset;
         private static readonly Rectangle _healthBarBackgroundSource;
@@ -60,6 +61,9 @@ namespace EndlessClient.Rendering
 
         public override void Initialize()
         {
+            _pixelTexture = new Texture2D(Game.GraphicsDevice, 1, 1);
+            _pixelTexture.SetData(new[] { Color.White });
+
             base.Initialize();
         }
 
@@ -150,6 +154,28 @@ namespace EndlessClient.Rendering
         {
             _spriteBatch.Begin();
 
+            // Draw a dark semi-transparent backdrop behind the health bar for visibility against any background
+            var backdropPadding = 2;
+            var healthBarBackdrop = new Rectangle(
+                (int)_healthBarPosition.X - backdropPadding,
+                (int)_healthBarPosition.Y - backdropPadding,
+                _healthBarBackgroundSource.Width + backdropPadding * 2,
+                _healthBarBackgroundSource.Height + backdropPadding * 2);
+            _spriteBatch.Draw(_pixelTexture, healthBarBackdrop, new Color(0, 0, 0, 140));
+
+            // Draw backdrop behind damage/heal numbers
+            if (_numberSourceRectangles.Count > 0)
+            {
+                var numberWidth = _isMiss ? _numberSourceRectangles[0].Width : _numberSourceRectangles.Count * DigitWidth;
+                var numberHeight = _numberSourceRectangles[0].Height;
+                var numberBackdrop = new Rectangle(
+                    (int)_damageCounterPosition.X - backdropPadding,
+                    (int)_damageCounterPosition.Y - backdropPadding,
+                    numberWidth + backdropPadding * 2,
+                    numberHeight + backdropPadding * 2);
+                _spriteBatch.Draw(_pixelTexture, numberBackdrop, new Color(0, 0, 0, 140));
+            }
+
             var numberNdx = 0;
             foreach (var numberSource in _numberSourceRectangles)
             {
@@ -168,6 +194,7 @@ namespace EndlessClient.Rendering
             if (disposing)
             {
                 _spriteBatch.Dispose();
+                _pixelTexture?.Dispose();
             }
 
             base.Dispose(disposing);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EOLib.Domain.Character;
 using EndlessClient.Audio;
 using EndlessClient.Content;
 using EndlessClient.ControlSets;
@@ -29,12 +30,13 @@ namespace EndlessClient.HUD.Panels
     /// </summary>
     public class CodeDrawnOnlineListPanel : CodeDrawnHudPanelBase
     {
-        private enum Filter { All, Friends, Admins, Party, Max }
+        private enum Filter { All, Friends, Admins, Party, Guild, Max }
 
         private readonly IHudControlProvider _hudControlProvider;
         private readonly IOnlinePlayerProvider _onlinePlayerProvider;
         private readonly IOnlinePlayerActions _onlinePlayerActions;
         private readonly IPartyDataProvider _partyDataProvider;
+        private readonly ICharacterProvider _characterProvider;
         private readonly IFriendIgnoreListService _friendIgnoreListService;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUIStyleProvider _styleProvider;
@@ -75,6 +77,7 @@ namespace EndlessClient.HUD.Panels
                                         IOnlinePlayerProvider onlinePlayerProvider,
                                         IOnlinePlayerActions onlinePlayerActions,
                                         IPartyDataProvider partyDataProvider,
+                                        ICharacterProvider characterProvider,
                                         IFriendIgnoreListService friendIgnoreListService,
                                         ISfxPlayer sfxPlayer,
                                         IUIStyleProvider styleProvider,
@@ -87,6 +90,7 @@ namespace EndlessClient.HUD.Panels
             _onlinePlayerProvider = onlinePlayerProvider;
             _onlinePlayerActions = onlinePlayerActions;
             _partyDataProvider = partyDataProvider;
+            _characterProvider = characterProvider;
             _friendIgnoreListService = friendIgnoreListService;
             _sfxPlayer = sfxPlayer;
             _styleProvider = styleProvider;
@@ -483,6 +487,12 @@ namespace EndlessClient.HUD.Panels
                     break;
                 case Filter.Party:
                     _filteredList = _onlineList.Where(x => _partyDataProvider.Members.Any(y => string.Equals(y.Name, x.Name, StringComparison.InvariantCultureIgnoreCase))).ToList();
+                    break;
+                case Filter.Guild:
+                    var myGuild = _characterProvider.MainCharacter.GuildName;
+                    _filteredList = !string.IsNullOrWhiteSpace(myGuild)
+                        ? _onlineList.Where(x => string.Equals(x.Guild, myGuild, StringComparison.InvariantCultureIgnoreCase)).ToList()
+                        : new List<OnlinePlayerInfo>();
                     break;
                 case Filter.All:
                 default:
