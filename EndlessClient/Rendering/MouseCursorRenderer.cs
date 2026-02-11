@@ -168,9 +168,19 @@ namespace EndlessClient.Rendering
 
             if (_mapItemText.Visible)
             {
-                //relative to cursor DrawPosition, since this control is a parent of MapItemText
-                _mapItemText.DrawPosition = new Vector2(DrawArea.X + 32 - _mapItemText.ActualWidth / 2f,
-                                                        DrawArea.Y + -_mapItemText.ActualHeight - 4);
+                var labelX = DrawArea.X + 32 - _mapItemText.ActualWidth / 2f;
+                var labelY = DrawArea.Y - _mapItemText.ActualHeight - 4;
+
+                var zoom = _configurationProvider.MapZoom;
+                if (zoom != 1.0f)
+                {
+                    var centerX = _clientWindowSizeProvider.Width / 2f;
+                    var centerY = _clientWindowSizeProvider.Height / 2f;
+                    labelX = (DrawArea.X + 32 - centerX) * zoom + centerX - _mapItemText.ActualWidth / 2f;
+                    labelY = (DrawArea.Y - _mapItemText.ActualHeight - 4 - centerY) * zoom + centerY;
+                }
+
+                _mapItemText.DrawPosition = new Vector2(labelX, labelY);
             }
 
             _startClickTime.MatchSome(st =>
