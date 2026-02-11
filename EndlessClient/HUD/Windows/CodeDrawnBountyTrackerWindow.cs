@@ -34,7 +34,7 @@ namespace EndlessClient.HUD.Windows
         private readonly BitmapFont _labelFont;
         private readonly BitmapFont _scaledFont;
 
-        private const int TrackerWidth = 180;
+        private const int TrackerWidth = 280;
         private const int HeaderHeight = 18;
         private const int RowHeight = 14;
         private const int Padding = 4;
@@ -246,10 +246,9 @@ namespace EndlessClient.HUD.Windows
                 var bounty = _bounties[i];
                 var y = startY + i * RowHeight;
 
-                // Bounty name (truncated if needed)
+                // Bounty name
                 var nameColor = bounty.Status == BountyStatus.Complete ? new Color(100, 200, 100) : _styleProvider.TextPrimary;
-                var name = bounty.Name.Length > 18 ? bounty.Name.Substring(0, 15) + "..." : bounty.Name;
-                _spriteBatch.DrawString(_font, name, new Vector2(pos.X + Padding, y), nameColor);
+                _spriteBatch.DrawString(_font, bounty.Name, new Vector2(pos.X + Padding, y), nameColor);
 
                 // Progress
                 var progressText = bounty.Status == BountyStatus.Complete
@@ -276,10 +275,9 @@ namespace EndlessClient.HUD.Windows
                 var bounty = _bounties[i];
                 var y = startY + i * RowHeight * scale;
 
-                // Bounty name (truncated if needed)
+                // Bounty name
                 var nameColor = bounty.Status == BountyStatus.Complete ? new Color(100, 200, 100) : _styleProvider.TextPrimary;
-                var name = bounty.Name.Length > 18 ? bounty.Name.Substring(0, 15) + "..." : bounty.Name;
-                _spriteBatch.DrawString(font, name, new Vector2(scaledPos.X + Padding * scale, y), nameColor);
+                _spriteBatch.DrawString(font, bounty.Name, new Vector2(scaledPos.X + Padding * scale, y), nameColor);
 
                 // Progress
                 var progressText = bounty.Status == BountyStatus.Complete

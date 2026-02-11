@@ -3,7 +3,9 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
+using EndlessClient.Rendering;
 using EndlessClient.Rendering.Factories;
+using EndlessClient.UI.Styles;
 using EndlessClient.UIControls;
 using EOLib.Graphics;
 
@@ -12,45 +14,49 @@ namespace EndlessClient.Dialogs.Factories
     [MappedType(BaseType = typeof(ICreateCharacterDialogFactory))]
     public class CreateCharacterDialogFactory : ICreateCharacterDialogFactory
     {
-        private readonly INativeGraphicsManager _nativeGraphicsManager;
+        private readonly IUIStyleProvider _styleProvider;
         private readonly IGameStateProvider _gameStateProvider;
         private readonly ICharacterRendererFactory _characterRendererFactory;
         private readonly IContentProvider _contentProvider;
         private readonly IEOMessageBoxFactory _eoMessageBoxFactory;
-        private readonly IEODialogButtonService _dialogButtonService;
         private readonly IXnaControlSoundMapper _xnaControlSoundMapper;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
-        public CreateCharacterDialogFactory(INativeGraphicsManager nativeGraphicsManager,
+        public CreateCharacterDialogFactory(IUIStyleProvider styleProvider,
                                             IGameStateProvider gameStateProvider,
                                             ICharacterRendererFactory characterRendererFactory,
                                             IContentProvider contentProvider,
                                             IEOMessageBoxFactory eoMessageBoxFactory,
-                                            IEODialogButtonService dialogButtonService,
-                                            IXnaControlSoundMapper xnaControlSoundMapper)
+                                            IXnaControlSoundMapper xnaControlSoundMapper,
+                                            IClientWindowSizeProvider clientWindowSizeProvider,
+                                            IGraphicsDeviceProvider graphicsDeviceProvider)
         {
-            _nativeGraphicsManager = nativeGraphicsManager;
+            _styleProvider = styleProvider;
             _gameStateProvider = gameStateProvider;
             _characterRendererFactory = characterRendererFactory;
             _contentProvider = contentProvider;
             _eoMessageBoxFactory = eoMessageBoxFactory;
-            _dialogButtonService = dialogButtonService;
             _xnaControlSoundMapper = xnaControlSoundMapper;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
-        public CreateCharacterDialog BuildCreateCharacterDialog()
+        public CodeDrawnCreateCharacterDialog BuildCreateCharacterDialog()
         {
-            return new CreateCharacterDialog(_nativeGraphicsManager,
-                                             _gameStateProvider,
-                                             _characterRendererFactory,
-                                             _contentProvider,
-                                             _eoMessageBoxFactory,
-                                             _dialogButtonService,
-                                             _xnaControlSoundMapper);
+            return new CodeDrawnCreateCharacterDialog(_styleProvider,
+                                                      _gameStateProvider,
+                                                      _characterRendererFactory,
+                                                      _contentProvider,
+                                                      _eoMessageBoxFactory,
+                                                      _xnaControlSoundMapper,
+                                                      _clientWindowSizeProvider,
+                                                      _graphicsDeviceProvider);
         }
     }
 
     public interface ICreateCharacterDialogFactory
     {
-        CreateCharacterDialog BuildCreateCharacterDialog();
+        CodeDrawnCreateCharacterDialog BuildCreateCharacterDialog();
     }
 }

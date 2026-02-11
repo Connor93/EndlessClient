@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
 using EndlessClient.Content;
@@ -391,14 +392,15 @@ namespace EndlessClient.GameExecution
             var postScaleDrawables = new List<IPostScaleDrawable>();
 
             // Collect from Game.Components (non-IXNAControl game components)
-            foreach (var component in Components)
+            // Snapshot with ToList() to avoid collection-modified exceptions when dialogs close during draw
+            foreach (var component in Components.ToList())
             {
                 CollectPostScaleDrawables(component, postScaleDrawables, seen);
             }
 
             // Also collect from control set's AllComponents, which includes IXNAControl instances
             // that are excluded from Game.Components by GameStateActions.AddNewComponents
-            foreach (var component in _controlSetRepository.CurrentControlSet.AllComponents)
+            foreach (var component in _controlSetRepository.CurrentControlSet.AllComponents.ToList())
             {
                 CollectPostScaleDrawables(component, postScaleDrawables, seen);
             }

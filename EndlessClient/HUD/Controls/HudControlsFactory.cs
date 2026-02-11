@@ -214,7 +214,6 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.PartyButton, CreateStateChangeButton(InGameStates.Party)},
                 {HudControlIdentifier.MacroButton, CreateStateChangeButton(InGameStates.Macro)},
                 {HudControlIdentifier.SettingsButton, CreateStateChangeButton(InGameStates.Settings)},
-                {HudControlIdentifier.HelpButton, CreateStateChangeButton(InGameStates.Help)},
 
                 {HudControlIdentifier.FriendList, CreateFriendListButton()},
                 {HudControlIdentifier.IgnoreList, CreateIgnoreListButton()},
@@ -229,7 +228,6 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.PartyPanel, CreateStatePanel(InGameStates.Party)},
                 {HudControlIdentifier.MacroPanel, CreateStatePanel(InGameStates.Macro)},
                 {HudControlIdentifier.SettingsPanel, CreateStatePanel(InGameStates.Settings)},
-                {HudControlIdentifier.HelpPanel, CreateStatePanel(InGameStates.Help)},
 
                 {HudControlIdentifier.ExpTrackerButton, CreateExpTrackerButton()},
                 {HudControlIdentifier.QuestWindowButton, CreateQuestWindowButton()},
