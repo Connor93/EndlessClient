@@ -172,8 +172,11 @@ namespace EndlessClient.Rendering.NPC
                 var currentFrame = _npcSpriteSheet.GetNPCTexture(_enfFileProvider.ENFFile[NPC.ID].Graphic, NPC.Frame, NPC.Direction);
 
                 var adjustedPos = currentMousePosition - DrawArea.Location;
+                if (adjustedPos.X < 0 || adjustedPos.Y < 0 || adjustedPos.X >= currentFrame.Width || adjustedPos.Y >= currentFrame.Height)
+                    return false;
+
                 var index = adjustedPos.Y * currentFrame.Width + adjustedPos.X;
-                return index < cachedTexture.Length && cachedTexture[index].A > 0;
+                return index >= 0 && index < cachedTexture.Length && cachedTexture[index].A > 0;
             }
 
             return true;
