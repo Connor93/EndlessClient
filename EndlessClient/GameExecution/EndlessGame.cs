@@ -133,8 +133,21 @@ namespace EndlessClient.GameExecution
             // setting Width/Height in window size repository applies the change to disable vsync
             _graphicsDeviceManager.SynchronizeWithVerticalRetrace = false;
             _graphicsDeviceManager.IsFullScreen = false;
-            _windowSizeRepository.Width = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
-            _windowSizeRepository.Height = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+
+            if (_configurationProvider.ScaledClient && _configurationProvider.InGameWidth > 0 && _configurationProvider.InGameHeight > 0)
+            {
+                // In scaled mode, set the window to the configured dimensions directly
+                // Width/Height setters go through ApplyChanges but their getters return game coordinates,
+                // so we set the backbuffer dimensions directly here
+                _graphicsDeviceManager.PreferredBackBufferWidth = _configurationProvider.InGameWidth;
+                _graphicsDeviceManager.PreferredBackBufferHeight = _configurationProvider.InGameHeight;
+                _graphicsDeviceManager.ApplyChanges();
+            }
+            else
+            {
+                _windowSizeRepository.Width = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
+                _windowSizeRepository.Height = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+            }
 
             _windowSizeRepository.GameWindowSizeChanged += (_, _) =>
             {
@@ -151,7 +164,6 @@ namespace EndlessClient.GameExecution
                     var newHeight = _windowSizeRepository.GameHeight;
                     if (_gameRenderTarget.Width != newWidth || _gameRenderTarget.Height != newHeight)
                     {
-                        System.Console.WriteLine($"[SCALED MODE] Recreating render target: {_gameRenderTarget.Width}x{_gameRenderTarget.Height} -> {newWidth}x{newHeight}");
                         _gameRenderTarget.Dispose();
                         _gameRenderTarget = new Microsoft.Xna.Framework.Graphics.RenderTarget2D(
                             GraphicsDevice,
@@ -198,18 +210,25 @@ namespace EndlessClient.GameExecution
                 // Enable window resizing for scaling
                 Window.AllowUserResizing = true;
 
-                // Start at 640x480 for pre-login screens (IsInGame is false)
-                // Game dimensions will switch when player enters the game world
-                var startWidth = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
-                var startHeight = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+                // Set the window/backbuffer to the configured dimensions
+                // The render target stays at 640x480 for title screen content
+                // and the scaling logic will upscale it to fill the larger window
+                var windowWidth = _configurationProvider.InGameWidth > 0
+                    ? _configurationProvider.InGameWidth
+                    : ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
+                var windowHeight = _configurationProvider.InGameHeight > 0
+                    ? _configurationProvider.InGameHeight
+                    : ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
 
-                System.Console.WriteLine($"[SCALED MODE] Config InGameWidth={_configurationProvider.InGameWidth}, InGameHeight={_configurationProvider.InGameHeight}");
-                System.Console.WriteLine($"[SCALED MODE] Starting at {startWidth}x{startHeight} (pre-login)");
+                _graphicsDeviceRepository.GraphicsDeviceManager.PreferredBackBufferWidth = windowWidth;
+                _graphicsDeviceRepository.GraphicsDeviceManager.PreferredBackBufferHeight = windowHeight;
+                _graphicsDeviceRepository.GraphicsDeviceManager.ApplyChanges();
+
 
                 _gameRenderTarget = new RenderTarget2D(
                     GraphicsDevice,
-                    startWidth,
-                    startHeight,
+                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH,
+                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT,
                     false,
                     SurfaceFormat.Color,
                     DepthFormat.None);
@@ -286,7 +305,6 @@ namespace EndlessClient.GameExecution
                 var targetHeight = _windowSizeRepository.GameHeight;
                 if (_gameRenderTarget.Width != targetWidth || _gameRenderTarget.Height != targetHeight)
                 {
-                    System.Console.WriteLine($"[DRAW] Resizing render target: {_gameRenderTarget.Width}x{_gameRenderTarget.Height} -> {targetWidth}x{targetHeight}");
                     _gameRenderTarget.Dispose();
                     _gameRenderTarget = new RenderTarget2D(
                         GraphicsDevice,

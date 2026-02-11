@@ -53,15 +53,8 @@ namespace EndlessClient.GameExecution
 
             if (_gameStateRepository.CurrentState == GameStates.PlayingTheGame)
             {
-                System.Console.WriteLine($"[LOGOUT] Leaving PlayingTheGame -> {newState}");
-                System.Console.WriteLine($"[LOGOUT] BEFORE: IsInGame={_clientWindowSizeRepository.IsInGame}, IsScaledMode={_clientWindowSizeRepository.IsScaledMode}");
-                System.Console.WriteLine($"[LOGOUT] BEFORE: GameWidth={_clientWindowSizeRepository.GameWidth}, GameHeight={_clientWindowSizeRepository.GameHeight}");
-                System.Console.WriteLine($"[LOGOUT] BEFORE: Width={_clientWindowSizeRepository.Width}, Height={_clientWindowSizeRepository.Height}");
-
                 _playerInfoRepository.PlayerIsInGame = false;
                 _clientWindowSizeRepository.IsInGame = false;
-
-                System.Console.WriteLine($"[LOGOUT] AFTER IsInGame=false: GameWidth={_clientWindowSizeRepository.GameWidth}, GameHeight={_clientWindowSizeRepository.GameHeight}");
 
                 StorePanelLayout(Game, new ExitingEventArgs());
                 Game.Exiting -= StorePanelLayout;
@@ -116,7 +109,7 @@ namespace EndlessClient.GameExecution
             {
                 var newWidth = _clientWindowSizeRepository.GameWidth;
                 var newHeight = _clientWindowSizeRepository.GameHeight;
-                System.Console.WriteLine($"[SCALED MODE] Switching to in-game: {newWidth}x{newHeight}");
+
                 _clientWindowSizeRepository.Width = newWidth;
                 _clientWindowSizeRepository.Height = newHeight;
             }
