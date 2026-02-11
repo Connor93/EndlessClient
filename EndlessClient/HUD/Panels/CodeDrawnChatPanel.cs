@@ -41,7 +41,6 @@ namespace EndlessClient.HUD.Panels
         // Available font sizes sorted ascending for binary-search-style selection
         private static readonly (int pixelSize, string fontKey)[] _availableFonts = new[]
         {
-            (9,  Constants.FontSize07),
             (11, Constants.FontSize08),
             (12, Constants.FontSize09),
             (13, Constants.FontSize10),

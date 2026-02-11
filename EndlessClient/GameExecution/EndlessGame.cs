@@ -281,6 +281,22 @@ namespace EndlessClient.GameExecution
             // XNAControls InputManager now supports coordinate transformation for correct hit detection
             if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
             {
+                // Check if render target needs to be resized (e.g., after logout when game dimensions change)
+                var targetWidth = _windowSizeRepository.GameWidth;
+                var targetHeight = _windowSizeRepository.GameHeight;
+                if (_gameRenderTarget.Width != targetWidth || _gameRenderTarget.Height != targetHeight)
+                {
+                    System.Console.WriteLine($"[DRAW] Resizing render target: {_gameRenderTarget.Width}x{_gameRenderTarget.Height} -> {targetWidth}x{targetHeight}");
+                    _gameRenderTarget.Dispose();
+                    _gameRenderTarget = new RenderTarget2D(
+                        GraphicsDevice,
+                        targetWidth,
+                        targetHeight,
+                        false,
+                        SurfaceFormat.Color,
+                        DepthFormat.None);
+                }
+
                 // Render the game to the fixed-size render target
                 GraphicsDevice.SetRenderTarget(_gameRenderTarget);
                 GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);

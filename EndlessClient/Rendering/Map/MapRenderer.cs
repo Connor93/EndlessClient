@@ -51,6 +51,7 @@ namespace EndlessClient.Rendering.Map
         private SpriteBatch _sb;
         private MapTransitionState _mapTransitionState = MapTransitionState.Default;
         private IReadOnlyList<int> _lastMapChecksum;
+        private bool _disposed;
         private bool _groundDrawn;
 
         private Option<MapQuakeState> _quakeState;
@@ -135,7 +136,7 @@ namespace EndlessClient.Rendering.Map
 
         public override void Update(GameTime gameTime)
         {
-            if (_currentMapStateProvider.IsSleepWarp) return;
+            if (_disposed || _currentMapStateProvider.IsSleepWarp) return;
 
             if (_lastMapChecksum == null || !_lastMapChecksum.SequenceEqual(_currentMapProvider.CurrentMap.Properties.Checksum))
             {
@@ -187,7 +188,7 @@ namespace EndlessClient.Rendering.Map
 
         public override void Draw(GameTime gameTime)
         {
-            if (!Visible)
+            if (_disposed || !Visible)
                 return;
 
             if (_currentMapStateProvider.IsSleepWarp)
@@ -524,18 +525,20 @@ namespace EndlessClient.Rendering.Map
 
         protected override void Dispose(bool disposing)
         {
+            _disposed = true;
+
             if (disposing)
             {
                 lock (_rt_locker_)
                 {
-                    _mapBaseTarget.Dispose();
-                    _mapObjectTarget.Dispose();
+                    _mapBaseTarget?.Dispose();
+                    _mapObjectTarget?.Dispose();
                 }
-                _sb.Dispose();
-                _mouseCursorRenderer.Dispose();
+                _sb?.Dispose();
+                _mouseCursorRenderer?.Dispose();
 
-                _npcRendererUpdater.Dispose();
-                _characterRendererUpdater.Dispose();
+                _npcRendererUpdater?.Dispose();
+                _characterRendererUpdater?.Dispose();
             }
 
             base.Dispose(disposing);

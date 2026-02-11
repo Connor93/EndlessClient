@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using AutomaticTypeMapper;
 using EOLib;
+using EOLib.Config;
 using EOLib.Graphics;
 using XNAControls;
 
@@ -75,6 +76,7 @@ namespace EndlessClient.Rendering
 
         private readonly IGameWindowRepository _gameWindowRepository;
         private readonly IGraphicsDeviceRepository _graphicsDeviceRepository;
+        private readonly IConfigurationProvider _configurationProvider;
 
         private readonly List<EventHandler<EventArgs>> _resizeEvents;
 
@@ -192,23 +194,46 @@ namespace EndlessClient.Rendering
         }
 
         public ClientWindowSizeRepository(IGameWindowRepository gameWindowRepository,
-                                          IGraphicsDeviceRepository graphicsDeviceRepository)
+                                          IGraphicsDeviceRepository graphicsDeviceRepository,
+                                          IConfigurationProvider configurationProvider)
         {
             _gameWindowRepository = gameWindowRepository;
             _graphicsDeviceRepository = graphicsDeviceRepository;
+            _configurationProvider = configurationProvider;
             _resizeEvents = new List<EventHandler<EventArgs>>();
         }
 
         public void ResetState()
         {
+            // Use the configuration directly since IsScaledMode may be cleared
+            // by another resettable before this one runs
+            var isScaledClient = _configurationProvider.ScaledClient;
+
+            System.Console.WriteLine($"[RESET STATE] isScaledClient={isScaledClient}, IsScaledMode={IsScaledMode}, IsInGame={IsInGame}");
+            System.Console.WriteLine($"[RESET STATE] Width={Width}, Height={Height}, GameWidth={GameWidth}, GameHeight={GameHeight}");
+            System.Console.WriteLine($"[RESET STATE] WindowWidth={WindowWidth}, WindowHeight={WindowHeight}, Backbuffer={_graphicsDeviceRepository.GraphicsDeviceManager.PreferredBackBufferWidth}x{_graphicsDeviceRepository.GraphicsDeviceManager.PreferredBackBufferHeight}");
+
             foreach (var evnt in _resizeEvents)
                 GameWindowSizeChanged -= evnt;
             _resizeEvents.Clear();
 
-            Resizable = false;
+            IsInGame = false;
 
-            Width = DEFAULT_BACKBUFFER_WIDTH;
-            Height = DEFAULT_BACKBUFFER_HEIGHT;
+            if (!isScaledClient)
+            {
+                // Non-scaled mode: reset to default 640x480 window
+                Resizable = false;
+                Width = DEFAULT_BACKBUFFER_WIDTH;
+                Height = DEFAULT_BACKBUFFER_HEIGHT;
+            }
+            else
+            {
+                // Scaled mode: preserve IsScaledMode and keep the window at its current size
+                // The render target will handle scaling 640x480 content to fill the window
+                IsScaledMode = true;
+
+                System.Console.WriteLine($"[RESET STATE] Scaled mode preserved, window stays at {WindowWidth}x{WindowHeight}");
+            }
         }
     }
 }

@@ -25,12 +25,24 @@ namespace EndlessClient.Input
 
         public override void Update(GameTime gameTime)
         {
+            if (!Game.IsActive)
+            {
+                base.Update(gameTime);
+                return;
+            }
+
             // Reset scroll wheel consumed flag at the start of each frame
             _userInputRepository.ScrollWheelConsumed = false;
 
             _userInputRepository.CurrentKeyState = Keyboard.GetState();
 
             var rawMouseState = Mouse.GetState();
+
+            // Check if mouse is within window bounds
+            int windowWidth = _windowSizeProvider.IsScaledMode ? _windowSizeProvider.Width : _windowSizeProvider.GameWidth;
+            int windowHeight = _windowSizeProvider.IsScaledMode ? _windowSizeProvider.Height : _windowSizeProvider.GameHeight;
+            bool mouseInBounds = rawMouseState.X >= 0 && rawMouseState.X < windowWidth &&
+                                 rawMouseState.Y >= 0 && rawMouseState.Y < windowHeight;
 
             if (_windowSizeProvider.IsScaledMode)
             {
@@ -46,20 +58,38 @@ namespace EndlessClient.Input
                 gameX = Math.Clamp(gameX, 0, _windowSizeProvider.GameWidth - 1);
                 gameY = Math.Clamp(gameY, 0, _windowSizeProvider.GameHeight - 1);
 
+                // If mouse is outside window, release all button states to prevent accidental clicks
                 _userInputRepository.CurrentMouseState = new MouseState(
                     gameX,
                     gameY,
                     rawMouseState.ScrollWheelValue,
-                    rawMouseState.LeftButton,
-                    rawMouseState.MiddleButton,
-                    rawMouseState.RightButton,
-                    rawMouseState.XButton1,
-                    rawMouseState.XButton2,
+                    mouseInBounds ? rawMouseState.LeftButton : ButtonState.Released,
+                    mouseInBounds ? rawMouseState.MiddleButton : ButtonState.Released,
+                    mouseInBounds ? rawMouseState.RightButton : ButtonState.Released,
+                    mouseInBounds ? rawMouseState.XButton1 : ButtonState.Released,
+                    mouseInBounds ? rawMouseState.XButton2 : ButtonState.Released,
                     rawMouseState.HorizontalScrollWheelValue);
             }
             else
             {
-                _userInputRepository.CurrentMouseState = rawMouseState;
+                // If mouse is outside window, release all button states
+                if (mouseInBounds)
+                {
+                    _userInputRepository.CurrentMouseState = rawMouseState;
+                }
+                else
+                {
+                    _userInputRepository.CurrentMouseState = new MouseState(
+                        rawMouseState.X,
+                        rawMouseState.Y,
+                        rawMouseState.ScrollWheelValue,
+                        ButtonState.Released,
+                        ButtonState.Released,
+                        ButtonState.Released,
+                        ButtonState.Released,
+                        ButtonState.Released,
+                        rawMouseState.HorizontalScrollWheelValue);
+                }
             }
 
             base.Update(gameTime);

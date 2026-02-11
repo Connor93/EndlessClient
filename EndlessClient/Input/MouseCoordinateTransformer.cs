@@ -40,5 +40,23 @@ namespace EndlessClient.Input
 
             return new Point(gameX, gameY);
         }
+
+        public bool IsInBounds(Point windowPosition)
+        {
+            if (!_windowSizeProvider.IsScaledMode)
+            {
+                return windowPosition.X >= 0 && windowPosition.X < _windowSizeProvider.GameWidth &&
+                       windowPosition.Y >= 0 && windowPosition.Y < _windowSizeProvider.GameHeight;
+            }
+
+            // In scaled mode, check if the window position is within the scaled game area
+            var offset = _windowSizeProvider.RenderOffset;
+            var scale = _windowSizeProvider.ScaleFactor;
+            int scaledWidth = (int)(_windowSizeProvider.GameWidth * scale);
+            int scaledHeight = (int)(_windowSizeProvider.GameHeight * scale);
+
+            return windowPosition.X >= offset.X && windowPosition.X < offset.X + scaledWidth &&
+                   windowPosition.Y >= offset.Y && windowPosition.Y < offset.Y + scaledHeight;
+        }
     }
 }

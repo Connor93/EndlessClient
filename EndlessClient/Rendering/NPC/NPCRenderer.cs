@@ -361,10 +361,10 @@ namespace EndlessClient.Rendering.NPC
         {
             if (disposing)
             {
-                Game.Components.Remove(_healthBarRenderer);
-                _healthBarRenderer.Dispose();
+                Game?.Components?.Remove(_healthBarRenderer);
+                _healthBarRenderer?.Dispose();
 
-                _nameLabel.Dispose();
+                _nameLabel?.Dispose();
                 _chatBubble?.Dispose();
                 _spriteBatch?.Dispose();
 
