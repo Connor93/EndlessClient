@@ -14,7 +14,6 @@ namespace EndlessClient.Rendering.Factories
     [AutoMappedType]
     public class MouseCursorRendererFactory : IMouseCursorRendererFactory
     {
-        private readonly INativeGraphicsManager _nativeGraphicsManager;
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IMapCellStateProvider _mapCellStateProvider;
         private readonly IItemStringService _itemStringService;
@@ -26,9 +25,9 @@ namespace EndlessClient.Rendering.Factories
         private readonly IContextMenuProvider _contextMenuProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
-        public MouseCursorRendererFactory(INativeGraphicsManager nativeGraphicsManager,
-                                          IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
+        public MouseCursorRendererFactory(IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                           IMapCellStateProvider mapCellStateProvider,
                                           IItemStringService itemStringService,
                                           IItemNameColorService itemNameColorService,
@@ -38,9 +37,9 @@ namespace EndlessClient.Rendering.Factories
                                           IActiveDialogProvider activeDialogProvider,
                                           IContextMenuProvider contextMenuProvider,
                                           IConfigurationProvider configurationProvider,
-                                          IClientWindowSizeProvider clientWindowSizeProvider)
+                                          IClientWindowSizeProvider clientWindowSizeProvider,
+                                          IGraphicsDeviceProvider graphicsDeviceProvider)
         {
-            _nativeGraphicsManager = nativeGraphicsManager;
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _mapCellStateProvider = mapCellStateProvider;
             _itemStringService = itemStringService;
@@ -52,12 +51,12 @@ namespace EndlessClient.Rendering.Factories
             _contextMenuProvider = contextMenuProvider;
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
         public IMouseCursorRenderer Create()
         {
-            return new MouseCursorRenderer(_nativeGraphicsManager,
-                                           _gridDrawCoordinateCalculator,
+            return new MouseCursorRenderer(_gridDrawCoordinateCalculator,
                                            _mapCellStateProvider,
                                            _itemStringService,
                                            _itemNameColorService,
@@ -67,7 +66,8 @@ namespace EndlessClient.Rendering.Factories
                                            _activeDialogProvider,
                                            _contextMenuProvider,
                                            _configurationProvider,
-                                           _clientWindowSizeProvider);
+                                           _clientWindowSizeProvider,
+                                           _graphicsDeviceProvider);
         }
     }
 

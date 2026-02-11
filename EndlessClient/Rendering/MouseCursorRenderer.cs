@@ -20,19 +20,17 @@ namespace EndlessClient.Rendering
 {
     public class MouseCursorRenderer : XNAControl, IMouseCursorRenderer
     {
-        private enum CursorIndex
+        private enum CursorState
         {
-            Standard = 0,
-            HoverNormal = 1,
-            HoverItem = 2,
-            ClickFirstFrame = 3,
-            ClickSecondFrame = 4,
-            NumberOfFramesInSheet = 5
+            Hidden,
+            Standard,
+            HoverInteractive,
+            HoverItem
         }
 
-        private readonly Rectangle SingleCursorFrameArea;
+        private const int TileWidth = IGridDrawCoordinateCalculator.DefaultGridWidth;
+        private const int TileHeight = IGridDrawCoordinateCalculator.DefaultGridHeight;
 
-        private readonly Texture2D _mouseCursorTexture;
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IMapCellStateProvider _mapCellStateProvider;
         private readonly IItemStringService _itemStringService;
@@ -44,22 +42,28 @@ namespace EndlessClient.Rendering
         private readonly IContextMenuProvider _contextMenuProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
         private readonly XNALabel _mapItemText;
 
+        private Texture2D _whitePixel;
         private int _gridX, _gridY;
-        private CursorIndex _cursorIndex;
-        private bool _shouldDrawCursor;
+        private CursorState _cursorState;
 
         private Option<Stopwatch> _startClickTime;
-        private CursorIndex _clickFrame;
         private int _clickAlpha;
         private Option<MapCoordinate> _clickCoordinate;
 
         public MapCoordinate GridCoordinates => new MapCoordinate(_gridX, _gridY);
 
-        public MouseCursorRenderer(INativeGraphicsManager nativeGraphicsManager,
-                                   IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
+        private static readonly Color StandardOutline = Color.FromNonPremultiplied(255, 255, 255, 210);
+        private static readonly Color StandardFill = Color.FromNonPremultiplied(255, 255, 255, 20);
+        private static readonly Color InteractiveOutline = Color.FromNonPremultiplied(200, 255, 200, 160);
+        private static readonly Color InteractiveFill = Color.FromNonPremultiplied(200, 255, 200, 30);
+        private static readonly Color ItemOutline = Color.FromNonPremultiplied(255, 215, 0, 180);
+        private static readonly Color ItemFill = Color.FromNonPremultiplied(255, 215, 0, 50);
+
+        public MouseCursorRenderer(IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                    IMapCellStateProvider mapCellStateProvider,
                                    IItemStringService itemStringService,
                                    IItemNameColorService itemNameColorService,
@@ -69,9 +73,9 @@ namespace EndlessClient.Rendering
                                    IActiveDialogProvider activeDialogProvider,
                                    IContextMenuProvider contextMenuProvider,
                                    IConfigurationProvider configurationProvider,
-                                   IClientWindowSizeProvider clientWindowSizeProvider)
+                                   IClientWindowSizeProvider clientWindowSizeProvider,
+                                   IGraphicsDeviceProvider graphicsDeviceProvider)
         {
-            _mouseCursorTexture = nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 24, true);
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _mapCellStateProvider = mapCellStateProvider;
             _itemStringService = itemStringService;
@@ -83,11 +87,9 @@ namespace EndlessClient.Rendering
             _contextMenuProvider = contextMenuProvider;
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
 
-            SingleCursorFrameArea = new Rectangle(0, 0,
-                                                  _mouseCursorTexture.Width / (int)CursorIndex.NumberOfFramesInSheet,
-                                                  _mouseCursorTexture.Height);
-            DrawArea = SingleCursorFrameArea;
+            DrawArea = new Rectangle(0, 0, TileWidth, TileHeight);
 
             _mapItemText = new XNALabel(Constants.FontSize09)
             {
@@ -95,7 +97,7 @@ namespace EndlessClient.Rendering
                 Text = string.Empty,
                 ForeColor = Color.White,
                 AutoSize = false,
-                DrawOrder = 10 //todo: make a better provider for draw orders (see also HudControlsFactory)
+                DrawOrder = 10
             };
 
             _clickCoordinate = Option.None<MapCoordinate>();
@@ -103,6 +105,9 @@ namespace EndlessClient.Rendering
 
         public override void Initialize()
         {
+            _whitePixel = new Texture2D(_graphicsDeviceProvider.GraphicsDevice, 1, 1);
+            _whitePixel.SetData(new[] { Color.White });
+
             _mapItemText.AddControlToDefaultGame();
         }
 
@@ -110,17 +115,14 @@ namespace EndlessClient.Rendering
 
         public override void Update(GameTime gameTime)
         {
-            // prevents updates if there is a dialog
             if (!ShouldUpdate() || _activeDialogProvider.ActiveDialogs.Any(x => x.HasValue) ||
                 _contextMenuProvider.ContextMenu.HasValue)
                 return;
 
-            // Apply inverse zoom transform to mouse position for accurate grid detection
             var mousePos = _userInputProvider.CurrentMouseState.Position.ToVector2();
             var zoom = _configurationProvider.MapZoom;
             if (zoom != 1.0f)
             {
-                // Transform mouse position from screen space to zoomed map space
                 var centerX = _clientWindowSizeProvider.Width / 2f;
                 var centerY = _clientWindowSizeProvider.Height / 2f;
                 mousePos = new Vector2(
@@ -132,13 +134,13 @@ namespace EndlessClient.Rendering
             _gridX = gridPosition.X;
             _gridY = gridPosition.Y;
 
-            UpdateDrawPostionBasedOnGridPosition();
+            UpdateDrawPositionBasedOnGridPosition();
 
             var cellState = _mapCellStateProvider.GetCellStateAt(_gridX, _gridY);
-            UpdateCursorSourceRectangle(cellState);
+            UpdateCursorState(cellState);
         }
 
-        private void UpdateDrawPostionBasedOnGridPosition()
+        private void UpdateDrawPositionBasedOnGridPosition()
         {
             var drawPosition = _gridDrawCoordinateCalculator.CalculateBaseLayerDrawCoordinatesFromGridUnits(_gridX, _gridY);
             DrawArea = new Rectangle((int)drawPosition.X,
@@ -147,21 +149,21 @@ namespace EndlessClient.Rendering
                                       DrawArea.Height);
         }
 
-        private void UpdateCursorSourceRectangle(IMapCellState cellState)
+        private void UpdateCursorState(IMapCellState cellState)
         {
-            _shouldDrawCursor = true;
-            _cursorIndex = CursorIndex.Standard;
+            _cursorState = CursorState.Standard;
+
             if (cellState.Character.HasValue || cellState.NPC.HasValue)
-                _cursorIndex = CursorIndex.HoverNormal;
+                _cursorState = CursorState.HoverInteractive;
             else if (cellState.Sign.HasValue)
-                _shouldDrawCursor = false;
+                _cursorState = CursorState.Hidden;
             else if (cellState.Items.Any())
             {
-                _cursorIndex = CursorIndex.HoverItem;
+                _cursorState = CursorState.HoverItem;
                 UpdateMapItemLabel(Option.Some(cellState.Items.First()));
             }
             else if (cellState.TileSpec != TileSpec.None)
-                UpdateCursorIndexForTileSpec(cellState.TileSpec);
+                UpdateCursorStateForTileSpec(cellState.TileSpec);
 
             if (!cellState.Items.Any())
                 UpdateMapItemLabel(Option.None<MapItem>());
@@ -187,17 +189,11 @@ namespace EndlessClient.Rendering
                 {
                     _clickAlpha -= 5;
 
-                    if (st.ElapsedMilliseconds > 350)
+                    if (_clickAlpha <= 0 || st.ElapsedMilliseconds > 600)
                     {
-                        _startClickTime = Option.Some(Stopwatch.StartNew());
-                        _clickFrame++;
-
-                        if (_clickFrame != CursorIndex.ClickFirstFrame && _clickFrame != CursorIndex.ClickSecondFrame)
-                        {
-                            _clickFrame = CursorIndex.Standard;
-                            _startClickTime = Option.None<Stopwatch>();
-                            _clickCoordinate = Option.None<MapCoordinate>();
-                        }
+                        _startClickTime = Option.None<Stopwatch>();
+                        _clickCoordinate = Option.None<MapCoordinate>();
+                        _clickAlpha = 0;
                     }
                 });
         }
@@ -225,7 +221,7 @@ namespace EndlessClient.Rendering
                 });
         }
 
-        private void UpdateCursorIndexForTileSpec(TileSpec tileSpec)
+        private void UpdateCursorStateForTileSpec(TileSpec tileSpec)
         {
             switch (tileSpec)
             {
@@ -233,7 +229,7 @@ namespace EndlessClient.Rendering
                 case TileSpec.MapEdge:
                 case TileSpec.FakeWall:
                 case TileSpec.VultTypo:
-                    _shouldDrawCursor = false;
+                    _cursorState = CursorState.Hidden;
                     break;
                 case TileSpec.Chest:
                 case TileSpec.BankVault:
@@ -253,7 +249,7 @@ namespace EndlessClient.Rendering
                 case TileSpec.Board7:
                 case TileSpec.Board8:
                 case TileSpec.Jukebox:
-                    _cursorIndex = CursorIndex.HoverNormal;
+                    _cursorState = CursorState.HoverInteractive;
                     break;
                 case TileSpec.NPCBoundary:
                 case TileSpec.Jump:
@@ -264,10 +260,10 @@ namespace EndlessClient.Rendering
                 case TileSpec.SpikesTrap:
                 case TileSpec.SpikesTimed:
                 case TileSpec.None:
-                    _cursorIndex = CursorIndex.Standard;
+                    _cursorState = CursorState.Standard;
                     break;
                 default:
-                    _cursorIndex = CursorIndex.HoverNormal;
+                    _cursorState = CursorState.HoverInteractive;
                     break;
             }
         }
@@ -276,32 +272,90 @@ namespace EndlessClient.Rendering
 
         public void Draw(SpriteBatch spriteBatch, Vector2 additionalOffset)
         {
-            if (_contextMenuProvider.ContextMenu.HasValue)
+            if (_contextMenuProvider.ContextMenu.HasValue || _whitePixel == null)
                 return;
 
-            if (_shouldDrawCursor && _gridX >= 0 && _gridY >= 0 &&
+            if (_cursorState != CursorState.Hidden && _gridX >= 0 && _gridY >= 0 &&
                 _gridX <= _currentMapProvider.CurrentMap.Properties.Width &&
                 _gridY <= _currentMapProvider.CurrentMap.Properties.Height)
             {
-                spriteBatch.Draw(_mouseCursorTexture,
-                                 DrawPosition + additionalOffset,
-                                 new Rectangle(SingleCursorFrameArea.Width * (int)_cursorIndex,
-                                               0,
-                                               SingleCursorFrameArea.Width,
-                                               SingleCursorFrameArea.Height),
-                                 Color.White);
+                var origin = DrawPosition + additionalOffset;
+
+                switch (_cursorState)
+                {
+                    case CursorState.Standard:
+                        DrawDiamond(spriteBatch, origin, StandardFill, StandardOutline);
+                        break;
+                    case CursorState.HoverInteractive:
+                        DrawDiamond(spriteBatch, origin, InteractiveFill, InteractiveOutline);
+                        break;
+                    case CursorState.HoverItem:
+                        DrawDiamond(spriteBatch, origin, ItemFill, ItemOutline);
+                        break;
+                }
             }
 
-            if (_startClickTime.HasValue)
+            if (_startClickTime.HasValue && _clickAlpha > 0)
             {
                 _clickCoordinate.MatchSome(c =>
                 {
                     var position = _gridDrawCoordinateCalculator.CalculateBaseLayerDrawCoordinatesFromGridUnits(c);
-                    spriteBatch.Draw(_mouseCursorTexture,
-                                     position + additionalOffset,
-                                     SingleCursorFrameArea.WithPosition(new Vector2(SingleCursorFrameArea.Width * (int)_clickFrame, 0)),
-                                     Color.FromNonPremultiplied(255, 255, 255, _clickAlpha));
+                    var clickFill = Color.FromNonPremultiplied(255, 255, 255, Math.Min(_clickAlpha / 3, 60));
+                    var clickOutline = Color.FromNonPremultiplied(255, 255, 255, _clickAlpha);
+                    DrawDiamond(spriteBatch, position + additionalOffset, clickFill, clickOutline);
                 });
+            }
+        }
+
+        private void DrawDiamond(SpriteBatch spriteBatch, Vector2 origin, Color fillColor, Color outlineColor)
+        {
+            // Diamond vertices relative to origin (top-left of tile):
+            //   Top:    (32, 0)
+            //   Right:  (64, 16)
+            //   Bottom: (32, 32)
+            //   Left:   (0, 16)
+            //
+            // Draw scanline-by-scanline for smooth edges
+            var hasFill = fillColor.A > 0;
+
+            for (var y = 0; y < TileHeight; y++)
+            {
+                int halfWidth;
+                if (y < TileHeight / 2)
+                    halfWidth = y * 2; // top half: expands by 2px per row
+                else
+                    halfWidth = (TileHeight - 1 - y) * 2; // bottom half: contracts
+
+                if (halfWidth <= 0)
+                {
+                    // Tip pixel (top and bottom)
+                    spriteBatch.Draw(_whitePixel,
+                        new Rectangle((int)origin.X + TileWidth / 2, (int)origin.Y + y, 1, 1),
+                        outlineColor);
+                    continue;
+                }
+
+                var xLeft = TileWidth / 2 - halfWidth;
+                var xRight = TileWidth / 2 + halfWidth;
+                var drawY = (int)origin.Y + y;
+
+                // Left edge pixel
+                spriteBatch.Draw(_whitePixel,
+                    new Rectangle((int)origin.X + xLeft, drawY, 1, 1),
+                    outlineColor);
+
+                // Right edge pixel
+                spriteBatch.Draw(_whitePixel,
+                    new Rectangle((int)origin.X + xRight, drawY, 1, 1),
+                    outlineColor);
+
+                // Fill between edges (if any)
+                if (hasFill && xRight - xLeft > 1)
+                {
+                    spriteBatch.Draw(_whitePixel,
+                        new Rectangle((int)origin.X + xLeft + 1, drawY, xRight - xLeft - 1, 1),
+                        fillColor);
+                }
             }
         }
 
@@ -311,7 +365,6 @@ namespace EndlessClient.Rendering
                 return;
 
             _startClickTime = Option.Some(Stopwatch.StartNew());
-            _clickFrame = CursorIndex.ClickFirstFrame;
             _clickAlpha = 200;
             _clickCoordinate = Option.Some(new MapCoordinate(_gridX, _gridY));
         }
@@ -328,6 +381,7 @@ namespace EndlessClient.Rendering
             {
                 _spriteBatch.Dispose();
                 _mapItemText.Dispose();
+                _whitePixel?.Dispose();
             }
         }
     }
