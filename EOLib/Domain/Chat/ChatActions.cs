@@ -55,6 +55,7 @@ namespace EOLib.Domain.Chat
 
         public (ChatResult, string) SendChatToServer(string chat, string targetCharacter, ChatType chatType)
         {
+            var wasUnhandledCommand = false;
             if (chatType == ChatType.Command)
             {
                 if (HandleCommand(chat))
@@ -62,6 +63,7 @@ namespace EOLib.Domain.Chat
 
                 //treat unhandled command as local chat
                 chatType = ChatType.Local;
+                wasUnhandledCommand = true;
             }
             else if (chatType == ChatType.PM)
             {
@@ -103,7 +105,7 @@ namespace EOLib.Domain.Chat
                 ChatType.Admin => ChatResult.HideSpeechBubble,
                 ChatType.Guild => ChatResult.HideSpeechBubble,
                 ChatType.Announce => ChatResult.AdminAnnounce,
-                _ => ChatResult.Ok,
+                _ => wasUnhandledCommand ? ChatResult.HideSpeechBubble : ChatResult.Ok,
             }, chat);
         }
 

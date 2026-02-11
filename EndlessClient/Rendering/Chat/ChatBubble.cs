@@ -48,7 +48,7 @@ namespace EndlessClient.Rendering.Chat
         private Option<Stopwatch> _startTime;
 
         // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 50;
+        public int PostScaleDrawOrder => 5; // Below HUD panels (0+), buttons (50), dialogs (100)
         public bool SkipRenderTargetDraw => false;
 
         public ChatBubble(IMapActor referenceRenderer,
@@ -66,7 +66,7 @@ namespace EndlessClient.Rendering.Chat
             _spriteBatch = new SpriteBatch(((Game)gameProvider.Game).GraphicsDevice);
 
             _startTime = Option.None<Stopwatch>();
-            DrawOrder = 29;
+            DrawOrder = 5; // Below HUD panels and dialogs
             Visible = false;
         }
 
@@ -176,9 +176,8 @@ namespace EndlessClient.Rendering.Chat
             var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;
             var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin;
 
-            // Use MaxTextWidth + extra margin to GUARANTEE text fits
-            // Font measurement is unreliable, so we add significant extra width
-            var bubbleWidth = MaxTextWidth + effectivePadding * 2 + extraWidth;
+            // Auto-size bubble width to actual text content
+            var bubbleWidth = (int)_textWidth + effectivePadding * 2 + extraWidth;
             var bubbleHeight = _textHeight + effectivePadding * 2 + extraHeight;
 
             // Position bubble centered above character
@@ -226,7 +225,7 @@ namespace EndlessClient.Rendering.Chat
             var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;
             var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin;
 
-            var bubbleWidth = MaxTextWidth + effectivePadding * 2 + extraWidth;
+            var bubbleWidth = (int)_textWidth + effectivePadding * 2 + extraWidth;
             var bubbleHeight = (int)(_textHeight + effectivePadding * 2 + extraHeight);
 
             // Colors
@@ -237,9 +236,9 @@ namespace EndlessClient.Rendering.Chat
 
             var bubbleRect = new Rectangle((int)_bubblePosition.X, (int)_bubblePosition.Y, bubbleWidth, bubbleHeight);
 
-            // Phase 1: Draw bubble background and borders (no scissor needed)
             _spriteBatch.Begin();
 
+            // Draw bubble background
             _spriteBatch.Draw(_whitePixel, bubbleRect, bubbleColor);
 
             // Draw border (1px on each side)
@@ -260,32 +259,21 @@ namespace EndlessClient.Rendering.Chat
                 }
             }
 
-            _spriteBatch.End();
+            // Draw text inside bubble (in render target so dialogs/windows properly occlude it)
+            var lineHeight = font.LineHeight;
+            for (int i = 0; i < _wrappedLines.Count; i++)
+            {
+                var linePos = new Vector2(_textPosition.X, _textPosition.Y + i * lineHeight);
+                _spriteBatch.DrawString(font, _wrappedLines[i], linePos, Color.Black);
+            }
 
-            // Text is drawn by DrawPostScale for crisp rendering
+            _spriteBatch.End();
         }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            if (!Visible || _wrappedLines.Count == 0)
-                return;
-
-            var font = _contentProvider.Fonts[Constants.FontSize10];
-
-            // Scale text position to screen coordinates
-            var screenX = _textPosition.X * scaleFactor + renderOffset.X;
-            var screenY = _textPosition.Y * scaleFactor + renderOffset.Y;
-
-            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
-            var lineHeight = font.LineHeight;
-            for (int i = 0; i < _wrappedLines.Count; i++)
-            {
-                var linePos = new Vector2(screenX, screenY + i * lineHeight);
-                spriteBatch.DrawString(font, _wrappedLines[i], linePos, Color.Black);
-            }
-
-            spriteBatch.End();
+            // Text is now drawn in Draw() so it stays within the render target
+            // and is properly occluded by dialogs/windows
         }
 
         protected override void Dispose(bool disposing)

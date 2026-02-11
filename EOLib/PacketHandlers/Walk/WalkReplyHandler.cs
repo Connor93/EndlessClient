@@ -33,16 +33,16 @@ namespace EOLib.PacketHandlers.Walk
             foreach (var unknownNpc in packet.NpcIndexes.Where(x => !_currentMapStateRepository.NPCs.ContainsKey(x)))
                 _currentMapStateRepository.UnknownNPCIndexes.Add(unknownNpc);
 
-            foreach (var item in packet.Items)
+            foreach (var item in packet.Items.Select(MapItem.FromNearby))
             {
-                _currentMapStateRepository.MapItems.Add(new MapItem.Builder
+                if (_currentMapStateRepository.MapItems.TryGetValue(item.UniqueID, out var existing))
                 {
-                    UniqueID = item.Id,
-                    ItemID = item.Id,
-                    X = item.Coords.X,
-                    Y = item.Coords.Y,
-                    Amount = item.Amount,
-                }.ToImmutable());
+                    _currentMapStateRepository.MapItems.Update(existing, item);
+                }
+                else
+                {
+                    _currentMapStateRepository.MapItems.Add(item);
+                }
             }
 
             return true;

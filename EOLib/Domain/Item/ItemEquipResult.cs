@@ -7,6 +7,7 @@
         WrongGender,
         StatRequirementNotMet,
         ClassRequirementNotMet,
-        NotEquippable
+        NotEquippable,
+        LevelRequirementNotMet
     }
 }

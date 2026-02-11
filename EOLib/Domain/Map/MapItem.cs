@@ -38,6 +38,15 @@ namespace EOLib.Domain.Map
 
         private MapItem() { }
 
+        // Override Record-generated GetHashCode/Equals to use only UniqueID.
+        // MapEntityCollectionHashSet uses GetHashCode() as its internal storage key.
+        // Without this override, items with different metadata (DropTime, OwningPlayerID, IsNPCDrop)
+        // get different hash codes even though they represent the same map item, breaking
+        // coordinate-based lookups and making items visible but not clickable.
+        public override int GetHashCode() => UniqueID.GetHashCode();
+
+        public override bool Equals(object obj) => obj is MapItem other && UniqueID == other.UniqueID;
+
         public static MapItem FromNearby(ItemMapInfo itemMapInfo)
         {
             return new Builder

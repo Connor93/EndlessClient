@@ -16,6 +16,7 @@ using EndlessClient.Rendering;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
+using EOLib.Domain.Item;
 using EOLib.Extensions;
 using EOLib.Graphics;
 using EOLib.IO;
@@ -51,6 +52,7 @@ namespace EndlessClient.Dialogs
         private readonly IStatusLabelSetter _statusLabelSetter;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IContentProvider _contentProvider;
+        private readonly IItemStringService _itemStringService;
 
         private readonly bool _isMainCharacter;
         private readonly Character _character;
@@ -84,6 +86,7 @@ namespace EndlessClient.Dialogs
             IStatusLabelSetter statusLabelSetter,
             ISfxPlayer sfxPlayer,
             IContentProvider contentProvider,
+            IItemStringService itemStringService,
             Character character,
             bool isMainCharacter)
         {
@@ -100,6 +103,7 @@ namespace EndlessClient.Dialogs
             _statusLabelSetter = statusLabelSetter;
             _sfxPlayer = sfxPlayer;
             _contentProvider = contentProvider;
+            _itemStringService = itemStringService;
             _character = character;
             _isMainCharacter = isMainCharacter;
 
@@ -275,7 +279,8 @@ namespace EndlessClient.Dialogs
                     this,
                     _isMainCharacter,
                     equipLocation,
-                    eifRecord)
+                    eifRecord,
+                    _itemStringService)
                 {
                     DrawArea = rect
                 };
@@ -410,6 +415,32 @@ namespace EndlessClient.Dialogs
                 spriteBatch.DrawString(font, "OK", new Vector2(textX, textY), _styleProvider.ButtonText);
             }
 
+            // Draw tooltip for hovered equipment items
+            foreach (var item in _equipmentItems)
+            {
+                if (item.IsHovered && !string.IsNullOrEmpty(item.TooltipText))
+                {
+                    var textSize = font.MeasureString(item.TooltipText);
+                    var padding = 8 * scaleFactor;
+                    var tooltipWidth = (int)(textSize.Width + padding * 2);
+                    var tooltipHeight = (int)(textSize.Height + padding * 2);
+
+                    // Position to right of slot, or left if overflows
+                    var slotScaledX = scaledX + (int)(item.DrawArea.X * scaleFactor);
+                    var slotScaledY = scaledY + (int)(item.DrawArea.Y * scaleFactor);
+                    var tooltipX = slotScaledX + (int)(item.DrawArea.Width * scaleFactor) + (int)(4 * scaleFactor);
+                    if (tooltipX + tooltipWidth > scaledX + scaledWidth)
+                        tooltipX = slotScaledX - tooltipWidth - (int)(4 * scaleFactor);
+
+                    var tooltipRect = new Rectangle(tooltipX, slotScaledY, tooltipWidth, tooltipHeight);
+
+                    DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipRect, Color.FromNonPremultiplied(20, 20, 20, 230));
+                    DrawingPrimitives.DrawRectBorder(spriteBatch, tooltipRect, _styleProvider.PanelBorder, 1);
+                    spriteBatch.DrawString(font, item.TooltipText,
+                        new Vector2(tooltipX + padding, slotScaledY + padding), Color.White);
+                }
+            }
+
             spriteBatch.End();
         }
 
@@ -450,6 +481,7 @@ namespace EndlessClient.Dialogs
         private readonly bool _isMainCharacter;
         private readonly EquipLocation _equipLocation;
         private readonly Option<EOLib.IO.Pub.EIFRecord> _itemRecord;
+        private readonly IItemStringService _itemStringService;
 
         private Texture2D _itemTexture;
 
@@ -466,7 +498,8 @@ namespace EndlessClient.Dialogs
             CodeDrawnPaperdollDialog parentDialog,
             bool isMainCharacter,
             EquipLocation equipLocation,
-            Option<EOLib.IO.Pub.EIFRecord> itemRecord)
+            Option<EOLib.IO.Pub.EIFRecord> itemRecord,
+            IItemStringService itemStringService)
         {
             _styleProvider = styleProvider;
             _graphicsManager = graphicsManager;
@@ -479,13 +512,24 @@ namespace EndlessClient.Dialogs
             _isMainCharacter = isMainCharacter;
             _equipLocation = equipLocation;
             _itemRecord = itemRecord;
+            _itemStringService = itemStringService;
 
             // Load item texture if equipped - use Graphic * 2 for inventory icon (not 2*Graphic-1 which is map drop)
             _itemRecord.MatchSome(rec =>
             {
                 _itemTexture = _graphicsManager.TextureFromResource(GFXTypes.Items, rec.Graphic * 2, transparent: true);
+                TooltipText = _itemStringService.GetStringForInventoryDisplay(rec, 1);
             });
+
+            OnMouseEnter += (_, _) =>
+            {
+                _itemRecord.MatchSome(_ => IsHovered = true);
+            };
+            OnMouseLeave += (_, _) => IsHovered = false;
         }
+
+        public bool IsHovered { get; private set; }
+        public string TooltipText { get; private set; }
 
         protected override bool HandleClick(IXNAControl control, MonoGame.Extended.Input.InputListeners.MouseEventArgs eventArgs)
         {

@@ -11,6 +11,7 @@ using EndlessClient.Rendering;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
+using EOLib.Domain.Item;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using XNAControls;
@@ -35,6 +36,7 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IItemStringService _itemStringService;
         private IInventoryController _inventoryController;
 
         public PaperdollDialogFactory(INativeGraphicsManager nativeGraphicsManager,
@@ -51,7 +53,8 @@ namespace EndlessClient.Dialogs.Factories
             IGameStateProvider gameStateProvider,
             IContentProvider contentProvider,
             IClientWindowSizeProvider clientWindowSizeProvider,
-            IGraphicsDeviceProvider graphicsDeviceProvider)
+            IGraphicsDeviceProvider graphicsDeviceProvider,
+            IItemStringService itemStringService)
         {
             _paperdollProvider = paperdollProvider;
             _pubFileProvider = pubFileProvider;
@@ -68,6 +71,7 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _itemStringService = itemStringService;
         }
 
         public IXNADialog Create(Character character, bool isMainCharacter)
@@ -89,6 +93,7 @@ namespace EndlessClient.Dialogs.Factories
                     _statusLabelSetter,
                     _sfxPlayer,
                     _contentProvider,
+                    _itemStringService,
                     character,
                     isMainCharacter);
             }

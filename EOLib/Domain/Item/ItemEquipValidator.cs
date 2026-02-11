@@ -63,6 +63,10 @@ namespace EOLib.Domain.Item
                 return (ItemEquipResult.StatRequirementNotMet, $" {reqs[req.Ndx]} {reqNames[req.Ndx]}", isAlternateEquipLocation);
             }
 
+            if (itemData.LevelReq > 0 && itemData.LevelReq > c.Stats[CharacterStat.Level])
+            {
+                return (ItemEquipResult.LevelRequirementNotMet, $" Level {itemData.LevelReq}", isAlternateEquipLocation);
+            }
 
             if (itemData.ClassReq > 0 && itemData.ClassReq != c.ClassID)
             {

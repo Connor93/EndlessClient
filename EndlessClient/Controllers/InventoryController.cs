@@ -209,6 +209,10 @@ namespace EndlessClient.Controllers
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION,
                         EOResourceID.STATUS_LABEL_ITEM_EQUIP_CAN_ONLY_BE_USED_BY, detail);
                     break;
+                case ItemEquipResult.LevelRequirementNotMet:
+                    _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION,
+                        EOResourceID.STATUS_LABEL_ITEM_EQUIP_THIS_ITEM_REQUIRES, detail);
+                    break;
                 case ItemEquipResult.Ok:
                     _itemActions.EquipItem(itemData.ID, isAlternateEquipLocation);
                     break;
