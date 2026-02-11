@@ -134,9 +134,10 @@ namespace EndlessClient.HUD.Inventory
             var col = (int)(relativeX / 26);
             var row = (int)(relativeY / 26);
 
-            // Clamp to valid grid bounds
-            col = Math.Clamp(col, 0, InventoryPanel.InventoryRowSlots - 1);
-            row = Math.Clamp(row, 0, InventoryPanel.InventoryRows - 1);
+            // Clamp to valid grid bounds, accounting for item size so the entire item fits
+            var (itemWidth, itemHeight) = Data.Size.GetDimensions();
+            col = Math.Clamp(col, 0, InventoryPanel.InventoryRowSlots - itemWidth);
+            row = Math.Clamp(row, 0, InventoryPanel.InventoryRows - itemHeight);
 
             return col + InventoryPanel.InventoryRowSlots * row;
         }

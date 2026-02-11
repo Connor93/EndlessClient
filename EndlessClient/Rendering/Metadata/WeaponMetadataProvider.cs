@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
 using EndlessClient.Rendering.Metadata.Models;
+using EOLib.IO.Repositories;
 
 namespace EndlessClient.Rendering.Metadata
 {
@@ -12,8 +14,10 @@ namespace EndlessClient.Rendering.Metadata
 
         private readonly Dictionary<int, WeaponMetadata> _metadata;
         private readonly IGFXMetadataLoader _metadataLoader;
+        private readonly IEIFFileProvider _eifFileProvider;
 
-        public WeaponMetadataProvider(IGFXMetadataLoader metadataLoader)
+        public WeaponMetadataProvider(IGFXMetadataLoader metadataLoader,
+                                      IEIFFileProvider eifFileProvider)
         {
             _metadata = new Dictionary<int, WeaponMetadata>
             {
@@ -94,12 +98,32 @@ namespace EndlessClient.Rendering.Metadata
                 { 74, new WeaponMetadata(0, new[] { SoundEffectID.MeleeWeaponAttack }, false) }, // fan
             };
             _metadataLoader = metadataLoader;
+            _eifFileProvider = eifFileProvider;
         }
 
         public WeaponMetadata GetValueOrDefault(int graphic)
         {
-            return _metadataLoader.GetMetadata<WeaponMetadata>(graphic)
-                .ValueOr(DefaultMetadata.TryGetValue(graphic, out var ret) ? ret : WeaponMetadata.Default);
+            // Check metadata loader first, then hardcoded defaults
+            var fromLoader = _metadataLoader.GetMetadata<WeaponMetadata>(graphic);
+            if (fromLoader.HasValue)
+                return fromLoader.ValueOr(WeaponMetadata.Default);
+
+            if (DefaultMetadata.TryGetValue(graphic, out var ret))
+                return ret;
+
+            // For modded weapons not in the metadata table, check the EIF SubType
+            // to auto-detect ranged weapons
+            if (graphic > 0 && _eifFileProvider.EIFFile != null)
+            {
+                var isRanged = _eifFileProvider.EIFFile
+                    .Any(x => x.DollGraphic == graphic &&
+                              x.Type == EOLib.IO.ItemType.Weapon &&
+                              x.SubType == EOLib.IO.ItemSubType.Ranged);
+                if (isRanged)
+                    return new WeaponMetadata(0, new[] { SoundEffectID.AttackBow }, true);
+            }
+
+            return WeaponMetadata.Default;
         }
     }
 }

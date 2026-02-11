@@ -2,6 +2,7 @@
 using AutomaticTypeMapper;
 using EOLib.Domain.Extensions;
 using EOLib.Domain.Map;
+using EOLib.IO;
 using EOLib.IO.Repositories;
 using Optional;
 using Optional.Collections;
@@ -15,16 +16,19 @@ namespace EOLib.Domain.Character
         private readonly IMapCellStateProvider _mapCellStateProvider;
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly IENFFileProvider _enfFileProvider;
+        private readonly IPaperdollProvider _paperdollProvider;
 
         public AttackValidationActions(ICharacterProvider characterProvider,
                                        IMapCellStateProvider mapCellStateProvider,
                                        IEIFFileProvider eifFileProvider,
-                                       IENFFileProvider enfFileProvider)
+                                       IENFFileProvider enfFileProvider,
+                                       IPaperdollProvider paperdollProvider)
         {
             _characterProvider = characterProvider;
             _mapCellStateProvider = mapCellStateProvider;
             _eifFileProvider = eifFileProvider;
             _enfFileProvider = enfFileProvider;
+            _paperdollProvider = paperdollProvider;
         }
 
         public AttackValidationError ValidateCharacterStateBeforeAttacking()
@@ -40,16 +44,43 @@ namespace EOLib.Domain.Character
                 return AttackValidationError.Exhausted;
 
             var rp = _characterProvider.MainCharacter.RenderProperties;
+            var mainCharId = _characterProvider.MainCharacter.ID;
 
-            var matchingWeapon = _eifFileProvider.EIFFile
-                .SingleOrNone(x => x.DollGraphic == rp.WeaponGraphic && x.Type == IO.ItemType.Weapon);
-            var matchingArrows = _eifFileProvider.EIFFile
-                .SingleOrNone(x => x.DollGraphic == rp.ShieldGraphic && x.Type == IO.ItemType.Shield);
+            // Use paperdoll data (actual equipped item IDs) when available.
+            // This correctly handles glamor gems where render properties show cosmetic overlays
+            // instead of the actual equipment.
+            var isRangedWeapon = false;
+            var hasArrows = false;
+            var hasShield = false;
 
-            var isRangedWeapon = matchingWeapon.Map(x => x.SubType == IO.ItemSubType.Ranged).ValueOr(false);
-            var isArrows = matchingArrows.Map(x => x.SubType == IO.ItemSubType.Arrows).ValueOr(false);
+            if (_paperdollProvider.VisibleCharacterPaperdolls.TryGetValue(mainCharId, out var paperdoll))
+            {
+                if (paperdoll.Paperdoll.TryGetValue(EquipLocation.Weapon, out var weaponId) && weaponId > 0)
+                {
+                    var weaponRecord = _eifFileProvider.EIFFile[weaponId];
+                    isRangedWeapon = weaponRecord.Type == IO.ItemType.Weapon && weaponRecord.SubType == IO.ItemSubType.Ranged;
+                }
 
-            if (isRangedWeapon && (rp.ShieldGraphic == 0 || !isArrows))
+                if (paperdoll.Paperdoll.TryGetValue(EquipLocation.Shield, out var shieldId) && shieldId > 0)
+                {
+                    hasShield = true;
+                    var shieldRecord = _eifFileProvider.EIFFile[shieldId];
+                    hasArrows = shieldRecord.Type == IO.ItemType.Shield && shieldRecord.SubType == IO.ItemSubType.Arrows;
+                }
+            }
+            else
+            {
+                // Fallback: use render properties when paperdoll data isn't available
+                var matchingWeapon = _eifFileProvider.EIFFile
+                    .FirstOrNone(x => x.DollGraphic == rp.WeaponGraphic && x.Type == IO.ItemType.Weapon);
+                isRangedWeapon = matchingWeapon.Map(x => x.SubType == IO.ItemSubType.Ranged).ValueOr(false);
+
+                hasShield = rp.ShieldGraphic != 0;
+                hasArrows = _eifFileProvider.EIFFile
+                    .Any(x => x.DollGraphic == rp.ShieldGraphic && x.Type == IO.ItemType.Shield && x.SubType == IO.ItemSubType.Arrows);
+            }
+
+            if (isRangedWeapon && (!hasShield || !hasArrows))
                 return AttackValidationError.MissingArrows;
 
             return _mapCellStateProvider
