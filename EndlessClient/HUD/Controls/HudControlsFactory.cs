@@ -228,6 +228,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.PartyPanel, CreateStatePanel(InGameStates.Party)},
                 {HudControlIdentifier.MacroPanel, CreateStatePanel(InGameStates.Macro)},
                 {HudControlIdentifier.SettingsPanel, CreateStatePanel(InGameStates.Settings)},
+                {HudControlIdentifier.HelpPanel, CreateStatePanel(InGameStates.Help)},
 
                 {HudControlIdentifier.ExpTrackerButton, CreateExpTrackerButton()},
                 {HudControlIdentifier.QuestWindowButton, CreateQuestWindowButton()},
