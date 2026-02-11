@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using AutomaticTypeMapper;
 using EOLib;
-using EOLib.Config;
 using EOLib.Graphics;
 using XNAControls;
 
@@ -16,22 +15,17 @@ namespace EndlessClient.Rendering
         bool Resizable { get; }
 
         /// <summary>
-        /// When in scaled mode, returns the logical game width (640). Otherwise same as Width.
+        /// Returns the logical game width (640 pre-login, configured in-game).
         /// </summary>
         int GameWidth { get; }
 
         /// <summary>
-        /// When in scaled mode, returns the logical game height (480). Otherwise same as Height.
+        /// Returns the logical game height (480 pre-login, configured in-game).
         /// </summary>
         int GameHeight { get; }
 
         /// <summary>
-        /// Whether the client is in scaled rendering mode
-        /// </summary>
-        bool IsScaledMode { get; }
-
-        /// <summary>
-        /// Current scale factor (1.0 when not scaled, otherwise window size / game size)
+        /// Current scale factor (window size / game size)
         /// </summary>
         float ScaleFactor { get; }
 
@@ -49,8 +43,6 @@ namespace EndlessClient.Rendering
         new int Height { get; set; }
 
         new bool Resizable { get; set; }
-
-        new bool IsScaledMode { get; set; }
 
         /// <summary>
         /// Configured game width from settings (0 = use default 640)
@@ -76,7 +68,6 @@ namespace EndlessClient.Rendering
 
         private readonly IGameWindowRepository _gameWindowRepository;
         private readonly IGraphicsDeviceRepository _graphicsDeviceRepository;
-        private readonly IConfigurationProvider _configurationProvider;
 
         private readonly List<EventHandler<EventArgs>> _resizeEvents;
 
@@ -86,8 +77,7 @@ namespace EndlessClient.Rendering
 
         public int Width
         {
-            // In scaled mode, return game canvas width for UI positioning
-            get => IsScaledMode ? GameWidth : WindowWidth;
+            get => GameWidth;
             set
             {
                 if (value < DEFAULT_BACKBUFFER_WIDTH)
@@ -103,8 +93,7 @@ namespace EndlessClient.Rendering
 
         public int Height
         {
-            // In scaled mode, return game canvas height for UI positioning
-            get => IsScaledMode ? GameHeight : WindowHeight;
+            get => GameHeight;
             set
             {
                 if (value < DEFAULT_BACKBUFFER_HEIGHT)
@@ -120,16 +109,11 @@ namespace EndlessClient.Rendering
 
         public bool Resizable
         {
-            // In scaled mode:
-            // - Pre-login: false (fixed 640x480 layout)
-            // - In-game with configured dimensions: true (floating layout)
-            get => IsScaledMode
-                ? (IsInGame && (ConfiguredGameWidth > DEFAULT_BACKBUFFER_WIDTH || ConfiguredGameHeight > DEFAULT_BACKBUFFER_HEIGHT))
-                : _gameWindowRepository.Window.AllowUserResizing;
+            // Pre-login: false (fixed 640x480 layout)
+            // In-game with configured dimensions: true (floating layout)
+            get => IsInGame && (ConfiguredGameWidth > DEFAULT_BACKBUFFER_WIDTH || ConfiguredGameHeight > DEFAULT_BACKBUFFER_HEIGHT);
             set => _gameWindowRepository.Window.AllowUserResizing = value;
         }
-
-        public bool IsScaledMode { get; set; }
 
         public int ConfiguredGameWidth { get; set; }
 
@@ -143,18 +127,15 @@ namespace EndlessClient.Rendering
         private int BaseGameWidth => IsInGame && ConfiguredGameWidth > 0 ? ConfiguredGameWidth : DEFAULT_BACKBUFFER_WIDTH;
         private int BaseGameHeight => IsInGame && ConfiguredGameHeight > 0 ? ConfiguredGameHeight : DEFAULT_BACKBUFFER_HEIGHT;
 
-        public int GameWidth => IsScaledMode ? BaseGameWidth : Width;
+        public int GameWidth => BaseGameWidth;
 
-        public int GameHeight => IsScaledMode ? BaseGameHeight : Height;
+        public int GameHeight => BaseGameHeight;
 
         public float ScaleFactor
         {
             get
             {
-                if (!IsScaledMode) return 1.0f;
-
                 // Calculate the scale factor that fits the game in the window while maintaining aspect ratio
-                // Use actual window dimensions, not Width/Height which return game dimensions in scaled mode
                 float scaleX = (float)WindowWidth / BaseGameWidth;
                 float scaleY = (float)WindowHeight / BaseGameHeight;
                 return Math.Min(scaleX, scaleY);
@@ -165,10 +146,7 @@ namespace EndlessClient.Rendering
         {
             get
             {
-                if (!IsScaledMode) return (0, 0);
-
                 // Calculate letterbox/pillarbox offset for centered rendering
-                // Use actual window dimensions
                 int scaledWidth = (int)(BaseGameWidth * ScaleFactor);
                 int scaledHeight = (int)(BaseGameHeight * ScaleFactor);
 
@@ -194,42 +172,21 @@ namespace EndlessClient.Rendering
         }
 
         public ClientWindowSizeRepository(IGameWindowRepository gameWindowRepository,
-                                          IGraphicsDeviceRepository graphicsDeviceRepository,
-                                          IConfigurationProvider configurationProvider)
+                                          IGraphicsDeviceRepository graphicsDeviceRepository)
         {
             _gameWindowRepository = gameWindowRepository;
             _graphicsDeviceRepository = graphicsDeviceRepository;
-            _configurationProvider = configurationProvider;
             _resizeEvents = new List<EventHandler<EventArgs>>();
         }
 
         public void ResetState()
         {
-            // Use the configuration directly since IsScaledMode may be cleared
-            // by another resettable before this one runs
-            var isScaledClient = _configurationProvider.ScaledClient;
-
-
             foreach (var evnt in _resizeEvents)
                 GameWindowSizeChanged -= evnt;
             _resizeEvents.Clear();
 
             IsInGame = false;
-
-            if (!isScaledClient)
-            {
-                // Non-scaled mode: reset to default 640x480 window
-                Resizable = false;
-                Width = DEFAULT_BACKBUFFER_WIDTH;
-                Height = DEFAULT_BACKBUFFER_HEIGHT;
-            }
-            else
-            {
-                // Scaled mode: preserve IsScaledMode and keep the window at its current size
-                // The render target will handle scaling 640x480 content to fill the window
-                IsScaledMode = true;
-
-            }
+            // Window stays at its current size — render target handles scaling
         }
     }
 }

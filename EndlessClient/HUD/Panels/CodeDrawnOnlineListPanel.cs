@@ -469,98 +469,6 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        /// <summary>
-        /// Original complete drawing - used in non-scaled mode
-        /// </summary>
-        protected override void DrawComplete(Vector2 pos)
-        {
-            _spriteBatch.Begin();
-
-            // Draw panel background
-            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
-
-            // Draw header bar
-            var headerRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, HeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
-
-            // Filter button
-            _filterButtonRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 3, 50, 14);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _filterButtonRect, _styleProvider.ButtonNormal);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _filterButtonRect, Color.Black, 1);
-            var filterText = _filter.ToString();
-            _spriteBatch.DrawString(_font, filterText, new Vector2(_filterButtonRect.X + 4, _filterButtonRect.Y + 1), Color.White);
-
-            // Column headers
-            _spriteBatch.DrawString(_headerFont, "Name", new Vector2(pos.X + ColName, pos.Y + 3), Color.White);
-            _spriteBatch.DrawString(_headerFont, "Title", new Vector2(pos.X + ColTitle, pos.Y + 3), Color.White);
-            _spriteBatch.DrawString(_headerFont, "Guild", new Vector2(pos.X + ColGuild, pos.Y + 3), Color.White);
-            _spriteBatch.DrawString(_headerFont, "Class", new Vector2(pos.X + ColClass, pos.Y + 3), Color.White);
-
-            // Player count
-            var countText = $"{_filteredList.Count}";
-            var countSize = _headerFont.MeasureString(countText);
-            _spriteBatch.DrawString(_headerFont, countText, new Vector2(pos.X + PanelWidth - countSize.Width - 8, pos.Y + 3), Color.White);
-
-            // Draw player rows
-            var listAreaY = (int)pos.Y + HeaderHeight + 2;
-            for (int i = 0; i < VisibleRows && _scrollOffset + i < _filteredList.Count; i++)
-            {
-                var player = _filteredList[_scrollOffset + i];
-                var rowY = listAreaY + (i * RowHeight);
-
-                // Alternating row colors
-                var rowRect = new Rectangle((int)pos.X + 2, rowY, PanelWidth - 4, RowHeight);
-                var rowColor = i % 2 == 0 ? new Color(70, 60, 50, 150) : new Color(60, 50, 40, 150);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowColor);
-
-                // Player info
-                var textColor = IsAdminIcon(player) ? new Color(255, 215, 0) : Color.White;
-                _spriteBatch.DrawString(_font, player.Name, new Vector2(pos.X + ColName, rowY), textColor);
-                _spriteBatch.DrawString(_font, player.Title, new Vector2(pos.X + ColTitle, rowY), _styleProvider.TextSecondary);
-                _spriteBatch.DrawString(_font, player.Guild, new Vector2(pos.X + ColGuild, rowY), _styleProvider.TextSecondary);
-                _spriteBatch.DrawString(_font, player.Class, new Vector2(pos.X + ColClass, rowY), _styleProvider.TextSecondary);
-            }
-
-            // Draw scrollbar on right side
-            var scrollX = (int)pos.X + PanelWidth - 20;
-            var scrollAreaTop = (int)pos.Y + HeaderHeight + 2;
-            var scrollAreaHeight = PanelHeight - HeaderHeight - 6;
-
-            // Scroll track background
-            _scrollTrackRect = new Rectangle(scrollX, scrollAreaTop, 16, scrollAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollTrackRect, new Color(40, 35, 30, 200));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollTrackRect, new Color(80, 70, 60), 1);
-
-            // Up button
-            _scrollUpRect = new Rectangle(scrollX, scrollAreaTop, 16, 16);
-            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollUpRect, upColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollUpRect, Color.Black, 1);
-            _spriteBatch.DrawString(_font, "▲", new Vector2(_scrollUpRect.X + 3, _scrollUpRect.Y + 2), Color.White);
-
-            // Down button
-            _scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - 16, 16, 16);
-            var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollDownRect, downColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollDownRect, Color.Black, 1);
-            _spriteBatch.DrawString(_font, "▼", new Vector2(_scrollDownRect.X + 3, _scrollDownRect.Y + 2), Color.White);
-
-            // Scroll thumb (position indicator)
-            if (_filteredList.Count > VisibleRows)
-            {
-                var thumbTrackHeight = scrollAreaHeight - 36;
-                var thumbHeight = Math.Max(10, thumbTrackHeight * VisibleRows / _filteredList.Count);
-                var maxOffset = _filteredList.Count - VisibleRows;
-                var thumbY = scrollAreaTop + 17 + (int)((thumbTrackHeight - thumbHeight) * _scrollOffset / (float)maxOffset);
-                var thumbRect = new Rectangle(scrollX + 2, thumbY, 12, thumbHeight);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, thumbRect, _styleProvider.ButtonNormal);
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, new Color(120, 110, 100), 1);
-            }
-
-            _spriteBatch.End();
-        }
 
 
         private void ApplyFilter()
@@ -595,9 +503,6 @@ namespace EndlessClient.HUD.Panels
 
         private Point TransformMousePosition(Point position)
         {
-            if (!SkipRenderTargetDraw)
-                return position;
-
             var offset = WindowSizeProvider.RenderOffset;
             var scale = WindowSizeProvider.ScaleFactor;
 

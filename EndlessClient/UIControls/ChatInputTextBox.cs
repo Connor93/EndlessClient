@@ -29,15 +29,8 @@ namespace EndlessClient.UIControls
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            // In scaled mode, skip drawing text (it will be drawn post-scale by the parent panel)
-            if (_clientWindowSizeProvider?.IsScaledMode == true)
-            {
-                // Don't call base - this skips drawing the text
-                // The parent panel's DrawInputTextScaled handles crisp text rendering
-                return;
-            }
-
-            base.OnDrawControl(gameTime);
+            // Text drawing is handled post-scale by the parent panel for crisp rendering
+            return;
         }
 
         protected override bool HandleTextInput(KeyboardEventArgs eventArgs)

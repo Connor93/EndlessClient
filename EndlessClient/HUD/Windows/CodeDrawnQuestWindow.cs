@@ -236,7 +236,7 @@ namespace EndlessClient.HUD.Windows
         private int _zOrder = 100;
         int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
         public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+        public bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -583,9 +583,6 @@ namespace EndlessClient.HUD.Windows
 
         private Point TransformMousePosition(Point position)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode)
-                return position;
-
             var offset = _clientWindowSizeProvider.RenderOffset;
             var scale = _clientWindowSizeProvider.ScaleFactor;
 

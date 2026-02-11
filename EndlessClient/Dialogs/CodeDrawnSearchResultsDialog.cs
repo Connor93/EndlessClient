@@ -203,18 +203,11 @@ namespace EndlessClient.Dialogs
 
         // IPostScaleDrawable implementation
         public int PostScaleDrawOrder => 100;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+        public bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (SkipRenderTargetDraw)
-            {
-                DrawFills(DrawPositionWithParentOffset);
-                base.OnDrawControl(gameTime);
-                return;
-            }
-
-            DrawComplete(DrawPositionWithParentOffset, 1.0f, _font, _headerFont);
+            DrawFills(DrawPositionWithParentOffset);
             base.OnDrawControl(gameTime);
         }
 
@@ -398,115 +391,10 @@ namespace EndlessClient.Dialogs
             _spriteBatch.End();
         }
 
-        /// <summary>
-        /// Complete drawing for non-scaled mode
-        /// </summary>
-        private void DrawComplete(Vector2 pos, float scale, BitmapFont font, BitmapFont headerFont)
-        {
-            _spriteBatch.Begin();
 
-            // Panel background with rounded corners
-            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, DialogWidth, DialogHeight);
-            DrawingPrimitives.DrawRoundedRect(_spriteBatch, bgRect, _styleProvider.PanelBackground, _styleProvider.CornerRadius);
-            DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, _styleProvider.CornerRadius, 2);
-
-            // Title bar
-            var titleRect = new Rectangle((int)pos.X + 1, (int)pos.Y + 1, DialogWidth - 2, 30);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, titleRect, _styleProvider.TitleBarBackground);
-
-            // Title text
-            if (!string.IsNullOrEmpty(_title))
-            {
-                _spriteBatch.DrawString(headerFont, _title, new Vector2(pos.X + 16, pos.Y + 8), _styleProvider.TitleBarText);
-            }
-
-            // List area background
-            var listRect = new Rectangle((int)pos.X + 8, (int)pos.Y + ListAreaTop, DialogWidth - 40, ListAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, listRect, new Color(0, 0, 0, 60));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, listRect, _styleProvider.PanelBorder, 1);
-
-            // Items
-            for (int i = 0; i < VisibleItems && _scrollOffset + i < _items.Count; i++)
-            {
-                var itemIndex = _scrollOffset + i;
-                var item = _items[itemIndex];
-                var rowY = (int)pos.Y + ListAreaTop + (i * ItemHeight);
-                var rowRect = new Rectangle((int)pos.X + 8, rowY, DialogWidth - 40, ItemHeight);
-
-                // Row background
-                Color rowColor;
-                if (itemIndex == _hoveredIndex)
-                    rowColor = new Color(255, 255, 255, 30);
-                else
-                    rowColor = i % 2 == 0 ? new Color(70, 60, 50, 80) : new Color(60, 50, 40, 80);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowColor);
-
-                // Item text
-                var textColor = itemIndex == _hoveredIndex
-                    ? new Color(150, 230, 255)
-                    : _styleProvider.TextHighlight;
-                _spriteBatch.DrawString(font, item.Text, new Vector2(pos.X + 12, rowY + 2), textColor);
-            }
-
-            // Scrollbar
-            var scrollX = (int)pos.X + DialogWidth - 24;
-            var scrollTrackRect = new Rectangle(scrollX, (int)pos.Y + ListAreaTop, 16, ListAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollTrackRect, new Color(40, 35, 30, 200));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, scrollTrackRect, new Color(80, 70, 60), 1);
-
-            // Up button
-            _scrollUpRect = new Rectangle(scrollX, (int)pos.Y + ListAreaTop, 16, 16);
-            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollUpRect, upColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollUpRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▲", new Vector2(_scrollUpRect.X + 3, _scrollUpRect.Y + 1), Color.White);
-
-            // Down button
-            _scrollDownRect = new Rectangle(scrollX, (int)pos.Y + ListAreaTop + ListAreaHeight - 16, 16, 16);
-            var maxOffset = Math.Max(0, _items.Count - VisibleItems);
-            var downColor = _scrollOffset < maxOffset ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollDownRect, downColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _scrollDownRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▼", new Vector2(_scrollDownRect.X + 3, _scrollDownRect.Y + 1), Color.White);
-
-            // Scroll thumb
-            if (_items.Count > VisibleItems)
-            {
-                var thumbTrackHeight = ListAreaHeight - 36;
-                var thumbHeight = Math.Max(10, thumbTrackHeight * VisibleItems / _items.Count);
-                var thumbY = (int)pos.Y + ListAreaTop + 17 + (int)((thumbTrackHeight - thumbHeight) * _scrollOffset / (float)maxOffset);
-                var thumbRect = new Rectangle(scrollX + 2, thumbY, 12, thumbHeight);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, thumbRect, _styleProvider.ButtonNormal);
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, new Color(120, 110, 100), 1);
-            }
-
-            // Cancel button
-            var buttonWidth = 80;
-            var buttonHeight = 24;
-            _cancelButtonRect = new Rectangle(
-                (int)pos.X + (DialogWidth - buttonWidth) / 2,
-                (int)pos.Y + DialogHeight - buttonHeight - 12,
-                buttonWidth, buttonHeight);
-
-            var buttonColor = _cancelButtonHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _cancelButtonRect, buttonColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _cancelButtonRect, Color.Black, 1);
-
-            var buttonText = "Cancel";
-            var textSize = headerFont.MeasureString(buttonText);
-            var textPos = new Vector2(
-                _cancelButtonRect.X + (_cancelButtonRect.Width - textSize.Width) / 2,
-                _cancelButtonRect.Y + (_cancelButtonRect.Height - textSize.Height) / 2);
-            _spriteBatch.DrawString(headerFont, buttonText, textPos, Color.White);
-
-            _spriteBatch.End();
-        }
 
         private Point TransformMousePosition(Point position)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode)
-                return position;
-
             var offset = _clientWindowSizeProvider.RenderOffset;
             var scale = _clientWindowSizeProvider.ScaleFactor;
 

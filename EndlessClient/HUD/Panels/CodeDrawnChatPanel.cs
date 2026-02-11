@@ -244,15 +244,6 @@ namespace EndlessClient.HUD.Panels
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (SkipRenderTargetDraw)
-            {
-                base.OnDrawControl(gameTime);
-                return;
-            }
-
-            // Normal mode: draw everything
-            DrawPanelBackground(DrawPositionWithParentOffset, 1.0f);
-            DrawChatMessages(DrawPositionWithParentOffset);
             base.OnDrawControl(gameTime);
         }
 
@@ -276,7 +267,6 @@ namespace EndlessClient.HUD.Panels
         }
 
         // Required by base class but not used since we override DrawPostScale completely with custom drawing
-        protected override void DrawComplete(Vector2 pos) { }
         protected override void DrawFillsScaled(Vector2 pos, float scale) { }
         protected override void DrawBordersAndTextScaled(Vector2 pos, float scale) { }
 
@@ -734,9 +724,6 @@ namespace EndlessClient.HUD.Panels
 
         private Point TransformMousePosition(Point position)
         {
-            if (!SkipRenderTargetDraw)
-                return position;
-
             var offset = WindowSizeProvider.RenderOffset;
             var scale = WindowSizeProvider.ScaleFactor;
 

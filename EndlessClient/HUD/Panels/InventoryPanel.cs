@@ -605,9 +605,6 @@ namespace EndlessClient.HUD.Panels
         }
         public Point TransformMousePosition(Point position)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode)
-                return position;
-
             var offset = _clientWindowSizeProvider.RenderOffset;
             var scale = _clientWindowSizeProvider.ScaleFactor;
 

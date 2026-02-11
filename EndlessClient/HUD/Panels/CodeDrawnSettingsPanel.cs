@@ -169,9 +169,6 @@ namespace EndlessClient.HUD.Panels
 
         private Point TransformMousePosition(Point position)
         {
-            if (!SkipRenderTargetDraw)
-                return position;
-
             var offset = WindowSizeProvider.RenderOffset;
             var scale = WindowSizeProvider.ScaleFactor;
 
@@ -313,58 +310,8 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        protected override void DrawComplete(Vector2 pos)
-        {
-            _spriteBatch.Begin();
 
-            // Draw panel background
-            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, PanelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
 
-            // Draw column divider
-            var lineColor = new Color((byte)_styleProvider.PanelBorder.R, (byte)_styleProvider.PanelBorder.G, (byte)_styleProvider.PanelBorder.B, (byte)100);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)pos.X + ColWidth, (int)pos.Y + 4, 1, PanelHeight - 8), lineColor);
-
-            // Draw settings
-            var labelColor = _styleProvider.TextSecondary;
-
-            foreach (var pair in _settingLabels)
-            {
-                var setting = pair.Key;
-                var label = pair.Value;
-                var ndx = (int)setting;
-                var col = ndx / 6;
-                var row = ndx % 6;
-
-                var hitArea = _settingHitAreas[setting];
-                var rowRect = new Rectangle((int)pos.X + hitArea.X, (int)pos.Y + hitArea.Y, hitArea.Width, hitArea.Height);
-
-                // Draw hover highlight
-                if (_hoveredSetting == setting)
-                {
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, new Color(255, 255, 255, 30));
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, rowRect, new Color(255, 255, 255, 60), 1);
-                }
-
-                var labelX = pos.X + 10 + col * ColWidth;
-                var valueX = pos.X + 90 + col * ColWidth;
-                var y = pos.Y + 9 + row * RowHeight;
-
-                _spriteBatch.DrawString(_labelFont, label, new Vector2(labelX, y), labelColor);
-
-                // Draw value with color based on state
-                var value = _settingValues[setting];
-                var valueColor = GetValueColor(setting, value);
-                _spriteBatch.DrawString(_font, value, new Vector2(valueX, y), valueColor);
-
-                // Draw toggle indicator arrow
-                var arrowX = pos.X + 205 + col * ColWidth;
-                _spriteBatch.DrawString(_font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
-            }
-
-            _spriteBatch.End();
-        }
 
 
         private Color GetValueColor(WhichSetting setting, string value)

@@ -134,7 +134,7 @@ namespace EndlessClient.HUD.Panels
         private int _zOrder = 0;
         int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
         public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+        public bool SkipRenderTargetDraw => true;
 
         public void BringToFront()
         {

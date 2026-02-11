@@ -43,7 +43,7 @@ namespace EOLib.Config
 
         public const string WASDMovement = nameof(WASDMovement);
 
-        public const string ScaledClient = nameof(ScaledClient);
+
 
         public const string UIMode = nameof(UIMode);
         public const string UIStyle = nameof(UIStyle);

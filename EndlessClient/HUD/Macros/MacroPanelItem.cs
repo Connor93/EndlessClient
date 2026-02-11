@@ -115,7 +115,7 @@ namespace EndlessClient.HUD.Macros
         }
 
         // True when in scaled mode - parent handles drawing icons in correct order
-        private bool SkipRenderTargetDraw => _clientWindowSizeProvider?.IsScaledMode ?? false;
+        private bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {

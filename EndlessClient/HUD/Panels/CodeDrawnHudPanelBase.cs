@@ -24,7 +24,7 @@ namespace EndlessClient.HUD.Panels
         /// Gets whether to skip rendering during the render target phase.
         /// When true, drawing is deferred to DrawPostScale for crisp text at any scale.
         /// </summary>
-        public bool SkipRenderTargetDraw => _windowSizeProvider.IsScaledMode;
+        public bool SkipRenderTargetDraw => true;
 
         /// <summary>
         /// Gets the draw order for post-scale rendering. Uses ZOrder for proper stacking.
@@ -55,19 +55,10 @@ namespace EndlessClient.HUD.Panels
         }
 
         /// <summary>
-        /// Handles draw dispatch between scaled and non-scaled modes.
+        /// Draw control override - drawing is handled in DrawPostScale for crisp rendering.
         /// </summary>
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (SkipRenderTargetDraw)
-            {
-                // In scaled mode: skip fills here - they will be drawn in DrawPostScale
-                base.OnDrawControl(gameTime);
-                return;
-            }
-
-            // Normal mode: draw everything in one pass
-            DrawComplete(DrawPositionWithParentOffset);
             base.OnDrawControl(gameTime);
         }
 
@@ -106,9 +97,6 @@ namespace EndlessClient.HUD.Panels
         /// </summary>
         protected abstract void DrawBordersAndTextScaled(Vector2 scaledPos, float scaleFactor);
 
-        /// <summary>
-        /// Draws everything in one pass for non-scaled mode.
-        /// </summary>
-        protected abstract void DrawComplete(Vector2 pos);
+
     }
 }

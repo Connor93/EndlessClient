@@ -64,9 +64,7 @@ namespace EndlessClient.Dialogs
         private const int DialogWidth = 385;
         private const int DialogHeight = 320;  // Taller to fit equipment slots (max y=274)
 
-        public bool IsScaledMode => _clientWindowSizeProvider != null &&
-            _clientWindowSizeProvider.Resizable &&
-            _graphicsDeviceProvider != null;
+
 
         public int PostScaleDrawOrder => 100;
         public bool SkipRenderTargetDraw => false;
@@ -160,27 +158,14 @@ namespace EndlessClient.Dialogs
         {
             DrawingPrimitives.Initialize(Game.GraphicsDevice);
 
-            // In scaled mode, unparent labels - we'll draw them in DrawPostScale
-            if (IsScaledMode)
-            {
-                _nameLabel?.SetControlUnparented();
-                _homeLabel?.SetControlUnparented();
-                _classLabel?.SetControlUnparented();
-                _partnerLabel?.SetControlUnparented();
-                _titleLabel?.SetControlUnparented();
-                _guildLabel?.SetControlUnparented();
-                _rankLabel?.SetControlUnparented();
-            }
-            else
-            {
-                _nameLabel?.Initialize();
-                _homeLabel?.Initialize();
-                _classLabel?.Initialize();
-                _partnerLabel?.Initialize();
-                _titleLabel?.Initialize();
-                _guildLabel?.Initialize();
-                _rankLabel?.Initialize();
-            }
+            // Unparent labels - text is drawn post-scale for crisp rendering
+            _nameLabel?.SetControlUnparented();
+            _homeLabel?.SetControlUnparented();
+            _classLabel?.SetControlUnparented();
+            _partnerLabel?.SetControlUnparented();
+            _titleLabel?.SetControlUnparented();
+            _guildLabel?.SetControlUnparented();
+            _rankLabel?.SetControlUnparented();
 
             _okButton?.Initialize();
 
@@ -306,14 +291,7 @@ namespace EndlessClient.Dialogs
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (IsScaledMode)
-            {
-                DrawFills(gameTime);
-            }
-            else
-            {
-                DrawComplete(gameTime);
-            }
+            DrawFills(gameTime);
         }
 
         /// <summary>
@@ -344,42 +322,11 @@ namespace EndlessClient.Dialogs
             base.OnDrawControl(gameTime);
         }
 
-        private void DrawComplete(GameTime gameTime)
-        {
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
 
-            _spriteBatch.Begin(transformMatrix: transform);
-
-            // Main dialog background
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(0, 0, DialogWidth, DialogHeight), _styleProvider.PanelBackground);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(0, 0, DialogWidth, DialogHeight), _styleProvider.PanelBorder, 2);
-
-            // Title bar
-            var titleBarHeight = 32;
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(2, 2, DialogWidth - 4, titleBarHeight - 2), _styleProvider.TitleBarBackground);
-
-            // Title text
-            var font = _contentProvider.Fonts[Constants.FontSize08pt5];
-            _spriteBatch.DrawString(font, "Paperdoll", new Vector2(16, 8), _styleProvider.TitleBarText);
-
-            // Equipment area background
-            var equipAreaWidth = 220;
-            var equipAreaTop = 20;
-            var equipAreaHeight = 260;
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), new Color(20, 20, 30, 200));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), _styleProvider.PanelBorder, 1);
-
-            // Draw static field labels
-            DrawFieldLabels(font);
-
-            _spriteBatch.End();
-            base.OnDrawControl(gameTime);
-        }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            if (!IsScaledMode) return;
+
 
             // Calculate scaled position based on where fills were drawn
             var drawPos = DrawAreaWithParentOffset;

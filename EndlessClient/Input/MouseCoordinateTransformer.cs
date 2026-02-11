@@ -7,8 +7,7 @@ namespace EndlessClient.Input
 {
     /// <summary>
     /// Transforms mouse coordinates from window space to game space for scaled rendering.
-    /// When the game renders at a fixed resolution (e.g., 1280x720) and scales up to fill
-    /// the window, this transformer converts window mouse coordinates to game coordinates.
+    /// The game renders at a fixed resolution and scales up to fill the window.
     /// </summary>
     public class MouseCoordinateTransformer : IMouseCoordinateTransformer
     {
@@ -21,12 +20,6 @@ namespace EndlessClient.Input
 
         public Point TransformMousePosition(Point windowPosition)
         {
-            // If not in scaled mode, return position unchanged
-            if (!_windowSizeProvider.IsScaledMode)
-            {
-                return windowPosition;
-            }
-
             var offset = _windowSizeProvider.RenderOffset;
             var scale = _windowSizeProvider.ScaleFactor;
 
@@ -43,13 +36,7 @@ namespace EndlessClient.Input
 
         public bool IsInBounds(Point windowPosition)
         {
-            if (!_windowSizeProvider.IsScaledMode)
-            {
-                return windowPosition.X >= 0 && windowPosition.X < _windowSizeProvider.GameWidth &&
-                       windowPosition.Y >= 0 && windowPosition.Y < _windowSizeProvider.GameHeight;
-            }
-
-            // In scaled mode, check if the window position is within the scaled game area
+            // Check if the window position is within the scaled game area
             var offset = _windowSizeProvider.RenderOffset;
             var scale = _windowSizeProvider.ScaleFactor;
             int scaledWidth = (int)(_windowSizeProvider.GameWidth * scale);

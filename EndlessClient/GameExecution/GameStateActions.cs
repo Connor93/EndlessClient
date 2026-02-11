@@ -104,7 +104,6 @@ namespace EndlessClient.GameExecution
 
             // Deferred window resize for PlayingTheGame (after controls fully added)
             if (newState == GameStates.PlayingTheGame &&
-                _clientWindowSizeRepository.IsScaledMode &&
                 (_clientWindowSizeRepository.ConfiguredGameWidth > 0 || _clientWindowSizeRepository.ConfiguredGameHeight > 0))
             {
                 var newWidth = _clientWindowSizeRepository.GameWidth;

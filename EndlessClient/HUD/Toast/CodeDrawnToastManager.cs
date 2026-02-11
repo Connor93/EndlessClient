@@ -157,17 +157,12 @@ namespace EndlessClient.HUD.Toast
 
         public override void Draw(GameTime gameTime)
         {
-            // Skip drawing in scaled mode - use DrawPostScale instead
-            if (_clientWindowSizeProvider.IsScaledMode)
-                return;
-
-            // Not used in scaled mode, but draw normally for non-scaled
-            DrawToasts(_spriteBatch, 1f, Point.Zero, false);
+            // Drawing is handled by DrawPostScale
         }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            if (!_clientWindowSizeProvider.IsScaledMode || _toasts.Count == 0)
+            if (_toasts.Count == 0)
                 return;
 
             DrawToasts(spriteBatch, scaleFactor, renderOffset, true);

@@ -352,40 +352,8 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.End();
         }
 
-        protected override void DrawComplete(Vector2 pos)
-        {
-            _spriteBatch.Begin();
 
-            var panelHeight = HeaderHeight + (_cachedParty.Count * MemberRowHeight) + Padding;
 
-            // Draw panel background with slight transparency
-            var bgRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, panelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, new Color(_styleProvider.PanelBackground, 0.9f));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
-
-            // Draw header with leave button
-            var headerRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, HeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
-            _spriteBatch.DrawString(_nameFont, $"Party ({_cachedParty.Count})",
-                new Vector2(pos.X + Padding, pos.Y + 2), Color.White);
-
-            // Leave button (X in top right corner)
-            _leaveButtonRect = new Rectangle((int)pos.X + PanelWidth - RemoveButtonSize - 4, (int)pos.Y + 3, RemoveButtonSize, RemoveButtonSize);
-            DrawRemoveButton(_leaveButtonRect, "X", new Color(180, 60, 60), _detailFont);
-
-            // Check if current character is leader
-            var isLeader = _cachedParty.Any(m => m.IsLeader && m.CharacterID == _characterProvider.MainCharacter.ID);
-
-            // Draw each party member
-            var memberIndex = 0;
-            foreach (var member in _cachedParty.OrderByDescending(m => m.IsLeader))
-            {
-                DrawPartyMemberComplete(pos, member, memberIndex, isLeader, _nameFont, _detailFont);
-                memberIndex++;
-            }
-
-            _spriteBatch.End();
-        }
 
 
         private void DrawPartyMember(Vector2 panelPos, PartyMember member, int index, bool isLeader)
@@ -440,53 +408,6 @@ namespace EndlessClient.HUD.Panels
                 Color.White);
         }
 
-        private void DrawPartyMemberComplete(Vector2 panelPos, PartyMember member, int index, bool isLeader, BitmapFont nameFont, BitmapFont detailFont)
-        {
-            var rowY = (int)panelPos.Y + HeaderHeight + (index * MemberRowHeight);
-            var rowRect = new Rectangle((int)panelPos.X + 2, rowY, PanelWidth - 4, MemberRowHeight - 2);
-
-            // Alternating row background
-            var rowBgColor = index % 2 == 0 ? new Color(80, 70, 60, 180) : new Color(70, 60, 50, 180);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowBgColor);
-
-            // Name (with star for leader)
-            var nameColor = member.IsLeader ? new Color(255, 215, 0) : Color.White;
-            var nameText = member.IsLeader ? $"★ {member.Name}" : member.Name;
-            _spriteBatch.DrawString(nameFont, nameText, new Vector2(panelPos.X + Padding + 2, rowY + 2), nameColor);
-
-            // Remove button for leader to kick other members
-            if (isLeader && member.CharacterID != _characterProvider.MainCharacter.ID)
-            {
-                var removeRect = new Rectangle((int)panelPos.X + PanelWidth - RemoveButtonSize - 8, rowY + 2, RemoveButtonSize, RemoveButtonSize);
-                DrawRemoveButton(removeRect, "x", new Color(140, 50, 50), detailFont);
-                _removeButtonRects[member.CharacterID] = removeRect;
-            }
-
-            // Level
-            var levelText = $"Lv. {member.Level}";
-            _spriteBatch.DrawString(detailFont, levelText, new Vector2(panelPos.X + Padding + 2, rowY + 16), _styleProvider.TextSecondary);
-
-            // Health bar background
-            var healthBarY = rowY + MemberRowHeight - HealthBarHeight - 4;
-            var healthBarRect = new Rectangle((int)panelPos.X + Padding, healthBarY, PanelWidth - (Padding * 2) - 4, HealthBarHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, new Color(40, 40, 40, 200));
-
-            // Health bar fill
-            var healthPercent = member.PercentHealth / 100f;
-            var healthFillWidth = (int)((healthBarRect.Width - 2) * healthPercent);
-            var healthColor = member.PercentHealth > 50 ? new Color(80, 180, 80) :
-                              member.PercentHealth > 25 ? new Color(220, 180, 50) :
-                              new Color(200, 60, 60);
-            var healthFillRect = new Rectangle(healthBarRect.X + 1, healthBarRect.Y + 1, healthFillWidth, HealthBarHeight - 2);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, healthFillRect, healthColor);
-
-            // Health percentage text
-            var healthText = $"{member.PercentHealth}%";
-            var textSize = detailFont.MeasureString(healthText);
-            _spriteBatch.DrawString(detailFont, healthText,
-                new Vector2(healthBarRect.X + (healthBarRect.Width - textSize.Width) / 2, healthBarY - 1),
-                Color.White);
-        }
 
         private void DrawRemoveButton(Rectangle rect, string label, Color bgColor, BitmapFont font)
         {

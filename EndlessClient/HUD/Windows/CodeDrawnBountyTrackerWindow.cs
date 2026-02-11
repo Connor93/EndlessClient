@@ -144,7 +144,7 @@ namespace EndlessClient.HUD.Windows
         private int _zOrder = 115;
         int IZOrderedWindow.ZOrder { get => _zOrder; set => _zOrder = value; }
         public int PostScaleDrawOrder => _zOrder;
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider.IsScaledMode;
+        public bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {

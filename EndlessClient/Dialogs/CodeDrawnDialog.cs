@@ -37,10 +37,8 @@ namespace EndlessClient.Dialogs
         public string Message { get; set; } = string.Empty;
         public string Caption { get; set; } = string.Empty;
 
-        private bool IsScaledMode => _clientWindowSizeProvider != null && Game.Window.AllowUserResizing;
-
         public int PostScaleDrawOrder => 100;
-        public bool SkipRenderTargetDraw => IsScaledMode;
+        public bool SkipRenderTargetDraw => true;
 
         /// <summary>
         /// Backwards-compatible constructor for non-scaled mode.
@@ -119,12 +117,10 @@ namespace EndlessClient.Dialogs
                     break;
             }
 
-            // In scaled mode, hide the child labels to prevent them from drawing in the render target
-            if (IsScaledMode)
-            {
-                _captionLabel?.SetControlUnparented();
-                _messageLabel?.SetControlUnparented();
-            }
+            // Hide the child labels to prevent them from drawing in the render target
+            // (text is drawn post-scale for crisp rendering)
+            _captionLabel?.SetControlUnparented();
+            _messageLabel?.SetControlUnparented();
 
             CenterInGameView();
         }
@@ -144,8 +140,7 @@ namespace EndlessClient.Dialogs
         {
             base.CenterInGameView();
 
-            if (_isInGame() && !Game.Window.AllowUserResizing)
-                DrawPosition = new Vector2(DrawPosition.X, (330 - DrawArea.Height) / 2f);
+            // Window is always resizable in scaled mode, no special centering needed
         }
 
         public override void Initialize()
@@ -165,14 +160,7 @@ namespace EndlessClient.Dialogs
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (IsScaledMode)
-            {
-                DrawFills();
-            }
-            else
-            {
-                DrawComplete();
-            }
+            DrawFills();
 
             // Let child buttons draw their fills
             base.OnDrawControl(gameTime);
@@ -204,36 +192,9 @@ namespace EndlessClient.Dialogs
             _spriteBatch.End();
         }
 
-        /// <summary>
-        /// Complete drawing for non-scaled mode
-        /// </summary>
-        private void DrawComplete()
-        {
-            var cornerRadius = _styleProvider.CornerRadius;
-            var borderThickness = _styleProvider.BorderThickness;
-            var titleBarHeight = _styleProvider.TitleBarHeight;
-
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
-
-            _spriteBatch.Begin(transformMatrix: transform);
-
-            // Main panel background
-            DrawingPrimitives.DrawRoundedRect(_spriteBatch, bounds, _styleProvider.PanelBackground, cornerRadius);
-            DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, bounds, _styleProvider.PanelBorder, cornerRadius, borderThickness);
-
-            // Title bar
-            DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle(borderThickness, borderThickness, DrawArea.Width - borderThickness * 2, titleBarHeight - borderThickness),
-                _styleProvider.TitleBarBackground);
-
-            _spriteBatch.End();
-        }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scale, Point renderOffset)
         {
-            if (!IsScaledMode) return;
 
             var scaleFactor = _clientWindowSizeProvider.ScaleFactor;
             var cornerRadius = _styleProvider.CornerRadius;

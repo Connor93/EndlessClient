@@ -88,18 +88,11 @@ namespace EndlessClient.UI.Controls
 
         // IPostScaleDrawable implementation
         public int PostScaleDrawOrder => 50; // Draw above panels but below dialogs
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider?.IsScaledMode ?? false;
+        public bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (SkipRenderTargetDraw)
-            {
-                DrawFills();
-            }
-            else
-            {
-                DrawComplete();
-            }
+            DrawFills();
 
             base.OnDrawControl(gameTime);
         }
@@ -164,41 +157,5 @@ namespace EndlessClient.UI.Controls
             _spriteBatch.End();
         }
 
-        private void DrawComplete()
-        {
-            var backgroundColor = _state switch
-            {
-                ButtonState.Pressed => _styleProvider.ButtonPressed,
-                ButtonState.Hover => _styleProvider.ButtonHover,
-                _ => _styleProvider.ButtonNormal
-            };
-            var borderColor = _styleProvider.ButtonBorder;
-            var textColor = _styleProvider.ButtonText;
-            var borderThickness = _styleProvider.BorderThickness;
-
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
-
-            _spriteBatch.Begin(transformMatrix: transform);
-
-            // Background
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bounds, backgroundColor);
-
-            // Border
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, bounds, borderColor, borderThickness);
-
-            // Text centered
-            if (!string.IsNullOrEmpty(_text) && _font != null)
-            {
-                var textSize = _font.MeasureString(_text);
-                var textPos = new Vector2(
-                    (bounds.Width - textSize.Width) / 2,
-                    (bounds.Height - textSize.Height) / 2);
-                _spriteBatch.DrawString(_font, _text, textPos, textColor);
-            }
-
-            _spriteBatch.End();
-        }
     }
 }

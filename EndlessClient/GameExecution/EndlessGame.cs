@@ -80,7 +80,7 @@ namespace EndlessClient.GameExecution
                            IMainButtonController mainButtonController,
                            IScrollingListDialogFactory scrollingListDialogFactory)
         {
-            System.IO.File.AppendAllText("debug_log.txt", "EndlessGame Constructor START\n");
+
             _windowSizeRepository = windowSizeRepository;
             _contentProvider = contentProvider;
             _graphicsDeviceRepository = graphicsDeviceRepository;
@@ -134,20 +134,16 @@ namespace EndlessClient.GameExecution
             _graphicsDeviceManager.SynchronizeWithVerticalRetrace = false;
             _graphicsDeviceManager.IsFullScreen = false;
 
-            if (_configurationProvider.ScaledClient && _configurationProvider.InGameWidth > 0 && _configurationProvider.InGameHeight > 0)
-            {
-                // In scaled mode, set the window to the configured dimensions directly
-                // Width/Height setters go through ApplyChanges but their getters return game coordinates,
-                // so we set the backbuffer dimensions directly here
-                _graphicsDeviceManager.PreferredBackBufferWidth = _configurationProvider.InGameWidth;
-                _graphicsDeviceManager.PreferredBackBufferHeight = _configurationProvider.InGameHeight;
-                _graphicsDeviceManager.ApplyChanges();
-            }
-            else
-            {
-                _windowSizeRepository.Width = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
-                _windowSizeRepository.Height = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
-            }
+            // Set window to configured dimensions (or default 640x480)
+            var windowWidth = _configurationProvider.InGameWidth > 0
+                ? _configurationProvider.InGameWidth
+                : ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
+            var windowHeight = _configurationProvider.InGameHeight > 0
+                ? _configurationProvider.InGameHeight
+                : ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
+            _graphicsDeviceManager.PreferredBackBufferWidth = windowWidth;
+            _graphicsDeviceManager.PreferredBackBufferHeight = windowHeight;
+            _graphicsDeviceManager.ApplyChanges();
 
             _windowSizeRepository.GameWindowSizeChanged += (_, _) =>
             {
@@ -157,21 +153,21 @@ namespace EndlessClient.GameExecution
                 if (_windowSizeRepository.Height < ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT)
                     _windowSizeRepository.Height = ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
 
-                // Recreate the game render target if we're in scaled mode and dimensions changed
-                if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
+                // Recreate the game render target if dimensions changed
+                if (_gameRenderTarget != null)
                 {
                     var newWidth = _windowSizeRepository.GameWidth;
                     var newHeight = _windowSizeRepository.GameHeight;
                     if (_gameRenderTarget.Width != newWidth || _gameRenderTarget.Height != newHeight)
                     {
                         _gameRenderTarget.Dispose();
-                        _gameRenderTarget = new Microsoft.Xna.Framework.Graphics.RenderTarget2D(
+                        _gameRenderTarget = new RenderTarget2D(
                             GraphicsDevice,
                             newWidth,
                             newHeight,
                             false,
-                            Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color,
-                            Microsoft.Xna.Framework.Graphics.DepthFormat.None);
+                            SurfaceFormat.Color,
+                            DepthFormat.None);
                     }
                 }
             };
@@ -198,41 +194,21 @@ namespace EndlessClient.GameExecution
             _graphicsDeviceRepository.GraphicsDeviceManager = _graphicsDeviceManager;
             _gameWindowRepository.Window = Window;
 
-            // Initialize scaled client mode if configured
-            if (_configurationProvider.ScaledClient)
-            {
-                _windowSizeRepository.IsScaledMode = true;
+            // Set configured game dimensions for when player logs in (0 = use default 640x480)
+            _windowSizeRepository.ConfiguredGameWidth = _configurationProvider.InGameWidth;
+            _windowSizeRepository.ConfiguredGameHeight = _configurationProvider.InGameHeight;
 
-                // Set configured game dimensions for when player logs in (0 = use default 640x480)
-                _windowSizeRepository.ConfiguredGameWidth = _configurationProvider.InGameWidth;
-                _windowSizeRepository.ConfiguredGameHeight = _configurationProvider.InGameHeight;
+            // Enable window resizing for scaling
+            Window.AllowUserResizing = true;
 
-                // Enable window resizing for scaling
-                Window.AllowUserResizing = true;
-
-                // Set the window/backbuffer to the configured dimensions
-                // The render target stays at 640x480 for title screen content
-                // and the scaling logic will upscale it to fill the larger window
-                var windowWidth = _configurationProvider.InGameWidth > 0
-                    ? _configurationProvider.InGameWidth
-                    : ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH;
-                var windowHeight = _configurationProvider.InGameHeight > 0
-                    ? _configurationProvider.InGameHeight
-                    : ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT;
-
-                _graphicsDeviceRepository.GraphicsDeviceManager.PreferredBackBufferWidth = windowWidth;
-                _graphicsDeviceRepository.GraphicsDeviceManager.PreferredBackBufferHeight = windowHeight;
-                _graphicsDeviceRepository.GraphicsDeviceManager.ApplyChanges();
-
-
-                _gameRenderTarget = new RenderTarget2D(
-                    GraphicsDevice,
-                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH,
-                    ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT,
-                    false,
-                    SurfaceFormat.Color,
-                    DepthFormat.None);
-            }
+            // Create render target at game resolution for scaled rendering
+            _gameRenderTarget = new RenderTarget2D(
+                GraphicsDevice,
+                ClientWindowSizeRepository.DEFAULT_BACKBUFFER_WIDTH,
+                ClientWindowSizeRepository.DEFAULT_BACKBUFFER_HEIGHT,
+                false,
+                SurfaceFormat.Color,
+                DepthFormat.None);
 
             SetUpInitialControlSet();
 
@@ -296,58 +272,47 @@ namespace EndlessClient.GameExecution
         {
             var isTestMode = _controlSetRepository.CurrentControlSet.GameState == GameStates.TestMode;
 
-            // Use render target scaling when in scaled mode (both pre-login and in-game)
-            // XNAControls InputManager now supports coordinate transformation for correct hit detection
-            if (_windowSizeRepository.IsScaledMode && _gameRenderTarget != null)
+            // Check if render target needs to be resized (e.g., after logout when game dimensions change)
+            var targetWidth = _windowSizeRepository.GameWidth;
+            var targetHeight = _windowSizeRepository.GameHeight;
+            if (_gameRenderTarget.Width != targetWidth || _gameRenderTarget.Height != targetHeight)
             {
-                // Check if render target needs to be resized (e.g., after logout when game dimensions change)
-                var targetWidth = _windowSizeRepository.GameWidth;
-                var targetHeight = _windowSizeRepository.GameHeight;
-                if (_gameRenderTarget.Width != targetWidth || _gameRenderTarget.Height != targetHeight)
-                {
-                    _gameRenderTarget.Dispose();
-                    _gameRenderTarget = new RenderTarget2D(
-                        GraphicsDevice,
-                        targetWidth,
-                        targetHeight,
-                        false,
-                        SurfaceFormat.Color,
-                        DepthFormat.None);
-                }
-
-                // Render the game to the fixed-size render target
-                GraphicsDevice.SetRenderTarget(_gameRenderTarget);
-                GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
-
-                base.Draw(gameTime);
-
-                // Switch back to the main backbuffer and draw the scaled render target
-                GraphicsDevice.SetRenderTarget(null);
-                GraphicsDevice.Clear(Color.Black); // Letterbox/pillarbox color
-
-                // Calculate destination rectangle for scaled rendering
-                var scale = _windowSizeRepository.ScaleFactor;
-                var offset = _windowSizeRepository.RenderOffset;
-                var destRect = new Rectangle(
-                    offset.X,
-                    offset.Y,
-                    (int)(_windowSizeRepository.GameWidth * scale),
-                    (int)(_windowSizeRepository.GameHeight * scale));
-
-                // Draw scaled using point sampling for crisp pixels
-                _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-                _spriteBatch.Draw(_gameRenderTarget, destRect, Color.White);
-                _spriteBatch.End();
-
-                // Draw post-scale UI controls directly to backbuffer for crisp rendering
-                DrawPostScaleControls(scale, new Point(offset.X, offset.Y));
+                _gameRenderTarget.Dispose();
+                _gameRenderTarget = new RenderTarget2D(
+                    GraphicsDevice,
+                    targetWidth,
+                    targetHeight,
+                    false,
+                    SurfaceFormat.Color,
+                    DepthFormat.None);
             }
-            else
-            {
-                // Normal rendering path (no scaling) - used for in-game floating layout
-                GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
-                base.Draw(gameTime);
-            }
+
+            // Render the game to the fixed-size render target
+            GraphicsDevice.SetRenderTarget(_gameRenderTarget);
+            GraphicsDevice.Clear(isTestMode ? Color.White : Color.Black);
+
+            base.Draw(gameTime);
+
+            // Switch back to the main backbuffer and draw the scaled render target
+            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.Clear(Color.Black); // Letterbox/pillarbox color
+
+            // Calculate destination rectangle for scaled rendering
+            var scale = _windowSizeRepository.ScaleFactor;
+            var offset = _windowSizeRepository.RenderOffset;
+            var destRect = new Rectangle(
+                offset.X,
+                offset.Y,
+                (int)(_windowSizeRepository.GameWidth * scale),
+                (int)(_windowSizeRepository.GameHeight * scale));
+
+            // Draw scaled using point sampling for crisp pixels
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            _spriteBatch.Draw(_gameRenderTarget, destRect, Color.White);
+            _spriteBatch.End();
+
+            // Draw post-scale UI controls directly to backbuffer for crisp rendering
+            DrawPostScaleControls(scale, new Point(offset.X, offset.Y));
 
 #if DEBUG
             _frames++;

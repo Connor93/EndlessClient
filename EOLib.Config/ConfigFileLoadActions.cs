@@ -62,7 +62,7 @@ namespace EOLib.Config
             _configRepository.Theme = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.Theme, out theme) ? theme : string.Empty;
             _configRepository.NPCGhosting = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.NPCGhosting, out tempBool) && tempBool;
             _configRepository.WASDMovement = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.WASDMovement, out tempBool) && tempBool;
-            _configRepository.ScaledClient = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.ScaledClient, out tempBool) && tempBool;
+
 
             string uiModeStr;
             _configRepository.UIMode = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.UIMode, out uiModeStr)

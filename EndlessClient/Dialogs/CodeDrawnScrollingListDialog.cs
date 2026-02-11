@@ -97,12 +97,9 @@ namespace EndlessClient.Dialogs
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _scaledFont = scaledFont;
 
-            // In scaled mode, we draw the title manually in DrawPostScale
+            // We draw the title manually in DrawPostScale
             // Unparent the XNALabel so it doesn't draw fuzzy text in render target phase
-            if (_clientWindowSizeProvider?.IsScaledMode ?? false)
-            {
-                _titleText?.SetControlUnparented();
-            }
+            _titleText?.SetControlUnparented();
         }
 
         /// <summary>
@@ -363,7 +360,7 @@ namespace EndlessClient.Dialogs
         /// Returns true when this dialog should skip rendering to the render target.
         /// Returns false when SuppressPostScaleRendering is true, to allow pre-scale fallback.
         /// </summary>
-        public bool SkipRenderTargetDraw => (_clientWindowSizeProvider?.IsScaledMode ?? false) && !SuppressPostScaleRendering;
+        public bool SkipRenderTargetDraw => !SuppressPostScaleRendering;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -715,7 +712,7 @@ namespace EndlessClient.Dialogs
         /// </summary>
         protected Point TransformMousePosition(Point position)
         {
-            if (_clientWindowSizeProvider == null || !_clientWindowSizeProvider.IsScaledMode)
+            if (_clientWindowSizeProvider == null)
                 return position;
 
             var offset = _clientWindowSizeProvider.RenderOffset;
@@ -792,8 +789,8 @@ namespace EndlessClient.Dialogs
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            // In scaled mode, drawing is handled by parent's DrawPostScale
-            if (_clientWindowSizeProvider?.IsScaledMode ?? false)
+            // Drawing is handled by parent's DrawPostScale
+            if (_clientWindowSizeProvider != null)
             {
                 base.OnDrawControl(gameTime);
                 return;

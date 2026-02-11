@@ -101,30 +101,19 @@ namespace EndlessClient.UI.Controls
 
         // IPostScaleDrawable implementation
         public int PostScaleDrawOrder => 100;
-        // Only skip render target draw when there's actual upscaling (ScaleFactor > 1).
-        // When ScaleFactor == 1 (render target matches window), single-pass DrawComplete is preferred.
-        public bool SkipRenderTargetDraw => _clientWindowSizeProvider?.ScaleFactor > 1f;
+        public bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            if (SkipRenderTargetDraw)
-            {
-                // In scaled mode with upscaling, draw fills into the render target (they scale fine as solid shapes).
-                // Borders and text are drawn later in DrawPostScale at native resolution for crispness.
-                DrawFills();
-            }
-            else
-            {
-                // In normal mode or scale=1, draw everything in one pass
-                DrawComplete();
-            }
+            // Draw fills into the render target (they scale fine as solid shapes).
+            // Borders and text are drawn later in DrawPostScale at native resolution for crispness.
+            DrawFills();
 
             base.OnDrawControl(gameTime);
         }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            if (scaleFactor <= 1f) return; // No upscaling = no need for post-scale drawing
             if (_spriteBatch == null) return;
             if (!Visible) return;
             if (ImmediateParent != null && !ImmediateParent.Visible) return;
@@ -209,57 +198,6 @@ namespace EndlessClient.UI.Controls
             _spriteBatch.End();
         }
 
-        /// <summary>
-        /// Draw everything in one pass for non-scaled mode.
-        /// </summary>
-        private void DrawComplete()
-        {
-            var backgroundColor = _state switch
-            {
-                ButtonState.Pressed => _styleProvider.ButtonPressed,
-                ButtonState.Hover => _styleProvider.ButtonHover,
-                _ => _styleProvider.ButtonNormal
-            };
-            var borderColor = _styleProvider.ButtonBorder;
-            var textColor = _styleProvider.ButtonText;
-            var cornerRadius = _styleProvider.CornerRadius;
-            var borderThickness = _styleProvider.BorderThickness;
 
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
-
-            _spriteBatch.Begin(transformMatrix: transform);
-
-            // Draw background
-            if (cornerRadius > 0)
-                DrawingPrimitives.DrawRoundedRect(_spriteBatch, bounds, backgroundColor, cornerRadius);
-            else
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, bounds, backgroundColor);
-
-            // Draw border
-            if (cornerRadius > 0)
-                DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, bounds, borderColor, cornerRadius, borderThickness);
-            else
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, bounds, borderColor, borderThickness);
-
-            // Draw text with shadow for contrast
-            if (!string.IsNullOrEmpty(_text) && _font != null)
-            {
-                var textSize = _font.MeasureString(_text);
-                var textPos = new Vector2(
-                    (int)((bounds.Width - textSize.Width) / 2),
-                    (int)((bounds.Height - textSize.Height) / 2));
-
-                // Shadow (1px offset, dark)
-                var shadowColor = new Color(0, 0, 0, 180);
-                _spriteBatch.DrawString(_font, _text, textPos + new Vector2(1, 1), shadowColor);
-
-                // Main text
-                _spriteBatch.DrawString(_font, _text, textPos, textColor);
-            }
-
-            _spriteBatch.End();
-        }
     }
 }

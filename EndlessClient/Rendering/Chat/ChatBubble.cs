@@ -30,8 +30,8 @@ namespace EndlessClient.Rendering.Chat
         private readonly IContentProvider _contentProvider;
         private readonly SpriteBatch _spriteBatch;
 
-        // Scissor state for clipping text to bubble bounds
-        private static readonly RasterizerState _scissorRasterizerState = new RasterizerState { ScissorTestEnable = true };
+
+
 
         // Simple white pixel for drawing shapes
         private Texture2D _whitePixel;
@@ -171,7 +171,7 @@ namespace EndlessClient.Rendering.Chat
         {
             // Extra margins are only needed at 1:1 scale to compensate for font measurement issues
             // When scaled up, the base padding is sufficient and extra margins look excessive
-            var isActuallyScaled = _clientWindowSizeProvider.IsScaledMode && _clientWindowSizeProvider.ScaleFactor > 1.0f;
+            var isActuallyScaled = _clientWindowSizeProvider.ScaleFactor > 1.0f;
             var effectivePadding = isActuallyScaled ? 4 : Padding;  // Use smaller padding when scaled
             var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;
             var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin;
@@ -221,7 +221,7 @@ namespace EndlessClient.Rendering.Chat
             var font = _contentProvider.Fonts[Constants.FontSize08pt5];
 
             // Use same conditional margin logic as Update()
-            var isActuallyScaled = _clientWindowSizeProvider.IsScaledMode && _clientWindowSizeProvider.ScaleFactor > 1.0f;
+            var isActuallyScaled = _clientWindowSizeProvider.ScaleFactor > 1.0f;
             var effectivePadding = isActuallyScaled ? 4 : Padding;
             var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;
             var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin;
@@ -262,39 +262,12 @@ namespace EndlessClient.Rendering.Chat
 
             _spriteBatch.End();
 
-            // Phase 2: Draw text with scissor clipping (only in non-scaled mode)
-            if (!_clientWindowSizeProvider.IsScaledMode)
-            {
-                var graphicsDevice = Game.GraphicsDevice;
-                var previousScissorRect = graphicsDevice.ScissorRectangle;
-
-                // Set scissor rect to the inner bubble area (excluding border)
-                var textClipRect = new Rectangle(
-                    (int)_textPosition.X,
-                    (int)_textPosition.Y,
-                    bubbleWidth - Padding * 2,
-                    bubbleHeight - Padding * 2);
-                graphicsDevice.ScissorRectangle = textClipRect;
-
-                _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
-
-                var lineHeight = font.LineHeight;
-                for (int i = 0; i < _wrappedLines.Count; i++)
-                {
-                    var linePos = new Vector2(_textPosition.X, _textPosition.Y + i * lineHeight);
-                    _spriteBatch.DrawString(font, _wrappedLines[i], linePos, Color.Black);
-                }
-
-                _spriteBatch.End();
-
-                // Restore previous scissor rect
-                graphicsDevice.ScissorRectangle = previousScissorRect;
-            }
+            // Text is drawn by DrawPostScale for crisp rendering
         }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-            if (!Visible || !_clientWindowSizeProvider.IsScaledMode || _wrappedLines.Count == 0)
+            if (!Visible || _wrappedLines.Count == 0)
                 return;
 
             var font = _contentProvider.Fonts[Constants.FontSize10];
