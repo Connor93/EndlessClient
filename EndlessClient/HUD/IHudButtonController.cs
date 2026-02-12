@@ -42,6 +42,8 @@
 
         void ClickGuildInfo();
 
+        void ClickGuildPanel();
+
         void ClickPaperdoll();
     }
 }

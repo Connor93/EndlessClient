@@ -38,18 +38,6 @@ namespace EndlessClient.HUD.Panels
         // Base font pixel size for dynamic scaling (14px = FontSize11)
         private const int BaseFontPixelSize = 14;
 
-        // Available font sizes sorted ascending for binary-search-style selection
-        private static readonly (int pixelSize, string fontKey)[] _availableFonts = new[]
-        {
-            (11, Constants.FontSize08),
-            (12, Constants.FontSize09),
-            (13, Constants.FontSize10),
-            (14, Constants.FontSize11),
-            (16, Constants.FontSize12),
-            (18, Constants.FontSize13),
-            (20, Constants.FontSize14),
-        };
-
         private readonly ScrollBar _scrollBar;
         private readonly INativeGraphicsManager _nativeGraphicsManager;
         private readonly Dictionary<ChatTab, CodeDrawnChatTabInfo> _tabs;
@@ -468,7 +456,7 @@ namespace EndlessClient.HUD.Panels
             foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
-                renderable.RenderScaledWithClipping(_spriteBatch, GetScaledFont(scaleFactor), messageAreaPos, scaleFactor);
+                renderable.RenderScaledWithClipping(_spriteBatch, FontScaleHelper.GetScaledFont(_contentProvider, BaseFontPixelSize, scaleFactor), messageAreaPos, scaleFactor);
             }
 
             _spriteBatch.End();
@@ -496,7 +484,7 @@ namespace EndlessClient.HUD.Panels
                 return;
 
             // Calculate the text width and whether we need horizontal scrolling
-            var scaledFont = GetScaledFont(scaleFactor);
+            var scaledFont = FontScaleHelper.GetScaledFont(_contentProvider, BaseFontPixelSize, scaleFactor);
             var textSize = scaledFont.MeasureString(text);
             var availableWidth = gameInputTextWidth * scaleFactor;
             var textOffsetX = 0f;
@@ -530,38 +518,7 @@ namespace EndlessClient.HUD.Panels
             graphicsDevice.ScissorRectangle = previousScissorRectangle;
         }
 
-        /// <summary>
-        /// Selects the closest available bitmap font to baseFontSize × scaleFactor.
-        /// This ensures text scales proportionally with the UI in post-scale rendering.
-        /// </summary>
-        private BitmapFont GetScaledFont(float scaleFactor)
-        {
-            var targetPx = BaseFontPixelSize * scaleFactor;
-            var bestKey = _availableFonts[_availableFonts.Length - 1].fontKey; // default to largest
 
-            for (int i = 0; i < _availableFonts.Length; i++)
-            {
-                if (_availableFonts[i].pixelSize >= targetPx)
-                {
-                    // Pick whichever is closer: this one or the previous one
-                    if (i > 0)
-                    {
-                        var diffLower = targetPx - _availableFonts[i - 1].pixelSize;
-                        var diffUpper = _availableFonts[i].pixelSize - targetPx;
-                        bestKey = diffLower <= diffUpper
-                            ? _availableFonts[i - 1].fontKey
-                            : _availableFonts[i].fontKey;
-                    }
-                    else
-                    {
-                        bestKey = _availableFonts[0].fontKey;
-                    }
-                    break;
-                }
-            }
-
-            return _contentProvider.Fonts[bestKey];
-        }
 
         private void DrawTabs(Vector2 pos)
         {

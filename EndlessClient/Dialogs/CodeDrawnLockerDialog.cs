@@ -161,7 +161,13 @@ namespace EndlessClient.Dialogs
 
         private string GetDialogTitle()
         {
-            return _characterProvider.MainCharacter.Name + "'s " + _localizedStringFinder.GetString(EOResourceID.DIALOG_TITLE_PRIVATE_LOCKER) + $" [{_lockerDataProvider.Items.Count}]";
+            var count = $" [{_lockerDataProvider.Items.Count}]";
+            return _lockerDataProvider.Context switch
+            {
+                LockerContext.GuildStorage => "Guild Storage" + count,
+                LockerContext.DeliveryInbox => "Personal Inbox" + count,
+                _ => _characterProvider.MainCharacter.Name + "'s " + _localizedStringFinder.GetString(EOResourceID.DIALOG_TITLE_PRIVATE_LOCKER) + count,
+            };
         }
 
         protected override void DrawButtonTextPostScale(Vector2 scaledPos, float scale, MonoGame.Extended.BitmapFonts.BitmapFont font)

@@ -28,8 +28,8 @@ namespace EndlessClient.HUD.Windows
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly BitmapFont _font;
+        private readonly IContentProvider _contentProvider;
         private readonly BitmapFont _labelFont;
-        private readonly BitmapFont _scaledFont;
 
         private const int WindowWidth = 240;
         private const int WindowHeight = 180;
@@ -53,8 +53,8 @@ namespace EndlessClient.HUD.Windows
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
+            _contentProvider = contentProvider;
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
-            _scaledFont = contentProvider.Fonts[Constants.FontSize10];
 
             // Center the window
             DrawArea = new Rectangle(
@@ -116,7 +116,7 @@ namespace EndlessClient.HUD.Windows
 
         private void DrawBordersAndText(Vector2 scaledPos, float scale)
         {
-            var font = scale >= 1.75f ? _scaledFont : _labelFont;
+            var font = FontScaleHelper.GetScaledFont(_contentProvider, scale);
 
             var scaledWidth = (int)(WindowWidth * scale);
             var scaledHeight = (int)(WindowHeight * scale);

@@ -39,6 +39,7 @@ namespace EndlessClient.Dialogs.Factories
                 _styleProviderFactory.Create(),
                 _clientWindowSizeProvider,
                 _graphicsDeviceProvider,
+                _contentProvider,
                 font,
                 headerFont,
                 scaledFont,

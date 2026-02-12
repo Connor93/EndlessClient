@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering;
@@ -30,7 +31,7 @@ namespace EndlessClient.Dialogs
         private readonly List<CodeDrawnListItem> _listItems;
         private readonly CodeDrawnScrollBar _scrollBar;
         private readonly BitmapFont _font;
-        private readonly BitmapFont _scaledFont;
+        private readonly IContentProvider _contentProvider;
 
         private IXNALabel _titleText;
         private CodeDrawnButton _okButton;
@@ -79,7 +80,6 @@ namespace EndlessClient.Dialogs
         protected IUIStyleProvider StyleProvider => _styleProvider;
         protected IClientWindowSizeProvider ClientWindowSizeProvider => _clientWindowSizeProvider;
         protected BitmapFont Font => _font;
-        protected BitmapFont ScaledFont => _scaledFont;
 
         /// <summary>
         /// Constructor with full post-scale rendering support.
@@ -95,7 +95,27 @@ namespace EndlessClient.Dialogs
         {
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
-            _scaledFont = scaledFont;
+
+            // We draw the title manually in DrawPostScale
+            // Unparent the XNALabel so it doesn't draw fuzzy text in render target phase
+            _titleText?.SetControlUnparented();
+        }
+
+        /// <summary>
+        /// Constructor with full post-scale rendering and adaptive font scaling support.
+        /// </summary>
+        public CodeDrawnScrollingListDialog(
+            IUIStyleProvider styleProvider,
+            IGameStateProvider gameStateProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider,
+            IGraphicsDeviceProvider graphicsDeviceProvider,
+            IContentProvider contentProvider,
+            BitmapFont font)
+            : this(styleProvider, gameStateProvider, font)
+        {
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
+            _contentProvider = contentProvider;
 
             // We draw the title manually in DrawPostScale
             // Unparent the XNALabel so it doesn't draw fuzzy text in render target phase
@@ -116,7 +136,7 @@ namespace EndlessClient.Dialogs
             _graphicsDeviceProvider = null;
             _isInGame = () => gameStateProvider.CurrentState == GameStates.PlayingTheGame;
             _font = font;
-            _scaledFont = font; // Use same font when no scaled font provided
+            _contentProvider = null;
             _listItems = new List<CodeDrawnListItem>();
 
             DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
@@ -354,7 +374,7 @@ namespace EndlessClient.Dialogs
         }
 
         // IPostScaleDrawable implementation
-        public int PostScaleDrawOrder => 100;
+        public int PostScaleDrawOrder => 200;
 
         /// <summary>
         /// Returns true when this dialog should skip rendering to the render target.
@@ -366,8 +386,8 @@ namespace EndlessClient.Dialogs
         {
             if (SkipRenderTargetDraw)
             {
-                // In scaled mode, draw only fills during the render target phase
-                DrawFills(DrawAreaWithParentOffset);
+                // In scaled mode, all visual rendering is done in DrawPostScale
+                // to ensure dialogs render on top of other PostScale elements (guild panel, chat).
                 base.OnDrawControl(gameTime);
                 return;
             }
@@ -389,33 +409,44 @@ namespace EndlessClient.Dialogs
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
+            DrawFillsPostScale(scaledPos, scaleFactor);
             DrawBordersAndText(scaledPos, scaleFactor);
         }
 
         /// <summary>
-        /// Draws only fills (for render target in scaled mode)
+        /// Draws background fills in PostScale phase so dialogs render fully on top of
+        /// other PostScale elements (guild panel at draw order 118, chat window, etc.).
         /// </summary>
-        protected virtual void DrawFills(Rectangle drawPos)
+        protected virtual void DrawFillsPostScale(Vector2 scaledPos, float scale)
         {
             var cornerRadius = _styleProvider.CornerRadius;
             var borderThickness = _styleProvider.BorderThickness;
             var titleBarHeight = _styleProvider.TitleBarHeight;
 
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
+            var panelWidth = (int)(DialogWidth * scale);
+            var panelHeight = (int)(DialogHeight * scale);
+            var bounds = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, panelWidth, panelHeight);
 
-            _spriteBatch.Begin(transformMatrix: transform);
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             // Main panel background
             DrawingPrimitives.DrawRoundedRect(_spriteBatch, bounds, _styleProvider.PanelBackground, cornerRadius);
 
             // Title bar fill
             DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle(borderThickness, borderThickness, DrawArea.Width - borderThickness * 2, titleBarHeight - borderThickness),
+                new Rectangle(
+                    (int)(scaledPos.X + borderThickness * scale),
+                    (int)(scaledPos.Y + borderThickness * scale),
+                    panelWidth - (int)(borderThickness * 2 * scale),
+                    (int)((titleBarHeight - borderThickness) * scale)),
                 _styleProvider.TitleBarBackground);
 
             // List area background (slightly darker)
-            var listBounds = new Rectangle(8, ListAreaTop, DialogWidth - 40, ListAreaHeight);
+            var listBounds = new Rectangle(
+                (int)(scaledPos.X + 8 * scale),
+                (int)(scaledPos.Y + ListAreaTop * scale),
+                (int)((DialogWidth - 40) * scale),
+                (int)(ListAreaHeight * scale));
             DrawingPrimitives.DrawFilledRect(_spriteBatch, listBounds, new Color(0, 0, 0, 60));
 
             _spriteBatch.End();
@@ -429,11 +460,10 @@ namespace EndlessClient.Dialogs
             var cornerRadius = _styleProvider.CornerRadius;
             var borderThickness = _styleProvider.BorderThickness;
 
-            // Select font based on scale - 3 tier system
-            BitmapFont font;
-            if (scale >= 1.75f) font = _scaledFont;
-            else if (scale >= 1.25f) font = _scaledFont; // Medium scale uses scaled font
-            else font = _font;
+            // Select font based on scale using adaptive helper
+            var font = _contentProvider != null
+                ? FontScaleHelper.GetScaledFont(_contentProvider, scale)
+                : _font;
 
             var panelWidth = (int)(DialogWidth * scale);
             var panelHeight = (int)(DialogHeight * scale);

@@ -13,7 +13,7 @@ using XNAControls;
 
 namespace EndlessClient.Dialogs
 {
-    public class TextMultiInputDialog : BaseEODialog
+    public class TextMultiInputDialog : BaseEODialog, ITextMultiInputDialog
     {
         public enum DialogSize
         {

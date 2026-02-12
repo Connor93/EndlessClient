@@ -4,11 +4,20 @@ using EOLib.Domain.Character;
 
 namespace EOLib.Domain.Map
 {
+    public enum LockerContext
+    {
+        Default,
+        GuildStorage,
+        DeliveryInbox,
+    }
+
     public interface ILockerDataRepository : IResettable
     {
         MapCoordinate Location { get; set; }
 
         HashSet<InventoryItem> Items { get; set; }
+
+        LockerContext Context { get; set; }
     }
 
     public interface ILockerDataProvider : IResettable
@@ -16,6 +25,8 @@ namespace EOLib.Domain.Map
         MapCoordinate Location { get; }
 
         IReadOnlyCollection<InventoryItem> Items { get; }
+
+        LockerContext Context { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -24,6 +35,8 @@ namespace EOLib.Domain.Map
         public MapCoordinate Location { get; set; }
 
         public HashSet<InventoryItem> Items { get; set; }
+
+        public LockerContext Context { get; set; }
 
         IReadOnlyCollection<InventoryItem> ILockerDataProvider.Items => Items;
 
@@ -36,6 +49,7 @@ namespace EOLib.Domain.Map
         {
             Location = MapCoordinate.Zero;
             Items = new HashSet<InventoryItem>();
+            Context = LockerContext.Default;
         }
     }
 }

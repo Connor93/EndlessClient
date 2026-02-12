@@ -1,4 +1,5 @@
 using System;
+using EndlessClient.Content;
 using EndlessClient.Rendering;
 using EndlessClient.Services;
 using EndlessClient.UI.Styles;
@@ -22,7 +23,7 @@ namespace EndlessClient.UI.Controls
 
         private readonly IUIStyleProvider _styleProvider;
         private readonly BitmapFont _font;
-        private readonly BitmapFont _scaledFont;
+        private readonly IContentProvider _contentProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private ButtonState _state = ButtonState.Normal;
         private string _text = string.Empty;
@@ -52,10 +53,22 @@ namespace EndlessClient.UI.Controls
             BitmapFont font,
             BitmapFont scaledFont,
             IClientWindowSizeProvider clientWindowSizeProvider)
+            : this(styleProvider, font, (IContentProvider)null, clientWindowSizeProvider)
+        {
+        }
+
+        /// <summary>
+        /// Full constructor with adaptive font scaling via FontScaleHelper.
+        /// </summary>
+        public CodeDrawnButton(
+            IUIStyleProvider styleProvider,
+            BitmapFont font,
+            IContentProvider contentProvider,
+            IClientWindowSizeProvider clientWindowSizeProvider)
         {
             _styleProvider = styleProvider;
             _font = font;
-            _scaledFont = scaledFont ?? font;
+            _contentProvider = contentProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
         }
 
@@ -164,8 +177,10 @@ namespace EndlessClient.UI.Controls
             var cornerRadius = _styleProvider.CornerRadius;
             var borderThickness = _styleProvider.BorderThickness;
 
-            // Select font based on scale
-            var font = scale >= 1.25f ? _scaledFont : _font;
+            // Select font based on scale using adaptive helper
+            var font = _contentProvider != null
+                ? FontScaleHelper.GetScaledFont(_contentProvider, scale)
+                : _font;
 
             var scaledWidth = (int)(DrawArea.Width * scale);
             var scaledHeight = (int)(DrawArea.Height * scale);

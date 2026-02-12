@@ -6,6 +6,7 @@ using EndlessClient.Audio;
 using EndlessClient.Content;
 using EndlessClient.Controllers;
 using EndlessClient.ControlSets;
+using EndlessClient.Dialogs.Factories;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Chat;
 using EndlessClient.HUD.Panels;
@@ -26,6 +27,7 @@ using EndlessClient.UIControls;
 using EOLib;
 using EOLib.Config;
 using EOLib.Domain.Character;
+using EOLib.Domain.Chat;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Login;
 using EOLib.Domain.Map;
@@ -87,6 +89,10 @@ namespace EndlessClient.HUD.Controls
         private readonly IQuestActions _questActions;
         private readonly IBountyDataProvider _bountyDataProvider;
         private readonly IWindowZOrderManager _windowZOrderManager;
+        private readonly IChatActions _chatActions;
+        private readonly ITextInputDialogFactory _textInputDialogFactory;
+        private readonly ITextMultiInputDialogFactory _textMultiInputDialogFactory;
+        private readonly ILockerDataRepository _lockerDataRepository;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -131,7 +137,11 @@ namespace EndlessClient.HUD.Controls
                                   IQuestDataProvider questDataProvider,
                                   IQuestActions questActions,
                                   IBountyDataProvider bountyDataProvider,
-                                  IWindowZOrderManager windowZOrderManager)
+                                  IWindowZOrderManager windowZOrderManager,
+                                  IChatActions chatActions,
+                                  ITextInputDialogFactory textInputDialogFactory,
+                                  ITextMultiInputDialogFactory textMultiInputDialogFactory,
+                                  ILockerDataRepository lockerDataRepository)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -175,6 +185,10 @@ namespace EndlessClient.HUD.Controls
             _questActions = questActions;
             _bountyDataProvider = bountyDataProvider;
             _windowZOrderManager = windowZOrderManager;
+            _chatActions = chatActions;
+            _textInputDialogFactory = textInputDialogFactory;
+            _textMultiInputDialogFactory = textMultiInputDialogFactory;
+            _lockerDataRepository = lockerDataRepository;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -239,6 +253,8 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.BountyTrackerWindow, CreateBountyTrackerWindow()},
                 {HudControlIdentifier.GuildInfoButton, CreateGuildInfoButton()},
                 {HudControlIdentifier.GuildInfoWindow, CreateGuildInfoWindow()},
+                {HudControlIdentifier.GuildPanelButton, CreateGuildPanelButton()},
+                {HudControlIdentifier.GuildPanel, CreateGuildPanel()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
@@ -731,6 +747,48 @@ namespace EndlessClient.HUD.Controls
                 _questActions)
             {
                 DrawOrder = HUD_CONTROL_LAYER + 27
+            };
+
+            _windowZOrderManager.Register(window);
+            window.Activated += () => _windowZOrderManager.BringToFront(window);
+
+            return window;
+        }
+
+        private IGameComponent CreateGuildPanelButton()
+        {
+            var btn = new UI.Controls.CodeDrawnHudButton(
+                _styleProvider,
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
+                _clientWindowSizeRepository)
+            {
+                Text = "GP",
+                DrawArea = new Rectangle(143, 0, 22, 14),
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = _configurationProvider.UIMode == UIMode.Code
+            };
+            btn.OnClick += (_, _) => _hudButtonController.ClickGuildPanel();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+            return btn;
+        }
+
+        private IGameComponent CreateGuildPanel()
+        {
+            var window = new Windows.CodeDrawnGuildPanel(
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository,
+                _bountyDataProvider,
+                _questActions,
+                _chatActions,
+                _textInputDialogFactory,
+                _textMultiInputDialogFactory,
+                (ICharacterProvider)_characterRepository,
+                _lockerDataRepository)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 28
             };
 
             _windowZOrderManager.Register(window);

@@ -35,17 +35,16 @@ namespace EndlessClient.HUD.Windows
     [AutoMappedType(IsSingleton = true)]
     public class WindowZOrderManager : IWindowZOrderManager
     {
-        private const int BaseWindowZOrder = 100;
+        private const int BaseWindowZOrder = 10;
+        private const int MaxWindowZOrder = 90; // Must stay below CodeDrawnDialog.PostScaleDrawOrder (100)
         private readonly List<IZOrderedWindow> _windows = new List<IZOrderedWindow>();
-        private int _maxZOrder = BaseWindowZOrder;
 
         public void Register(IZOrderedWindow window)
         {
             if (!_windows.Contains(window))
             {
                 _windows.Add(window);
-                // Assign unique initial z-order to each window
-                window.ZOrder = GetNextZOrder();
+                window.ZOrder = BaseWindowZOrder + _windows.Count;
             }
         }
 
@@ -56,14 +55,21 @@ namespace EndlessClient.HUD.Windows
 
         public int GetNextZOrder()
         {
-            return ++_maxZOrder;
+            return BaseWindowZOrder + _windows.Count + 1;
         }
 
         public void BringToFront(IZOrderedWindow window)
         {
-            if (_windows.Contains(window))
+            if (!_windows.Contains(window)) return;
+
+            // Move this window to the end of the list (highest priority)
+            _windows.Remove(window);
+            _windows.Add(window);
+
+            // Re-normalize all z-orders within bounded range
+            for (int i = 0; i < _windows.Count; i++)
             {
-                window.ZOrder = GetNextZOrder();
+                _windows[i].ZOrder = BaseWindowZOrder + i + 1;
             }
         }
     }

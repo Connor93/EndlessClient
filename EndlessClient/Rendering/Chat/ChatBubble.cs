@@ -184,14 +184,18 @@ namespace EndlessClient.Rendering.Chat
             var bubbleX = _parent.HorizontalCenter - bubbleWidth / 2.0f;
             var bubbleY = _parent.NameLabelY - bubbleHeight - NubHeight + 10;
 
-            // Apply zoom if needed
+            // Apply zoom if needed - zoom the character anchor point, then offset by bubble size
             var zoom = _configurationProvider.MapZoom;
             if (zoom != 1.0f)
             {
                 var centerX = _clientWindowSizeProvider.GameWidth / 2f;
                 var centerY = _clientWindowSizeProvider.GameHeight / 2f;
-                bubbleX = (_parent.HorizontalCenter - centerX) * zoom + centerX - bubbleWidth / 2.0f;
-                bubbleY = (_parent.NameLabelY - bubbleHeight - NubHeight + 10 - centerY) * zoom + centerY;
+                // Zoom the character's horizontal center and name label anchor
+                var zoomedCenterX = (_parent.HorizontalCenter - centerX) * zoom + centerX;
+                var zoomedNameY = (_parent.NameLabelY - centerY) * zoom + centerY;
+                // Apply bubble offset AFTER zoom so it doesn't scale with distance
+                bubbleX = zoomedCenterX - bubbleWidth / 2.0f;
+                bubbleY = zoomedNameY - bubbleHeight - NubHeight + 10;
             }
 
             // CRITICAL: Floor to integer to match what Draw() does when casting to Rectangle

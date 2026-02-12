@@ -76,7 +76,7 @@ namespace EndlessClient.Dialogs.Factories
                 };
                 var font = _contentProvider.Fonts[Constants.FontSize09];
                 var scaledFont = _contentProvider.Fonts[Constants.FontSize10];
-                codeDialog.SetupDialog(whichButtons, font, scaledFont);
+                codeDialog.SetupDialog(whichButtons, font, scaledFont, _contentProvider);
                 messageBox = codeDialog;
             }
             else

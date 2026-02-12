@@ -58,7 +58,7 @@ namespace EndlessClient.Dialogs.Actions
                 }
             };
 
-            UseDefaultDialogSounds(dlg);
+            UseDefaultDialogSounds(dlg as BaseEODialog);
 
             dlg.ShowDialog();
         }
@@ -83,7 +83,7 @@ namespace EndlessClient.Dialogs.Actions
                 }
             };
 
-            UseDefaultDialogSounds(dlg);
+            UseDefaultDialogSounds(dlg as BaseEODialog);
 
             dlg.ShowDialog();
         }
@@ -91,6 +91,8 @@ namespace EndlessClient.Dialogs.Actions
         // copied from InGameDialogActions
         private void UseDefaultDialogSounds(BaseEODialog dialog)
         {
+            if (dialog == null) return;
+
             dialog.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);
 
             foreach (var textbox in dialog.ChildControls.OfType<IXNATextBox>())

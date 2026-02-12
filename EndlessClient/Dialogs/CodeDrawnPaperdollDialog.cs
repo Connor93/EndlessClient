@@ -372,6 +372,7 @@ namespace EndlessClient.Dialogs
             // Field labels and values
             var labelX = scaledPos.X + 240 * scaleFactor;
             var valueX = scaledPos.X + 300 * scaleFactor;
+            var maxValueWidth = (scaledPos.X + (DialogWidth - 8) * scaleFactor) - valueX;
 
             var fieldLabels = new[]
             {
@@ -389,7 +390,22 @@ namespace EndlessClient.Dialogs
                 var labelPos = new Vector2(labelX, scaledPos.Y + y * scaleFactor);
                 var valuePos = new Vector2(valueX, scaledPos.Y + y * scaleFactor);
                 spriteBatch.DrawString(font, label, labelPos, _styleProvider.TextSecondary);
-                spriteBatch.DrawString(font, value, valuePos, _styleProvider.TextPrimary);
+
+                // Truncate value text if it overflows the dialog bounds
+                var displayValue = value;
+                if (!string.IsNullOrEmpty(displayValue))
+                {
+                    var textWidth = font.MeasureString(displayValue).Width;
+                    if (textWidth > maxValueWidth)
+                    {
+                        var ellipsis = "...";
+                        while (displayValue.Length > 1 && font.MeasureString(displayValue + ellipsis).Width > maxValueWidth)
+                            displayValue = displayValue[..^1];
+                        displayValue += ellipsis;
+                    }
+                }
+
+                spriteBatch.DrawString(font, displayValue, valuePos, _styleProvider.TextPrimary);
             }
 
             // OK button

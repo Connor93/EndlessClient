@@ -60,6 +60,8 @@ namespace EndlessClient.HUD.Controls
         BountyTrackerWindow,
         GuildInfoButton,
         GuildInfoWindow,
+        GuildPanelButton,
+        GuildPanel,
 
         HPStatusBar,
         TPStatusBar,

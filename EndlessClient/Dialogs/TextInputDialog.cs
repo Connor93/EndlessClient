@@ -9,7 +9,7 @@ using XNAControls;
 
 namespace EndlessClient.Dialogs
 {
-    public class TextInputDialog : BaseEODialog
+    public class TextInputDialog : BaseEODialog, ITextInputDialog
     {
         private readonly IXNATextBox _inputBox;
         private readonly bool _upperCase;

@@ -179,6 +179,15 @@ namespace EndlessClient.HUD
             }
         }
 
+        public void ClickGuildPanel()
+        {
+            if (_hudControlProvider.IsInGame)
+            {
+                var window = _hudControlProvider.GetComponent<CodeDrawnGuildPanel>(Controls.HudControlIdentifier.GuildPanel);
+                window.Toggle();
+            }
+        }
+
         public void ClickPaperdoll()
         {
             _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);

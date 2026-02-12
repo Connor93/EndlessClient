@@ -34,7 +34,9 @@ namespace EOLib.PacketHandlers.Locker
 
         public override bool HandlePacket(LockerOpenServerPacket packet)
         {
+            var savedContext = _lockerDataRepository.Context;
             _lockerDataRepository.ResetState();
+            _lockerDataRepository.Context = savedContext;
             _lockerDataRepository.Location = new MapCoordinate(packet.LockerCoords.X, packet.LockerCoords.Y);
 
             foreach (var item in packet.LockerItems)

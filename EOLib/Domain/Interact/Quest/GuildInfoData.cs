@@ -20,5 +20,9 @@ namespace EOLib.Domain.Interact.Quest
         public int Contribution { get; }
 
         public string ActiveBuffs { get; }
+
+        public int Bank { get; }
+
+        public int OnlineCount { get; }
     }
 }

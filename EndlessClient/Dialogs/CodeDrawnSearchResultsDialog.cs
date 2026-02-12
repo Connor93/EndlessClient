@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EndlessClient.Content;
 using EndlessClient.Rendering;
 using EndlessClient.Services;
 using EndlessClient.UI.Controls;
@@ -23,10 +24,9 @@ namespace EndlessClient.Dialogs
         private readonly IUIStyleProvider _styleProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IContentProvider _contentProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _headerFont;
-        private readonly BitmapFont _scaledFont;
-        private readonly BitmapFont _scaledHeaderFont;
         private readonly List<SearchResultItem> _items;
 
         private const int DialogWidth = 290;
@@ -56,6 +56,7 @@ namespace EndlessClient.Dialogs
             IUIStyleProvider styleProvider,
             IClientWindowSizeProvider clientWindowSizeProvider,
             IGraphicsDeviceProvider graphicsDeviceProvider,
+            IContentProvider contentProvider,
             BitmapFont font,
             BitmapFont headerFont,
             BitmapFont scaledFont,
@@ -64,10 +65,9 @@ namespace EndlessClient.Dialogs
             _styleProvider = styleProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _contentProvider = contentProvider;
             _font = font;
             _headerFont = headerFont;
-            _scaledFont = scaledFont;
-            _scaledHeaderFont = scaledHeaderFont;
             _items = new List<SearchResultItem>();
 
             DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
@@ -295,23 +295,9 @@ namespace EndlessClient.Dialogs
         {
             _spriteBatch.Begin();
 
-            // Select font based on scale
-            BitmapFont font, headerFont;
-            if (scale >= 1.75f)
-            {
-                font = _scaledFont;
-                headerFont = _scaledHeaderFont;
-            }
-            else if (scale >= 1.25f)
-            {
-                font = _headerFont;
-                headerFont = _headerFont;
-            }
-            else
-            {
-                font = _font;
-                headerFont = _headerFont;
-            }
+            // Select font based on scale using adaptive helper
+            var font = FontScaleHelper.GetScaledFont(_contentProvider, scale);
+            var headerFont = FontScaleHelper.GetScaledFont(_contentProvider, 13, scale);
 
             var panelWidth = (int)(DialogWidth * scale);
             var panelHeight = (int)(DialogHeight * scale);

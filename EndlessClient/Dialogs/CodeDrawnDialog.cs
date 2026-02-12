@@ -1,4 +1,5 @@
 using System;
+using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering;
@@ -29,7 +30,7 @@ namespace EndlessClient.Dialogs
         private IXNALabel _messageLabel;
         private IXNALabel _captionLabel;
         private BitmapFont _font;
-        private BitmapFont _scaledFont;
+        private IContentProvider _contentProvider;
 
         protected int DialogWidth { get; set; } = 290;
         protected int DialogHeight { get; set; } = 120;
@@ -63,10 +64,10 @@ namespace EndlessClient.Dialogs
             _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
-        public void SetupDialog(EODialogButtons buttons, BitmapFont font, BitmapFont scaledFont = null)
+        public void SetupDialog(EODialogButtons buttons, BitmapFont font, BitmapFont scaledFont = null, IContentProvider contentProvider = null)
         {
             _font = font;
-            _scaledFont = scaledFont ?? font;
+            _contentProvider = contentProvider;
             DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
 
             // Title/Caption label
@@ -127,7 +128,7 @@ namespace EndlessClient.Dialogs
 
         private CodeDrawnButton CreateButton(string text, Vector2 position, int width, int height)
         {
-            var button = new CodeDrawnButton(_styleProvider, _font, _scaledFont, _clientWindowSizeProvider)
+            var button = new CodeDrawnButton(_styleProvider, _font, _contentProvider, _clientWindowSizeProvider)
             {
                 Text = text,
                 DrawArea = new Rectangle((int)position.X, (int)position.Y, width, height)
@@ -208,14 +209,10 @@ namespace EndlessClient.Dialogs
                 logicalX * scaleFactor + renderOffset.X,
                 logicalY * scaleFactor + renderOffset.Y);
 
-            // Choose font based on scale factor
-            BitmapFont font;
-            if (scaleFactor < 1.25f)
-                font = _font;
-            else if (scaleFactor < 1.75f)
-                font = _scaledFont ?? _font;
-            else
-                font = _scaledFont ?? _font;
+            // Choose font based on scale factor using adaptive helper
+            var font = _contentProvider != null
+                ? FontScaleHelper.GetScaledFont(_contentProvider, scaleFactor)
+                : _font;
 
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 

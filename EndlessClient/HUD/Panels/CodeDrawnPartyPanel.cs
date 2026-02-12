@@ -29,10 +29,9 @@ namespace EndlessClient.HUD.Panels
         private readonly ICharacterProvider _characterProvider;
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IContentProvider _contentProvider;
         private readonly BitmapFont _nameFont;
         private readonly BitmapFont _detailFont;
-        private readonly BitmapFont _scaledNameFont;
-        private readonly BitmapFont _scaledDetailFont;
 
         private const int PanelWidth = 160;
         private const int MemberRowHeight = 45;
@@ -61,10 +60,9 @@ namespace EndlessClient.HUD.Panels
             _characterProvider = characterProvider;
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _contentProvider = contentProvider;
             _nameFont = contentProvider.Fonts[Constants.FontSize09];
             _detailFont = contentProvider.Fonts[Constants.FontSize08];
-            _scaledNameFont = contentProvider.Fonts[Constants.FontSize10];
-            _scaledDetailFont = contentProvider.Fonts[Constants.FontSize10];
 
             _cachedParty = new HashSet<PartyMember>();
             _removeButtonRects = new Dictionary<int, Rectangle>();
@@ -287,11 +285,9 @@ namespace EndlessClient.HUD.Panels
         {
             _spriteBatch.Begin();
 
-            // Select font based on scale
-            BitmapFont nameFont, detailFont;
-            if (scale >= 1.75f) { nameFont = _scaledNameFont; detailFont = _scaledDetailFont; }
-            else if (scale >= 1.25f) { nameFont = _nameFont; detailFont = _detailFont; }
-            else { nameFont = _nameFont; detailFont = _detailFont; }
+            // Select font based on scale using adaptive helper
+            var nameFont = FontScaleHelper.GetScaledFont(_contentProvider, 12, scale);
+            var detailFont = FontScaleHelper.GetScaledFont(_contentProvider, 10, scale);
 
             var panelHeight = (int)((HeaderHeight + (_cachedParty.Count * MemberRowHeight) + Padding) * scale);
 

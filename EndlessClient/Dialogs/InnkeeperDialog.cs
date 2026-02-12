@@ -180,7 +180,7 @@ namespace EndlessClient.Dialogs
                                     {
                                         var answers = new List<string>(3);
 
-                                        Func<int, TextInputDialog> createDlg = i => _textInputDialogFactory.Create($"{i + 1}. {_citizenDataProvider.Questions[i]}");
+                                        Func<int, ITextInputDialog> createDlg = i => _textInputDialogFactory.Create($"{i + 1}. {_citizenDataProvider.Questions[i]}");
 
                                         // we can't suspend the context and await the result of the dialogs because XNAControls isn't that powerful,
                                         //    so we have to get the result in the DialogClosing event handler after we know the user is done entering their input

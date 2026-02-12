@@ -37,7 +37,6 @@ namespace EndlessClient.Dialogs
         private readonly IContentProvider _contentProvider;
 
         private readonly XNATextBox _contentEditor;
-        private readonly BitmapFont _scaledFont;
 
         private IniEditorState _state;
         private string _currentFilename;
@@ -61,14 +60,13 @@ namespace EndlessClient.Dialogs
                                IHudControlProvider hudControlProvider,
                                BitmapFont font,
                                BitmapFont scaledFont)
-            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider, font, scaledFont)
+            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider, contentProvider, font)
         {
             _iniEditorActions = iniEditorActions;
             _iniEditorProvider = iniEditorProvider;
             _messageBoxFactory = messageBoxFactory;
             _hudControlProvider = hudControlProvider;
             _contentProvider = contentProvider;
-            _scaledFont = scaledFont;
 
             Title = "INI Editor";
             _state = IniEditorState.FileList;
@@ -374,9 +372,7 @@ namespace EndlessClient.Dialogs
         /// </summary>
         private void DrawEditorContentPostScale(Vector2 scaledPos, float scale)
         {
-            BitmapFont font;
-            if (scale >= 1.25f) font = _scaledFont;
-            else font = Font;
+            var font = FontScaleHelper.GetScaledFont(_contentProvider, scale);
 
             var editorX = (int)(scaledPos.X + 12 * scale);
             var editorY = (int)(scaledPos.Y + ListAreaTop * scale);
