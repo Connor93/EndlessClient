@@ -236,24 +236,33 @@ namespace EndlessClient.GameExecution
             // Fixed timestep catch-up loop: run multiple ticks if the PC fell behind.
             // On fast PCs this runs once per loop (same as before). On slow PCs, missed ticks
             // are caught up so animations/movement run at correct speed. Capped at 5 to prevent spiral-of-death.
+            //
+            // IMPORTANT: base.Update() is only called ONCE per frame to preserve input handling.
+            // Calling it multiple times causes XNA input components to consume mouse clicks on
+            // the first iteration, breaking NPC interaction and other click-based features.
+            // Catch-up ticks only advance the tick counter for animation timing.
             var catchUpCount = 0;
             const int MaxCatchUpTicks = 5;
             while ((gameTime.TotalGameTime - _lastFrameUpdate).TotalMilliseconds >= FixedTimeStepRepository.TICK_TIME_MS
                    && catchUpCount < MaxCatchUpTicks)
             {
-#if DEBUG
-                if (catchUpCount == 0)
-                {
-                    var currentKeyState = Keyboard.GetState();
-                    if (KeyboardExtended.GetState().WasKeyJustDown(Keys.F5))
-                    {
-                        _testModeLauncher.LaunchTestMode();
-                    }
-
-                    _previousKeyState = currentKeyState;
-                }
-#endif
                 _fixedTimeStepRepository.Tick();
+                _lastFrameUpdate += TimeSpan.FromMilliseconds(FixedTimeStepRepository.TICK_TIME_MS);
+                catchUpCount++;
+            }
+
+            // Run game component updates exactly once per frame
+            if (catchUpCount > 0)
+            {
+#if DEBUG
+                var currentKeyState = Keyboard.GetState();
+                if (KeyboardExtended.GetState().WasKeyJustDown(Keys.F5))
+                {
+                    _testModeLauncher.LaunchTestMode();
+                }
+
+                _previousKeyState = currentKeyState;
+#endif
 
                 try
                 {
@@ -277,9 +286,6 @@ namespace EndlessClient.GameExecution
                     ShowExceptionDetailDialog(ex);
                 }
 #endif
-
-                _lastFrameUpdate += TimeSpan.FromMilliseconds(FixedTimeStepRepository.TICK_TIME_MS);
-                catchUpCount++;
             }
 
             // FPS limiter: suppress next draw if not enough time has elapsed

@@ -38,11 +38,10 @@ namespace EndlessClient.Input
 
             var rawMouseState = Mouse.GetState();
 
-            // Check if mouse is within window bounds
-            int windowWidth = _windowSizeProvider.Width;
-            int windowHeight = _windowSizeProvider.Height;
-            bool mouseInBounds = rawMouseState.X >= 0 && rawMouseState.X < windowWidth &&
-                                 rawMouseState.Y >= 0 && rawMouseState.Y < windowHeight;
+            // Check if mouse is within actual window bounds (not game bounds, since raw coords are in window space)
+            var windowBounds = Game.Window.ClientBounds;
+            bool mouseInBounds = rawMouseState.X >= 0 && rawMouseState.X < windowBounds.Width &&
+                                 rawMouseState.Y >= 0 && rawMouseState.Y < windowBounds.Height;
 
             // Transform mouse coordinates from window space to game space
             var offset = _windowSizeProvider.RenderOffset;
