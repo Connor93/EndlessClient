@@ -86,6 +86,10 @@ namespace EOLib.Config
                 ? Math.Max(1.0f, Math.Min(2.0f, tempFloat))
                 : 1.0f;
             _configRepository.ScrollWheelZoom = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.ScrollWheelZoom, out tempBool) && tempBool;
+
+            _configRepository.MaxFPS = configFile.GetValue(ConfigStrings.Custom, ConfigStrings.MaxFPS, out tempInt)
+                ? Math.Max(0, Math.Min(240, tempInt))
+                : 60; // Default to 60 FPS cap; 0 = unlimited
         }
     }
 }

@@ -52,6 +52,8 @@ namespace EndlessClient.GameExecution
 
         private KeyboardState _previousKeyState;
         private TimeSpan _lastFrameUpdate;
+        private TimeSpan _lastDrawTime;
+        private TimeSpan _minDrawInterval;
 
 #if DEBUG
         private SpriteBatch _spriteBatch;
@@ -130,6 +132,12 @@ namespace EndlessClient.GameExecution
             InactiveSleepTime = TimeSpan.FromMilliseconds(0);
 
             _previousKeyState = Keyboard.GetState();
+
+            // Set up FPS limiter based on config (0 = unlimited)
+            var maxFps = _configurationProvider.MaxFPS;
+            _minDrawInterval = maxFps > 0
+                ? TimeSpan.FromMilliseconds(1000.0 / maxFps)
+                : TimeSpan.Zero;
 
             // setting Width/Height in window size repository applies the change to disable vsync
             _graphicsDeviceManager.SynchronizeWithVerticalRetrace = false;
@@ -267,10 +275,22 @@ namespace EndlessClient.GameExecution
 
                 _lastFrameUpdate = gameTime.TotalGameTime;
             }
+
+            // FPS limiter: suppress next draw if not enough time has elapsed
+            if (_minDrawInterval > TimeSpan.Zero)
+            {
+                var elapsed = gameTime.TotalGameTime - _lastDrawTime;
+                if (elapsed < _minDrawInterval)
+                {
+                    SuppressDraw();
+                }
+            }
         }
 
         protected override void Draw(GameTime gameTime)
         {
+            _lastDrawTime = gameTime.TotalGameTime;
+
             var isTestMode = _controlSetRepository.CurrentControlSet.GameState == GameStates.TestMode;
 
             // Check if render target needs to be resized (e.g., after logout when game dimensions change)

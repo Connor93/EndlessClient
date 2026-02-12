@@ -45,6 +45,7 @@ namespace EOLib.Config
 
         float MapZoom { get; set; }
         bool ScrollWheelZoom { get; set; }
+        int MaxFPS { get; set; }
     }
 
     public interface IConfigurationProvider
@@ -89,6 +90,7 @@ namespace EOLib.Config
 
         float MapZoom { get; }
         bool ScrollWheelZoom { get; }
+        int MaxFPS { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -134,5 +136,6 @@ namespace EOLib.Config
 
         public float MapZoom { get; set; } = 1.0f;
         public bool ScrollWheelZoom { get; set; }
+        public int MaxFPS { get; set; }
     }
 }

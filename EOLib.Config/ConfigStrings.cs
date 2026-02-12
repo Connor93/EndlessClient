@@ -50,5 +50,6 @@ namespace EOLib.Config
 
         public const string MapZoom = nameof(MapZoom);
         public const string ScrollWheelZoom = nameof(ScrollWheelZoom);
+        public const string MaxFPS = nameof(MaxFPS);
     }
 }
