@@ -934,103 +934,118 @@ namespace EndlessClient.HUD.Windows
 
         private void DrawBountiesTab(Vector2 pos, float scale, BitmapFont font)
         {
-            var y = pos.Y + (HeaderHeight + TabBarHeight + Padding) * scale;
+            var scrollOffset = _tabScrollOffsets[(int)GuildTab.Bounties] * scale;
+            var y = pos.Y + (HeaderHeight + TabBarHeight + Padding) * scale - scrollOffset;
+            var clipTop = pos.Y + (HeaderHeight + TabBarHeight) * scale;
+            var clipBottom = pos.Y + (PanelHeight - 36) * scale;
 
             // ── Section 1: Daily Bounties ──
             var dailyBounties = _bountyDataProvider.Bounties;
-            _spriteBatch.DrawString(font, "Daily Bounties:",
-                new Vector2(pos.X + Padding * scale, y), SectionHeaderColor);
+            if (y >= clipTop && y < clipBottom)
+                _spriteBatch.DrawString(font, "Daily Bounties:",
+                    new Vector2(pos.X + Padding * scale, y), SectionHeaderColor);
             y += RowHeight * scale;
 
             if (dailyBounties == null || dailyBounties.Count == 0)
             {
-                _spriteBatch.DrawString(font, "No daily bounties. Use Refresh.",
-                    new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextSecondary);
+                if (y >= clipTop && y < clipBottom)
+                    _spriteBatch.DrawString(font, "No daily bounties. Use Refresh.",
+                        new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextSecondary);
                 y += RowHeight * scale;
             }
             else
             {
                 foreach (var bounty in dailyBounties)
                 {
-                    _spriteBatch.DrawString(font, bounty.Name,
-                        new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextPrimary);
+                    if (y >= clipTop && y < clipBottom)
+                        _spriteBatch.DrawString(font, bounty.Name,
+                            new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextPrimary);
                     y += RowHeight * scale;
 
-                    var barX = (int)(pos.X + (Padding + 8) * scale);
-                    var barWidth = (int)((PanelWidth - Padding * 2 - 16) * scale);
-                    var barHeight = (int)(8 * scale);
-                    var barRect = new Rectangle(barX, (int)y, barWidth, barHeight);
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, barRect, ExpBarBg);
-
-                    if (bounty.Target > 0)
+                    if (y >= clipTop && y < clipBottom)
                     {
-                        var fillWidth = (int)(barWidth * Math.Min(1.0, (double)bounty.Progress / bounty.Target));
-                        if (fillWidth > 0)
+                        var barX = (int)(pos.X + (Padding + 8) * scale);
+                        var barWidth = (int)((PanelWidth - Padding * 2 - 16) * scale);
+                        var barHeight = (int)(8 * scale);
+                        var barRect = new Rectangle(barX, (int)y, barWidth, barHeight);
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, barRect, ExpBarBg);
+
+                        if (bounty.Target > 0)
                         {
-                            var fillColor = bounty.Progress >= bounty.Target ? BuffActiveColor : ExpBarFill;
-                            DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                                new Rectangle(barX, (int)y, fillWidth, barHeight), fillColor);
+                            var fillWidth = (int)(barWidth * Math.Min(1.0, (double)bounty.Progress / bounty.Target));
+                            if (fillWidth > 0)
+                            {
+                                var fillColor = bounty.Progress >= bounty.Target ? BuffActiveColor : ExpBarFill;
+                                DrawingPrimitives.DrawFilledRect(_spriteBatch,
+                                    new Rectangle(barX, (int)y, fillWidth, barHeight), fillColor);
+                            }
+                            var progressText = bounty.Progress + "/" + bounty.Target;
+                            var textSize = _font.MeasureString(progressText);
+                            _spriteBatch.DrawString(_font, progressText,
+                                new Vector2(barX + (barWidth - textSize.Width) / 2, y - 1), Color.White);
                         }
-                        var progressText = bounty.Progress + "/" + bounty.Target;
-                        var textSize = _font.MeasureString(progressText);
-                        _spriteBatch.DrawString(_font, progressText,
-                            new Vector2(barX + (barWidth - textSize.Width) / 2, y - 1), Color.White);
                     }
                     y += 14 * scale;
-
-                    if (y > pos.Y + (PanelHeight - 40) * scale) return;
                 }
             }
 
             // ── Divider ──
             y += 2 * scale;
-            DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle((int)(pos.X + Padding * scale), (int)y, (int)((PanelWidth - Padding * 2) * scale), 1),
-                DividerColor);
+            if (y >= clipTop && y < clipBottom)
+                DrawingPrimitives.DrawFilledRect(_spriteBatch,
+                    new Rectangle((int)(pos.X + Padding * scale), (int)y, (int)((PanelWidth - Padding * 2) * scale), 1),
+                    DividerColor);
             y += 4 * scale;
 
             // ── Section 2: Request Board ──
-            _spriteBatch.DrawString(font, "Request Board:",
-                new Vector2(pos.X + Padding * scale, y), SectionHeaderColor);
+            if (y >= clipTop && y < clipBottom)
+                _spriteBatch.DrawString(font, "Request Board:",
+                    new Vector2(pos.X + Padding * scale, y), SectionHeaderColor);
             y += RowHeight * scale;
 
             var customBounties = _customBounties;
             if (customBounties == null || customBounties.Count == 0)
             {
-                _spriteBatch.DrawString(font, "No active requests.",
-                    new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextSecondary);
+                if (y >= clipTop && y < clipBottom)
+                    _spriteBatch.DrawString(font, "No active requests.",
+                        new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextSecondary);
                 y += RowHeight * scale;
-                _spriteBatch.DrawString(font, "Use Post Request to add one.",
-                    new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextSecondary);
+                if (y >= clipTop && y < clipBottom)
+                    _spriteBatch.DrawString(font, "Use Post Request to add one.",
+                        new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextSecondary);
             }
             else
             {
                 var myName = _characterProvider?.MainCharacter?.Name ?? "";
                 foreach (var bounty in customBounties)
                 {
-                    if (y + RowHeight * 2 * scale > pos.Y + (PanelHeight - 36) * scale) break;
-
                     // Line 1: Item name x Amount
-                    var itemLine = $"{bounty.ItemName} x{bounty.Amount}";
-                    _spriteBatch.DrawString(font, itemLine,
-                        new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextPrimary);
+                    if (y >= clipTop && y < clipBottom)
+                    {
+                        var itemLine = $"{bounty.ItemName} x{bounty.Amount}";
+                        _spriteBatch.DrawString(font, itemLine,
+                            new Vector2(pos.X + (Padding + 4) * scale, y), _styleProvider.TextPrimary);
+                    }
                     y += RowHeight * scale;
 
                     // Line 2: Status info
-                    string statusText;
-                    Color statusColor;
-                    if (bounty.Status == CustomBountyStatus.Open)
+                    if (y >= clipTop && y < clipBottom)
                     {
-                        statusText = $"  Posted by {bounty.Poster}";
-                        statusColor = _styleProvider.TextSecondary;
+                        string statusText;
+                        Color statusColor;
+                        if (bounty.Status == CustomBountyStatus.Open)
+                        {
+                            statusText = $"  Posted by {bounty.Poster}";
+                            statusColor = _styleProvider.TextSecondary;
+                        }
+                        else
+                        {
+                            statusText = $"  {bounty.AcceptedBy} delivering";
+                            statusColor = new Color(200, 180, 100);
+                        }
+                        _spriteBatch.DrawString(font, statusText,
+                            new Vector2(pos.X + (Padding + 4) * scale, y), statusColor);
                     }
-                    else
-                    {
-                        statusText = $"  {bounty.AcceptedBy} delivering";
-                        statusColor = new Color(200, 180, 100);
-                    }
-                    _spriteBatch.DrawString(font, statusText,
-                        new Vector2(pos.X + (Padding + 4) * scale, y), statusColor);
                     y += (RowHeight + 4) * scale;
                 }
             }
