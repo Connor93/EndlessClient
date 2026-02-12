@@ -233,20 +233,25 @@ namespace EndlessClient.GameExecution
 
         protected override void Update(GameTime gameTime)
         {
-            // Force updates to wait every 12ms
-            // Some game components rely on slower update times. 60FPS was the original, but 12ms factors nicely in 120ms "ticks"
-            // See: https://github.com/ethanmoffat/EndlessClient/issues/199
-            // Using IsFixedTimeStep = true with TargetUpdateTime set to 60FPS also limits the draw rate, which is not desired
-            if ((gameTime.TotalGameTime - _lastFrameUpdate).TotalMilliseconds >= FixedTimeStepRepository.TICK_TIME_MS)
+            // Fixed timestep catch-up loop: run multiple ticks if the PC fell behind.
+            // On fast PCs this runs once per loop (same as before). On slow PCs, missed ticks
+            // are caught up so animations/movement run at correct speed. Capped at 5 to prevent spiral-of-death.
+            var catchUpCount = 0;
+            const int MaxCatchUpTicks = 5;
+            while ((gameTime.TotalGameTime - _lastFrameUpdate).TotalMilliseconds >= FixedTimeStepRepository.TICK_TIME_MS
+                   && catchUpCount < MaxCatchUpTicks)
             {
 #if DEBUG
-                var currentKeyState = Keyboard.GetState();
-                if (KeyboardExtended.GetState().WasKeyJustDown(Keys.F5))
+                if (catchUpCount == 0)
                 {
-                    _testModeLauncher.LaunchTestMode();
-                }
+                    var currentKeyState = Keyboard.GetState();
+                    if (KeyboardExtended.GetState().WasKeyJustDown(Keys.F5))
+                    {
+                        _testModeLauncher.LaunchTestMode();
+                    }
 
-                _previousKeyState = currentKeyState;
+                    _previousKeyState = currentKeyState;
+                }
 #endif
                 _fixedTimeStepRepository.Tick();
 
@@ -273,7 +278,8 @@ namespace EndlessClient.GameExecution
                 }
 #endif
 
-                _lastFrameUpdate = gameTime.TotalGameTime;
+                _lastFrameUpdate += TimeSpan.FromMilliseconds(FixedTimeStepRepository.TICK_TIME_MS);
+                catchUpCount++;
             }
 
             // FPS limiter: suppress next draw if not enough time has elapsed
