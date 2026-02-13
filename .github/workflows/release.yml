@@ -114,7 +114,7 @@ jobs:
           path: EndlessClient-linux-x64.tar.gz
 
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -136,6 +136,7 @@ jobs:
             -c Debug \
             -r osx-arm64 \
             --self-contained true \
+            -p:BuildContent=false \
             -o publish/osx-arm64
 
       - name: Clean debug files
