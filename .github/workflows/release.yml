@@ -1,0 +1,264 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish
+        run: |
+          dotnet publish EndlessClient/EndlessClient.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=false `
+            -o publish/win-x64
+
+      - name: Clean debug files
+        run: |
+          Remove-Item publish\win-x64\*.pdb -Force -ErrorAction SilentlyContinue
+          Remove-Item publish\win-x64\*.config -Force -ErrorAction SilentlyContinue
+
+      - name: Copy game assets
+        run: |
+          $folders = @("config", "data", "gfx", "jbox", "maps", "mfx", "pub", "sfx")
+          foreach ($folder in $folders) {
+            $src = "ClientAssets\$folder"
+            $dst = "publish\win-x64\$folder"
+            if (Test-Path $src) {
+              Copy-Item -Path $src -Destination $dst -Recurse -Force
+            }
+          }
+
+      - name: Zip
+        run: Compress-Archive -Path publish\win-x64\* -DestinationPath EndlessClient-win-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EndlessClient-win-x64
+          path: EndlessClient-win-x64.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish
+        run: |
+          dotnet publish EndlessClient/EndlessClient.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/linux-x64
+
+      - name: Clean debug files
+        run: |
+          rm -f publish/linux-x64/*.pdb
+          rm -f publish/linux-x64/*.config
+
+      - name: Copy game assets
+        run: |
+          for folder in config data gfx jbox maps mfx pub sfx; do
+            if [ -d "ClientAssets/$folder" ]; then
+              cp -r "ClientAssets/$folder" "publish/linux-x64/$folder"
+            fi
+          done
+
+      - name: Make executable
+        run: chmod +x publish/linux-x64/EndlessClient
+
+      - name: Create tarball
+        run: tar -czf EndlessClient-linux-x64.tar.gz -C publish linux-x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EndlessClient-linux-x64
+          path: EndlessClient-linux-x64.tar.gz
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish
+        run: |
+          dotnet publish EndlessClient/EndlessClient.csproj \
+            -c Debug \
+            -r osx-arm64 \
+            --self-contained true \
+            -o publish/osx-arm64
+
+      - name: Clean debug files
+        run: |
+          rm -f publish/osx-arm64/*.pdb
+          rm -f publish/osx-arm64/*.config
+
+      - name: Copy game assets
+        run: |
+          for folder in config data gfx jbox maps mfx pub sfx; do
+            if [ -d "ClientAssets/$folder" ]; then
+              cp -r "ClientAssets/$folder" "publish/osx-arm64/$folder"
+            fi
+          done
+
+      - name: Create .app bundle
+        run: |
+          APP_DIR="EndlessClient.app"
+          CONTENTS="$APP_DIR/Contents"
+          MACOS="$CONTENTS/MacOS"
+          RESOURCES="$CONTENTS/Resources"
+
+          mkdir -p "$MACOS" "$RESOURCES"
+
+          # Copy published files to Resources
+          cp -r publish/osx-arm64/* "$RESOURCES/"
+
+          # Create launcher script
+          cat > "$MACOS/EndlessClient" << 'LAUNCHER'
+          #!/bin/bash
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          RESOURCES="$DIR/../Resources"
+          cd "$RESOURCES"
+          exec "./EndlessClient" "$@"
+          LAUNCHER
+          chmod +x "$MACOS/EndlessClient"
+
+          # Create Info.plist
+          cat > "$CONTENTS/Info.plist" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>EndlessClient</string>
+              <key>CFBundleDisplayName</key>
+              <string>Endless Online Client</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.endlessonline.client</string>
+              <key>CFBundleVersion</key>
+              <string>1.0.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleExecutable</key>
+              <string>EndlessClient</string>
+              <key>CFBundleIconFile</key>
+              <string>AppIcon</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.15</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>LSApplicationCategoryType</key>
+              <string>public.app-category.games</string>
+          </dict>
+          </plist>
+          PLIST
+
+          # Convert icon if available
+          ICON_SOURCE="EndlessClient/Icon.ico"
+          if [ -f "$ICON_SOURCE" ]; then
+            ICONSET_DIR="$RESOURCES/AppIcon.iconset"
+            mkdir -p "$ICONSET_DIR"
+            for size in 16 32 128 256 512; do
+              sips -s format png -z $size $size "$ICON_SOURCE" --out "$ICONSET_DIR/icon_${size}x${size}.png" 2>/dev/null || true
+            done
+            sips -s format png -z 32 32 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_16x16@2x.png" 2>/dev/null || true
+            sips -s format png -z 64 64 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_32x32@2x.png" 2>/dev/null || true
+            sips -s format png -z 256 256 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_128x128@2x.png" 2>/dev/null || true
+            sips -s format png -z 512 512 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_256x256@2x.png" 2>/dev/null || true
+            sips -s format png -z 1024 1024 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_512x512@2x.png" 2>/dev/null || true
+            iconutil -c icns "$ICONSET_DIR" -o "$RESOURCES/AppIcon.icns" 2>/dev/null || true
+            rm -rf "$ICONSET_DIR"
+          fi
+
+      - name: Zip .app bundle
+        run: zip -r EndlessClient-macos-arm64.zip EndlessClient.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EndlessClient-macos-arm64
+          path: EndlessClient-macos-arm64.zip
+
+  create-release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate release tag
+        id: tag
+        run: echo "tag=v$(date +'%Y.%m.%d')-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: EndlessClient ${{ steps.tag.outputs.tag }}
+          body: |
+            Automated release from commit ${{ github.sha }}
+
+            ### Downloads
+            - **Windows (x64):** `EndlessClient-win-x64.zip` — Extract and run `EndlessClient.exe`
+            - **Linux (x64):** `EndlessClient-linux-x64.tar.gz` — Extract and run `./linux-x64/EndlessClient`
+            - **macOS (Apple Silicon):** `EndlessClient-macos-arm64.zip` — Extract and open `EndlessClient.app`
+          files: |
+            artifacts/EndlessClient-win-x64/EndlessClient-win-x64.zip
+            artifacts/EndlessClient-linux-x64/EndlessClient-linux-x64.tar.gz
+            artifacts/EndlessClient-macos-arm64/EndlessClient-macos-arm64.zip
+          draft: false
+          prerelease: false

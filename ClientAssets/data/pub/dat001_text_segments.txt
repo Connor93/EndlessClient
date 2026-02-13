@@ -1,0 +1,2693 @@
+--- SEGMENT 0 (len 16) ---
+EIFs:jGold$
+
+--- SEGMENT 18 (len 26) ---
+Small Health Potion
+
+--- SEGMENT 36 (len 24) ---
+small Mana Potion
+
+--- SEGMENT 54 (len 20) ---
+Health Potion
+
+--- SEGMENT 72 (len 18) ---
+Mana Potion
+
+--- SEGMENT 90 (len 21) ---
+Flower Bouquet
+
+--- SEGMENT 108 (len 18) ---
+Love Letter
+
+--- SEGMENT 126 (len 17) ---
+Canvas Bag
+
+--- SEGMENT 144 (len 19) ---
+Green Potion
+
+--- SEGMENT 162 (len 19) ---
+Brown Potion
+
+--- SEGMENT 180 (len 19) ---
+Orb of Light
+
+--- SEGMENT 198 (len 16) ---
+
+Orc Skull
+
+--- SEGMENT 216 (len 18) ---
+Cure Potion
+
+--- SEGMENT 234 (len 21) ---
+Skeleton Skull
+
+--- SEGMENT 252 (len 19) ---
+Royal Potion
+
+--- SEGMENT 270 (len 18) ---
+Dark Potion
+
+--- SEGMENT 288 (len 23) ---
+Elemental Potion	
+
+--- SEGMENT 306 (len 12) ---
+Lance¹
+
+--- SEGMENT 324 (len 17) ---
+Broadsword%
+
+--- SEGMENT 342 (len 12) ---
+Broom&
+
+--- SEGMENT 360 (len 13) ---
+Dagger'
+
+--- SEGMENT 378 (len 20) ---
+Ancient Sword(
+
+--- SEGMENT 396 (len 17) ---
+Luna Staff)
+
+--- SEGMENT 414 (len 20) ---
+Big ugly Mace*
+
+--- SEGMENT 432 (len 17) ---
+Ninchackus+
+
+--- SEGMENT 450 (len 10) ---
+Sai,
+
+--- SEGMENT 468 (len 18) ---
+Small Sword-
+
+--- SEGMENT 486 (len 12) ---
+Spear.
+
+--- SEGMENT 504 (len 12) ---
+Staff/
+
+--- SEGMENT 522 (len 15) ---
+	Wood Axe0
+
+--- SEGMENT 540 (len 16) ---
+
+Throw Axe1
+
+--- SEGMENT 558 (len 17) ---
+eBattle Axe2
+
+--- SEGMENT 576 (len 16) ---
+
+Holy Book3
+
+--- SEGMENT 594 (len 12) ---
+Saber4
+
+--- SEGMENT 612 (len 18) ---
+Spirit Star5
+
+--- SEGMENT 630 (len 19) ---
+Ancient Star6
+
+--- SEGMENT 648 (len 19) ---
+Dragon Blade7
+
+--- SEGMENT 666 (len 18) ---
+Dark Katana8
+
+--- SEGMENT 684 (len 25) ---
+Silver Elf Braclet:
+
+--- SEGMENT 702 (len 25) ---
+Golden Elf Braclet9
+
+--- SEGMENT 720 (len 18) ---
+Silver Ring<
+
+--- SEGMENT 738 (len 18) ---
+Golden Ring;
+
+--- SEGMENT 756 (len 19) ---
+Leather Belt=
+
+--- SEGMENT 774 (len 17) ---
+eSkull Belt>
+
+--- SEGMENT 792 (len 19) ---
+Train Ticker@
+
+--- SEGMENT 810 (len 12) ---
+Herbs 
+
+--- SEGMENT 828 (len 21) ---
+Cleric CostumeB
+
+--- SEGMENT 846 (len 15) ---
+	StellinoA
+
+--- SEGMENT 864 (len 21) ---
+Leather GlovesC
+
+--- SEGMENT 882 (len 23) ---
+Emerald NecklaceD
+
+--- SEGMENT 900 (len 21) ---
+Necro NecklaceE
+
+--- SEGMENT 918 (len 18) ---
+Iron ShieldF
+
+--- SEGMENT 936 (len 18) ---
+Kite ShieldG
+
+--- SEGMENT 954 (len 21) ---
+Leather BracerH
+
+--- SEGMENT 972 (len 24) ---
+Round Iron ShieldI
+
+--- SEGMENT 990 (len 23) ---
+Wooden ProtectorK
+
+--- SEGMENT 1008 (len 21) ---
+Dark ProtectorJ
+
+--- SEGMENT 1026 (len 21) ---
+Leather GlovesC
+
+--- SEGMENT 1044 (len 19) ---
+Dragon ArmorM
+
+--- SEGMENT 1062 (len 19) ---
+Dragon ArmorN
+
+--- SEGMENT 1080 (len 33) ---
+Scroll Of Admin (no value)?
+
+--- SEGMENT 1098 (len 22) ---
+Scroll Of Beach?
+
+--- SEGMENT 1116 (len 22) ---
+Scroll Of Event?
+
+--- SEGMENT 1134 (len 24) ---
+Scroll Of Ancient?
+
+--- SEGMENT 1152 (len 23) ---
+Scroll Of Recall?
+
+--- SEGMENT 1170 (len 24) ---
+Scroll Of Centaur?
+
+--- SEGMENT 1188 (len 27) ---
+Scroll Of Stronghold?
+
+--- SEGMENT 1206 (len 23) ---
+Scroll Of Castle?
+
+--- SEGMENT 1224 (len 21) ---
+Scroll Of Void?
+
+--- SEGMENT 1242 (len 24) ---
+Scroll Of Nothing?
+
+--- SEGMENT 1260 (len 20) ---
+Water CrystalP
+
+--- SEGMENT 1278 (len 20) ---
+Earth CrystalQ
+
+--- SEGMENT 1296 (len 19) ---
+Dark CrystalR
+
+--- SEGMENT 1314 (len 21) ---
+Forest CrystalS
+
+--- SEGMENT 1332 (len 22) ---
+Element CrystalT
+
+--- SEGMENT 1350 (len 22) ---
+Eternal CrystalU
+
+--- SEGMENT 1368 (len 18) ---
+Air CrystalV
+
+--- SEGMENT 1386 (len 19) ---
+Fire CrystalW
+
+--- SEGMENT 1404 (len 20) ---
+Light CrystalX
+
+--- SEGMENT 1422 (len 17) ---
+Blue BootsY
+
+--- SEGMENT 1440 (len 17) ---
+Blue BootsZ
+
+--- SEGMENT 1458 (len 17) ---
+Blue Boots[
+
+--- SEGMENT 1476 (len 18) ---
+Brown Boots\
+
+--- SEGMENT 1494 (len 18) ---
+Brown Boots]
+
+--- SEGMENT 1512 (len 18) ---
+Brown Boots^
+
+--- SEGMENT 1530 (len 16) ---
+
+Red Boots_
+
+--- SEGMENT 1548 (len 16) ---
+
+Red Boots`
+
+--- SEGMENT 1566 (len 16) ---
+
+Red Bootsa
+
+--- SEGMENT 1584 (len 19) ---
+Purple Bootsb
+
+--- SEGMENT 1602 (len 19) ---
+Purple Bootsc
+
+--- SEGMENT 1620 (len 19) ---
+Purple Bootsd
+
+--- SEGMENT 1638 (len 17) ---
+Pink Bootse
+
+--- SEGMENT 1656 (len 18) ---
+Green Bootsf
+
+--- SEGMENT 1674 (len 18) ---
+Green Bootsg
+
+--- SEGMENT 1692 (len 18) ---
+Green Bootsh
+
+--- SEGMENT 1710 (len 19) ---
+Yellow Bootsi
+
+--- SEGMENT 1728 (len 19) ---
+Yellow Bootsj
+
+--- SEGMENT 1746 (len 19) ---
+Yellow Bootsk
+
+--- SEGMENT 1764 (len 18) ---
+Black Bootsl
+
+--- SEGMENT 1782 (len 17) ---
+Dark Bootsm
+
+--- SEGMENT 1800 (len 17) ---
+Grey Bootsn
+
+--- SEGMENT 1818 (len 19) ---
+Blue Sandalso
+
+--- SEGMENT 1836 (len 19) ---
+Blue Sandalsp
+
+--- SEGMENT 1854 (len 19) ---
+Blue Sandalsq
+
+--- SEGMENT 1872 (len 20) ---
+Brown Sandalsr
+
+--- SEGMENT 1890 (len 20) ---
+Brown Sandalss
+
+--- SEGMENT 1908 (len 20) ---
+Brown Sandalst
+
+--- SEGMENT 1926 (len 18) ---
+Red Sandalsu
+
+--- SEGMENT 1944 (len 18) ---
+Red Sandalsv
+
+--- SEGMENT 1962 (len 18) ---
+Red Sandalsw
+
+--- SEGMENT 1980 (len 21) ---
+Purple Sandalsx
+
+--- SEGMENT 1998 (len 21) ---
+Purple Sandalsy
+
+--- SEGMENT 2016 (len 21) ---
+Purple Sandalsz
+
+--- SEGMENT 2034 (len 19) ---
+Pink Sandals{
+
+--- SEGMENT 2052 (len 20) ---
+Green Sandals|
+
+--- SEGMENT 2070 (len 20) ---
+Green Sandals}
+
+--- SEGMENT 2088 (len 20) ---
+Green Sandals~
+
+--- SEGMENT 2106 (len 21) ---
+Yellow Sandals
+
+--- SEGMENT 2124 (len 21) ---
+Yellow Sandals€
+
+--- SEGMENT 2142 (len 21) ---
+Yellow Sandals�
+
+--- SEGMENT 2160 (len 20) ---
+Black Sandals‚
+
+--- SEGMENT 2178 (len 19) ---
+Dark Sandalsƒ
+
+--- SEGMENT 2196 (len 19) ---
+Grey Sandals„
+
+--- SEGMENT 2214 (len 26) ---
+Red Enchanted Boots…
+
+--- SEGMENT 2232 (len 28) ---
+Green Enchanted Boots†
+
+--- SEGMENT 2250 (len 27) ---
+Blue Enchanted Boots‡
+
+--- SEGMENT 2268 (len 20) ---
+Wizzard Robes�
+
+--- SEGMENT 2286 (len 20) ---
+Wizzard Robes�
+
+--- SEGMENT 2304 (len 19) ---
+Gothic Dress�
+
+--- SEGMENT 2322 (len 18) ---
+Swift Armor�
+
+--- SEGMENT 2340 (len 17) ---
+Cave Robes‘
+
+--- SEGMENT 2358 (len 20) ---
+Forrest Robes’
+
+--- SEGMENT 2376 (len 21) ---
+Wedding Tuxido“
+
+--- SEGMENT 2394 (len 14) ---
+Sweater”
+
+--- SEGMENT 2412 (len 21) ---
+Swordman Armor•
+
+--- SEGMENT 2430 (len 20) ---
+Thief clothes–
+
+--- SEGMENT 2448 (len 19) ---
+Frella Dress—
+
+--- SEGMENT 2466 (len 20) ---
+Wardica Plate˜
+
+--- SEGMENT 2484 (len 19) ---
+Priest Robes›
+
+--- SEGMENT 2502 (len 18) ---
+Ninja Dress™
+
+--- SEGMENT 2520 (len 20) ---
+Warrior Plateš
+
+--- SEGMENT 2538 (len 18) ---
+	Rogue Cloakœ
+
+--- SEGMENT 2556 (len 20) ---
+Soldier Plate�
+
+--- SEGMENT 2574 (len 19) ---
+Peasant Suit�
+
+--- SEGMENT 2592 (len 17) ---
+Gold PlateŸ
+
+--- SEGMENT 2610 (len 19) ---
+Indian Robes 
+
+--- SEGMENT 2628 (len 16) ---
+
+Red Dress¡
+
+--- SEGMENT 2646 (len 18) ---
+Rogue Cloak¢
+
+--- SEGMENT 2664 (len 17) ---
+Holy Robes¤
+
+--- SEGMENT 2682 (len 20) ---
+Panda Costume¦
+
+--- SEGMENT 2700 (len 22) ---
+Peasant Clothes§
+
+--- SEGMENT 2718 (len 19) ---
+Casual Dress¨
+
+--- SEGMENT 2736 (len 21) ---
+Eternal Turtle’
+
+--- SEGMENT 2754 (len 25) ---
+Light Battle Plate©
+
+--- SEGMENT 2772 (len 25) ---
+Heavy Battle Plateª
+
+--- SEGMENT 2790 (len 17) ---
+Dark Robes«
+
+--- SEGMENT 2808 (len 17) ---
+Ninja Suit¬
+
+--- SEGMENT 2826 (len 25) ---
+Replica Hero Plate­
+
+--- SEGMENT 2844 (len 17) ---
+Event Item®
+
+--- SEGMENT 2862 (len 17) ---
+Event Item¯
+
+--- SEGMENT 2880 (len 12) ---
+Apple
+
+--- SEGMENT 2898 (len 18) ---
+Small Bread!
+
+--- SEGMENT 2916 (len 20) ---
+Wedding Dress£
+
+--- SEGMENT 2934 (len 17) ---
+Grey Dress±
+
+--- SEGMENT 2952 (len 13) ---
+Dresca°
+
+--- SEGMENT 2970 (len 17) ---
+Monk Pants²
+
+--- SEGMENT 2988 (len 19) ---
+Mystic Dress³
+
+--- SEGMENT 3006 (len 16) ---
+
+Red Plate´
+
+--- SEGMENT 3024 (len 16) ---
+
+Red Plateµ
+
+--- SEGMENT 3042 (len 18) ---
+Heavy Pants¶
+
+--- SEGMENT 3060 (len 21) ---
+Turtle Costume·
+
+--- SEGMENT 3078 (len 12) ---
+Tennu¸
+
+--- SEGMENT 3096 (len 23) ---
+Blue Magical Hatº
+
+--- SEGMENT 3114 (len 24) ---
+Black Magical Hat»
+
+--- SEGMENT 3132 (len 25) ---
+Purple Magical Hat¼
+
+--- SEGMENT 3150 (len 25) ---
+Blue Enchanted Hat½
+
+--- SEGMENT 3168 (len 26) ---
+Black Enchanted Hat¾
+
+--- SEGMENT 3186 (len 27) ---
+Purple Enchanted Hat¿
+
+--- SEGMENT 3204 (len 17) ---
+Horned HatÀ
+
+--- SEGMENT 3222 (len 20) ---
+Chainmail HatÁ
+
+--- SEGMENT 3240 (len 16) ---
+
+Fairy HatÂ
+
+--- SEGMENT 3258 (len 14) ---
+BandanaÃ
+
+--- SEGMENT 3276 (len 14) ---
+BandanaÄ
+
+--- SEGMENT 3294 (len 14) ---
+BandanaÅ
+
+--- SEGMENT 3312 (len 14) ---
+BandanaÆ
+
+--- SEGMENT 3330 (len 14) ---
+BandanaÇ
+
+--- SEGMENT 3348 (len 17) ---
+Mystic HatÉ
+
+--- SEGMENT 3366 (len 17) ---
+Black HoodÊ
+
+--- SEGMENT 3384 (len 17) ---
+Brown HoodË
+
+--- SEGMENT 3402 (len 16) ---
+
+Blue HoodÌ
+
+--- SEGMENT 3420 (len 17) ---
+Green HoodÍ
+
+--- SEGMENT 3438 (len 15) ---
+	Red HoodÎ
+
+--- SEGMENT 3456 (len 19) ---
+Purple ScarfÏ
+
+--- SEGMENT 3474 (len 18) ---
+Black ScarfÑ
+
+--- SEGMENT 3492 (len 16) ---
+
+Red ScarfĞ
+
+--- SEGMENT 3510 (len 18) ---
+Samurai HatÈ
+
+--- SEGMENT 3528 (len 18) ---
+Dragon MaskÒ
+
+--- SEGMENT 3546 (len 19) ---
+Merchant HatÓ
+
+--- SEGMENT 3564 (len 20) ---
+Devil Costume¥
+
+--- SEGMENT 3582 (len 20) ---
+Devil Costume“
+
+--- SEGMENT 3600 (len 21) ---
+Turtle Costume·
+
+--- SEGMENT 3618 (len 20) ---
+Panda Costume¦
+
+--- SEGMENT 3636 (len 21) ---
+School uniformÔ
+
+--- SEGMENT 3654 (len 18) ---
+Elder RobesÕ
+
+--- SEGMENT 3670 (len 17) ---
+Aura StaffÖ
+
+--- SEGMENT 3688 (len 20) ---
+eForrest Staff×
+
+--- SEGMENT 3706 (len 19) ---
+eNormal SwordØ
+
+--- SEGMENT 3724 (len 18) ---
+eElder RobesÙ
+
+--- SEGMENT 3740 (len 19) ---
+eGuard ShieldÚ
+
+--- SEGMENT 3758 (len 22) ---
+eSmall FairysodaŞ
+
+--- SEGMENT 3776 (len 20) ---
+eBig Fairysodaß
+
+--- SEGMENT 3794 (len 21) ---
+eBrown Hair Dyeà
+
+--- SEGMENT 3812 (len 21) ---
+eGreen Hair Dyeá
+
+--- SEGMENT 3830 (len 20) ---
+ePink Hair Dyeâ
+
+--- SEGMENT 3848 (len 19) ---
+eRed Hair Dyeã
+
+--- SEGMENT 3866 (len 21) ---
+eBlond Hair Dyeä
+
+--- SEGMENT 3884 (len 20) ---
+eBlue Hair Dyeå
+
+--- SEGMENT 3902 (len 22) ---
+ePurple Hair Dyeæ
+
+--- SEGMENT 3920 (len 20) ---
+eLuna Hair Dyeç
+
+--- SEGMENT 3938 (len 21) ---
+eWhite Hair Dyeè
+
+--- SEGMENT 3956 (len 21) ---
+eBlack Hair Dyeé
+
+--- SEGMENT 3974 (len 18) ---
+eRoyal SkirtÜ
+
+--- SEGMENT 3992 (len 17) ---
+eRoyal SuitÛ
+
+--- SEGMENT 4010 (len 18) ---
+eJewel Staffİ
+
+--- SEGMENT 4028 (len 19) ---
+eThors Hammerê
+
+--- SEGMENT 4046 (len 17) ---
+eYellow Gemë
+
+--- SEGMENT 4064 (len 15) ---
+e	Blue Gemì
+
+--- SEGMENT 4082 (len 17) ---
+ePurple Gemí
+
+--- SEGMENT 4100 (len 15) ---
+e	Pink Gemî
+
+--- SEGMENT 4118 (len 14) ---
+eRed Gemï
+
+--- SEGMENT 4136 (len 17) ---
+eOrange Gemğ
+
+--- SEGMENT 4154 (len 15) ---
+e	Luna Gemñ
+
+--- SEGMENT 4172 (len 16) ---
+e
+Green Gemò
+
+--- SEGMENT 4190 (len 15) ---
+e	Dark Gemó
+
+--- SEGMENT 4208 (len 18) ---
+eMagic Charmô
+
+--- SEGMENT 4226 (len 21) ---
+eGuardian Charmõ
+
+--- SEGMENT 4244 (len 16) ---
+e
+War Charmö
+
+--- SEGMENT 4262 (len 19) ---
+eLight Katana÷
+
+--- SEGMENT 4280 (len 17) ---
+eNormal Keyø
+
+--- SEGMENT 4298 (len 17) ---
+eSilver Keyù
+
+--- SEGMENT 4316 (len 18) ---
+eCrystal Keyú
+
+--- SEGMENT 4334 (len 17) ---
+eWraith Keyû
+
+--- SEGMENT 4352 (len 20) ---
+eShopkeeper #1?
+
+--- SEGMENT 4370 (len 20) ---
+eShopkeeper #2?
+
+--- SEGMENT 4388 (len 15) ---
+e	Pole Armü
+
+--- SEGMENT 4406 (len 20) ---
+eWhite sumuraiı
+
+--- SEGMENT 4424 (len 17) ---
+eHelmy
+
+--- SEGMENT 4441 (len 21) ---
+e
+Crow Claw
+
+--- SEGMENT 4458 (len 20) ---
+e	Rat Tail
+
+
+--- SEGMENT 4475 (len 22) ---
+eBlob Slime
+
+--- SEGMENT 4492 (len 25) ---
+eMummy Bandage
+
+--- SEGMENT 4509 (len 19) ---
+eFox Fur
+
+--- SEGMENT 4526 (len 23) ---
+eSnake Tooth
+
+--- SEGMENT 4543 (len 24) ---
+eSnake Rattle
+
+--- SEGMENT 4560 (len 24) ---
+eCentaur Hoof	
+
+--- SEGMENT 4577 (len 23) ---
+eSpider Eyes
+
+--- SEGMENT 4594 (len 22) ---
+eSpider Leg
+
+--- SEGMENT 4611 (len 21) ---
+e
+Goat Horn
+
+--- SEGMENT 4628 (len 24) ---
+ePenguin Meat
+
+--- SEGMENT 4645 (len 23) ---
+eCyclops Eye
+
+--- SEGMENT 4662 (len 25) ---
+eSkeleton Bone
+
+--- SEGMENT 4679 (len 24) ---
+eSkeleton Rib
+
+--- SEGMENT 4696 (len 25) ---
+eBarbarian Ear
+
+--- SEGMENT 4713 (len 24) ---
+eBeatle Fangs
+
+--- SEGMENT 4730 (len 22) ---
+eWingo Claw
+
+--- SEGMENT 4747 (len 23) ---
+eIron Gloves
+
+--- SEGMENT 4764 (len 24) ---
+eDeath Gloves
+
+--- SEGMENT 4781 (len 23) ---
+eRoyal Boots
+
+--- SEGMENT 4798 (len 16) ---
+eWhip
+
+--- SEGMENT 4815 (len 27) ---
+eMagical Trident
+
+--- SEGMENT 4832 (len 23) ---
+eHand Sickle
+
+--- SEGMENT 4849 (len 25) ---
+eWarlock Sword
+
+--- SEGMENT 4866 (len 25) ---
+eChristmas Hat
+
+--- SEGMENT 4883 (len 25) ---
+eAncient Plate
+
+--- SEGMENT 4900 (len 25) ---
+eAncient Plate
+
+--- SEGMENT 4917 (len 25) ---
+eAncient Boots
+
+--- SEGMENT 4934 (len 29) ---
+eVyercil tentacles
+
+--- SEGMENT 4951 (len 20) ---
+e	Dark rag
+
+--- SEGMENT 4968 (len 18) ---
+eEloffe!
+
+--- SEGMENT 4985 (len 17) ---
+eEloff 
+
+--- SEGMENT 5002 (len 24) ---
+eUltima Blade"
+
+--- SEGMENT 5019 (len 21) ---
+e
+Ice Blade'
+
+--- SEGMENT 5036 (len 25) ---
+eGold Defender#
+
+--- SEGMENT 5053 (len 23) ---
+eLotus Sword%
+
+--- SEGMENT 5070 (len 25) ---
+eCrystal Sword$
+
+--- SEGMENT 5087 (len 24) ---
+eKilling Edge(
+
+--- SEGMENT 5104 (len 22) ---
+eDark Blade&
+
+--- SEGMENT 5121 (len 24) ---
+eReaper Scyth)
+
+--- SEGMENT 5138 (len 24) ---
+eEloff Helmet*
+
+--- SEGMENT 5155 (len 25) ---
+eCresent Staff+
+
+--- SEGMENT 5172 (len 23) ---
+ePotion of Flames	
+
+--- SEGMENT 5190 (len 21) ---
+ePotion of Love
+
+
+--- SEGMENT 5208 (len 26) ---
+ePotion of Celebrate
+
+--- SEGMENT 5226 (len 25) ---
+ePotion of Sparkles
+
+--- SEGMENT 5244 (len 21) ---
+ePotion of Evil
+
+--- SEGMENT 5262 (len 23) ---
+ePotion of Terror
+
+--- SEGMENT 5280 (len 15) ---
+eBow,
+
+--- SEGMENT 5297 (len 19) ---
+eAir hat-
+
+--- SEGMENT 5314 (len 24) ---
+eBird Feather.
+
+--- SEGMENT 5331 (len 22) ---
+eHorse Hoof/
+
+--- SEGMENT 5348 (len 21) ---
+e
+Blue Blob0
+
+--- SEGMENT 5365 (len 20) ---
+e	Red Blob1
+
+--- SEGMENT 5382 (len 23) ---
+ePurple Blob2
+
+--- SEGMENT 5399 (len 21) ---
+e
+Pink Blob3
+
+--- SEGMENT 5416 (len 23) ---
+eYellow Blob4
+
+--- SEGMENT 5433 (len 21) ---
+e
+Navy Blob5
+
+--- SEGMENT 5450 (len 22) ---
+eGreen Blob6
+
+--- SEGMENT 5467 (len 23) ---
+eWolfman Fur7
+
+--- SEGMENT 5484 (len 23) ---
+eFrog Scrubs8
+
+--- SEGMENT 5501 (len 21) ---
+e
+Frog Head9
+
+--- SEGMENT 5518 (len 23) ---
+eLotus Armor:
+
+--- SEGMENT 5535 (len 23) ---
+eLotus Armor;
+
+--- SEGMENT 5552 (len 19) ---
+ePilotte<
+
+--- SEGMENT 5569 (len 22) ---
+ePirate Hat=
+
+--- SEGMENT 5586 (len 18) ---
+eBeruta>
+
+--- SEGMENT 5603 (len 20) ---
+e	Crossbow?
+
+--- SEGMENT 5620 (len 18) ---
+eReaper@
+
+--- SEGMENT 5637 (len 23) ---
+eStinger EyeA
+
+--- SEGMENT 5654 (len 20) ---
+e	Bat WingB
+
+--- SEGMENT 5671 (len 24) ---
+eWorm SegmentC
+
+--- SEGMENT 5688 (len 21) ---
+e
+Wurm HeadD
+
+--- SEGMENT 5705 (len 20) ---
+e	Ant LegsE
+
+--- SEGMENT 5722 (len 26) ---
+eTeawk TentacleF
+
+--- SEGMENT 5739 (len 23) ---
+eWhite RobesG
+
+--- SEGMENT 5756 (len 24) ---
+eHockey StickH
+
+--- SEGMENT 5773 (len 19) ---
+eNeedlesI
+
+--- SEGMENT 5790 (len 23) ---
+eTwin BladesJ
+
+--- SEGMENT 5807 (len 22) ---
+eLefor MaceK
+
+--- SEGMENT 5824 (len 22) ---
+eCava StaffL
+
+--- SEGMENT 5841 (len 24) ---
+eLotus HelmetM
+
+--- SEGMENT 5858 (len 23) ---
+eScroll Of Guilds?
+
+--- SEGMENT 5876 (len 27) ---
+eHula Hula PantsN
+
+--- SEGMENT 5893 (len 27) ---
+eHula Hula SkirtO
+
+--- SEGMENT 5910 (len 21) ---
+e
+Kitty HatP
+
+--- SEGMENT 5927 (len 25) ---
+eHula Hula HatQ
+
+--- SEGMENT 5944 (len 21) ---
+e
+Blue StarR
+
+--- SEGMENT 5961 (len 19) ---
+eIce GemS
+
+--- SEGMENT 5978 (len 20) ---
+e	Ice CubeT
+
+--- SEGMENT 5995 (len 23) ---
+eGolom StoneU
+
+--- SEGMENT 6012 (len 21) ---
+e
+Gnome HatV
+
+--- SEGMENT 6029 (len 22) ---
+eGnome DollW
+
+--- SEGMENT 6046 (len 26) ---
+eCrusader ArmorX
+
+--- SEGMENT 6063 (len 26) ---
+eCrusader ArmorY
+
+--- SEGMENT 6080 (len 17) ---
+eGaloyZ
+
+--- SEGMENT 6097 (len 18) ---
+eGaloya[
+
+--- SEGMENT 6114 (len 16) ---
+eBurk\
+
+--- SEGMENT 6131 (len 18) ---
+eKimono]
+
+--- SEGMENT 6148 (len 26) ---
+eSchool Costume^
+
+--- SEGMENT 6165 (len 16) ---
+eHarp_
+
+--- SEGMENT 6182 (len 18) ---
+eGuitar`
+
+--- SEGMENT 6199 (len 24) ---
+eBattle Spearb
+
+--- SEGMENT 6216 (len 17) ---
+eFlaila
+
+--- SEGMENT 6233 (len 21) ---
+e
+Ewak Legsc
+
+--- SEGMENT 6250 (len 23) ---
+eGeggime Furd
+
+--- SEGMENT 6267 (len 28) ---
+eTaewcus Tentaclee
+
+--- SEGMENT 6284 (len 23) ---
+eSnail Housef
+
+--- SEGMENT 6301 (len 21) ---
+e
+Snail Tieg
+
+--- SEGMENT 6318 (len 20) ---
+e	Mushroomh
+
+--- SEGMENT 6335 (len 23) ---
+eElegant Hati
+
+--- SEGMENT 6352 (len 19) ---
+eWar Axej
+
+--- SEGMENT 6369 (len 18) ---
+eGastrok
+
+--- SEGMENT 6386 (len 22) ---
+eAblo Staffl
+
+--- SEGMENT 6403 (len 23) ---
+eFluon Swordm
+
+--- SEGMENT 6420 (len 17) ---
+eOblonn
+
+--- SEGMENT 6437 (len 15) ---
+eGuno
+
+--- SEGMENT 6454 (len 18) ---
+eRapierp
+
+--- SEGMENT 6471 (len 20) ---
+eScroll Of Art?
+
+--- SEGMENT 6489 (len 20) ---
+e	Elegantaq
+
+--- SEGMENT 6506 (len 23) ---
+eHeavy Eloffr
+
+--- SEGMENT 6523 (len 24) ---
+
+eHeavy Eloffes
+
+--- SEGMENT 6540 (len 20) ---
+
+e	Buccaneet
+
+--- SEGMENT 6557 (len 24) ---
+eLast Samuraiu
+
+--- SEGMENT 6574 (len 19) ---
+eElegantv
+
+--- SEGMENT 6591 (len 21) ---
+e
+Love Ringw
+
+--- SEGMENT 6608 (len 24) ---
+eBig Health Potion
+
+--- SEGMENT 6626 (len 22) ---
+eBig Mana Potion
+
+--- SEGMENT 6644 (len 13) ---
+eElixer
+
+--- SEGMENT 6662 (len 19) ---
+eChalybsx
+
+--- SEGMENT 6679 (len 18) ---
+eQuariay
+
+--- SEGMENT 6696 (len 19) ---
+eHickoryz
+
+--- SEGMENT 6713 (len 20) ---
+e	Buccanee{
+
+--- SEGMENT 6730 (len 23) ---
+eWhite Boots|
+
+--- SEGMENT 6747 (len 25) ---
+eWhite Sandals}
+
+--- SEGMENT 6764 (len 22) ---
+eGood Wings~
+
+--- SEGMENT 6781 (len 20) ---
+e	Gob Helm
+
+--- SEGMENT 6798 (len 27) ---
+eHorned Gob Helm€
+
+--- SEGMENT 6815 (len 22) ---
+eHero Plate�
+
+--- SEGMENT 6832 (len 22) ---
+eHero Plate‚
+
+--- SEGMENT 6849 (len 22) ---
+eKnob Staffƒ
+
+--- SEGMENT 6866 (len 25) ---
+eFladdat Staff„
+
+--- SEGMENT 6883 (len 20) ---
+e	Gabrasto…
+
+--- SEGMENT 6900 (len 18) ---
+eChappy†
+
+--- SEGMENT 6917 (len 24) ---
+eBattle Spear‡
+
+--- SEGMENT 6934 (len 26) ---
+eOptica Batwingˆ
+
+--- SEGMENT 6951 (len 18) ---
+eLeaves‰
+
+--- SEGMENT 6968 (len 19) ---
+eOrc EarŠ
+
+--- SEGMENT 6985 (len 22) ---
+eMetal Part‹
+
+--- SEGMENT 7002 (len 17) ---
+eCraneŒ
+
+--- SEGMENT 7019 (len 25) ---
+eGreen Crystal�
+
+--- SEGMENT 7036 (len 22) ---
+eImp Stings�
+
+--- SEGMENT 7053 (len 20) ---
+e	Handcuff�
+
+--- SEGMENT 7070 (len 21) ---
+e
+Twin Horn�
+
+--- SEGMENT 7087 (len 25) ---
+eVine Tentacle‘
+
+--- SEGMENT 7104 (len 23) ---
+eRobot Chain’
+
+--- SEGMENT 7121 (len 25) ---
+eMonster Flesh“
+
+--- SEGMENT 7138 (len 27) ---
+eRobe of Sanctum”
+
+--- SEGMENT 7155 (len 23) ---
+ePlaot Robes•
+
+--- SEGMENT 7172 (len 35) ---
+eBroken Bag (don't use).–
+
+--- SEGMENT 7189 (len 25) ---
+eSoccery Armor—
+
+--- SEGMENT 7206 (len 25) ---
+eSoccery Armor˜
+
+--- SEGMENT 7223 (len 24) ---
+eGolden Crown™
+
+--- SEGMENT 7240 (len 23) ---
+eOld Treasure Map?
+
+--- SEGMENT 7258 (len 25) ---
+eArchery Armorš
+
+--- SEGMENT 7275 (len 25) ---
+eArchery Armor›
+
+--- SEGMENT 7292 (len 18) ---
+eTebaruœ
+
+--- SEGMENT 7309 (len 27) ---
+eRoyal Protector�
+
+--- SEGMENT 7326 (len 27) ---
+eLotus Protector�
+
+--- SEGMENT 7343 (len 23) ---
+eAztec Crown™
+
+--- SEGMENT 7360 (len 22) ---
+eScroll Of Truth?
+
+--- SEGMENT 7378 (len 19) ---
+eChopperŸ
+
+--- SEGMENT 7395 (len 25) ---
+eLens Of Truth 
+
+--- SEGMENT 7412 (len 22) ---
+eDark Endur¡
+
+--- SEGMENT 7429 (len 25) ---
+eNormal Arrows¢
+
+--- SEGMENT 7446 (len 24) ---
+eFrost Arrows£
+
+--- SEGMENT 7463 (len 23) ---
+eFire Arrows¤
+
+--- SEGMENT 7480 (len 30) ---
+eHelmet of Darkness¥
+
+--- SEGMENT 7497 (len 26) ---
+eHat of wonders¦
+
+--- SEGMENT 7514 (len 18) ---
+eKetova§
+
+--- SEGMENT 7531 (len 18) ---
+eKetovu©
+
+--- SEGMENT 7548 (len 16) ---
+eBaru¨
+
+--- SEGMENT 7565 (len 18) ---
+eBarutaª
+
+--- SEGMENT 7582 (len 28) ---
+eWooden Protector«
+
+--- SEGMENT 7599 (len 17) ---
+eAdger¬
+
+--- SEGMENT 7616 (len 18) ---
+eChains­
+
+--- SEGMENT 7633 (len 19) ---
+eMerhawk®
+
+--- SEGMENT 7650 (len 18) ---
+eMitova¯
+
+--- SEGMENT 7667 (len 18) ---
+eAnanas°
+
+--- SEGMENT 7684 (len 17) ---
+eApple±
+
+--- SEGMENT 7701 (len 18) ---
+eBanana²
+
+--- SEGMENT 7718 (len 17) ---
+eBerry³
+
+--- SEGMENT 7735 (len 17) ---
+eBrush´
+
+--- SEGMENT 7752 (len 18) ---
+ePickleµ
+
+--- SEGMENT 7769 (len 20) ---
+e	Flad Hat¶
+
+--- SEGMENT 7786 (len 18) ---
+eKontra·
+
+--- SEGMENT 7803 (len 28) ---
+eGood Force Wings¸
+
+--- SEGMENT 7820 (len 28) ---
+eFire Force Wings¹
+
+--- SEGMENT 7837 (len 23) ---
+eSteel Bootsº
+
+--- SEGMENT 7854 (len 20) ---
+e	Cook Hat»
+
+--- SEGMENT 7871 (len 25) ---
+eCooks Uniform¼
+
+--- SEGMENT 7888 (len 25) ---
+eCooks Uniform½
+
+--- SEGMENT 7905 (len 19) ---
+eGlasses¾
+
+--- SEGMENT 7922 (len 22) ---
+ePirate Cap¿
+
+--- SEGMENT 7939 (len 22) ---
+eOak ShieldÀ
+
+--- SEGMENT 7956 (len 22) ---
+eJack SpearÁ
+
+--- SEGMENT 7973 (len 23) ---
+eBazar StaffÂ
+
+--- SEGMENT 7990 (len 21) ---
+e
+Saw SwordÃ
+
+--- SEGMENT 8007 (len 20) ---
+e	Scav BowÄ
+
+--- SEGMENT 8024 (len 17) ---
+eDracoÅ
+
+--- SEGMENT 8041 (len 19) ---
+eDracotaÉ
+
+--- SEGMENT 8058 (len 16) ---
+eOronÆ3
+
+--- SEGMENT 8075 (len 17) ---
+eTebarÇ
+
+--- SEGMENT 8092 (len 25) ---
+eDocter OutfitÈ
+
+--- SEGMENT 8109 (len 24) ---
+eNurse OutfitÌ
+
+--- SEGMENT 8126 (len 16) ---
+ePwepÊ
+
+--- SEGMENT 8143 (len 17) ---
+eOronaË3
+
+--- SEGMENT 8160 (len 23) ---
+eDark EnduraÍ
+
+--- SEGMENT 8177 (len 21) ---
+e
+Medic CapÎ
+
+--- SEGMENT 8194 (len 15) ---
+eFanÏ
+
+--- SEGMENT 8211 (len 23) ---
+eDragon ClawĞ
+
+--- SEGMENT 8228 (len 23) ---
+eDragon WingÑ
+
+--- SEGMENT 8245 (len 22) ---
+eDead FliesÒ
+
+--- SEGMENT 8262 (len 22) ---
+eDragon Eye_
+
+--- SEGMENT 8279 (len 21) ---
+e
+Viper EyeÔ
+
+--- SEGMENT 8296 (len 21) ---
+e
+Aqua HandÕ
+
+--- SEGMENT 8313 (len 16) ---
+eFishÖ
+
+--- SEGMENT 8330 (len 19) ---
+eApe Fur×
+
+--- SEGMENT 8347 (len 21) ---
+e
+Tenba BagØ
+
+--- SEGMENT 8364 (len 18) ---
+eSpringÙ
+
+--- SEGMENT 8381 (len 18) ---
+eButterÚ
+
+--- SEGMENT 8398 (len 19) ---
+eFlowiesÛ
+
+--- SEGMENT 8415 (len 18) ---
+ePencilÜ
+
+--- SEGMENT 8432 (len 22) ---
+eBorg Metalİ
+
+--- SEGMENT 8449 (len 17) ---
+ePiggyŞ
+
+--- SEGMENT 8466 (len 20) ---
+eCaptain Boots]
+
+--- SEGMENT 8484 (len 20) ---
+ePeasant Bread!
+
+--- SEGMENT 8502 (len 17) ---
+eRare Berry
+
+--- SEGMENT 8520 (len 21) ---
+eUseless Leaves 
+
+--- SEGMENT 8538 (len 22) ---
+eSpecial Hairdyeà
+
+--- SEGMENT 8556 (len 28) ---
+eBaby Turtle Meat
+
+--- SEGMENT 8573 (len 18) ---
+eKing Scroll?
+
+--- SEGMENT 8590 (len 27) ---
+eShiny Red Apple±
+
+--- SEGMENT 8607 (len 22) ---
+Baru Flock�
+
+--- SEGMENT 8624 (len 18) ---
+Useless Bag
+
+--- SEGMENT 8642 (len 24) ---
+Title Certificate@
+
+--- SEGMENT 8660 (len 18) ---
+Useless Bag
+
+--- SEGMENT 8678 (len 24) ---
+Phoenix Beak/
+
+--- SEGMENT 8695 (len 18) ---
+Staff Staff/
+
+--- SEGMENT 8713 (len 28) ---
+Christmas Scrollu
+
+--- SEGMENT 8730 (len 22) ---
+Festive CrystalS
+
+--- SEGMENT 8748 (len 18) ---
+Skin Melter
+
+--- SEGMENT 8766 (len 24) ---
+Book of Evil
+
+--- SEGMENT 8783 (len 27) ---
+Armour Modifierİ
+
+--- SEGMENT 8800 (len 18) ---
+eCuirasé
+
+--- SEGMENT 8817 (len 22) ---
+Nior Plateë
+
+--- SEGMENT 8834 (len 19) ---
+Niplate
+
+--- SEGMENT 8851 (len 23) ---
+Abyss Plate
+
+--- SEGMENT 8885 (len 16) ---
+Pwap#
+
+--- SEGMENT 8902 (len 18) ---
+Sacred'
+
+--- SEGMENT 8919 (len 16) ---
+Luon.
+
+--- SEGMENT 8936 (len 21) ---
+
+ArmorM 59/
+
+--- SEGMENT 8953 (len 22) ---
+Track Suit0
+
+--- SEGMENT 8970 (len 20) ---
+	Merchant1
+
+--- SEGMENT 8987 (len 24) ---
+White Tuxido6
+
+--- SEGMENT 9004 (len 18) ---
+Legion;
+
+--- SEGMENT 9021 (len 21) ---
+
+ArmorM 64C
+
+--- SEGMENT 9038 (len 23) ---
+Pink TuxidoD
+
+--- SEGMENT 9055 (len 21) ---
+
+ArmorM 66H
+
+--- SEGMENT 9072 (len 21) ---
+
+DemoniqueK
+
+--- SEGMENT 9089 (len 26) ---
+Winter Sweaterk
+
+--- SEGMENT 9106 (len 24) ---
+Dragon Platel3
+
+--- SEGMENT 9123 (len 30) ---
+Scroll of Haunted House?
+
+--- SEGMENT 9141 (len 21) ---
+
+ArmorM 71n
+
+--- SEGMENT 9158 (len 22) ---
+Noble Suito
+
+--- SEGMENT 9175 (len 23) ---
+Steel Platep
+
+--- SEGMENT 9192 (len 21) ---
+
+ArmorM 74q
+
+--- SEGMENT 9209 (len 21) ---
+
+ArmorM 75r
+
+--- SEGMENT 9226 (len 16) ---
+Azurs
+
+--- SEGMENT 9243 (len 25) ---
+Crusade Armort
+
+--- SEGMENT 9260 (len 21) ---
+
+ArmorM 78•
+
+--- SEGMENT 9277 (len 27) ---
+Penguin Costume¦
+
+--- SEGMENT 9294 (len 21) ---
+
+ArmorM 80¨
+
+--- SEGMENT 9311 (len 21) ---
+
+ArmorM 81©
+
+--- SEGMENT 9328 (len 23) ---
+Necro Plateª
+
+--- SEGMENT 9345 (len 21) ---
+
+ArmorM 83¿
+
+--- SEGMENT 9362 (len 21) ---
+
+ArmorM 84Á
+
+--- SEGMENT 9379 (len 22) ---
+Fur JacketÃ
+
+--- SEGMENT 9396 (len 26) ---
+Butler CostumeÏ
+
+--- SEGMENT 9413 (len 21) ---
+
+ArmorM 87Ğ
+
+--- SEGMENT 9430 (len 21) ---
+
+ArmorM 88Ô
+
+--- SEGMENT 9447 (len 21) ---
+
+ArmorM 89ˆ
+
+--- SEGMENT 9464 (len 21) ---
+
+ArmorM 90ı
+
+--- SEGMENT 9481 (len 24) ---
+Royal Jacket
+
+--- SEGMENT 9498 (len 17) ---
+Cuiraê
+
+--- SEGMENT 9515 (len 23) ---
+Niora Plateì
+
+--- SEGMENT 9532 (len 18) ---
+Oblonaù
+
+--- SEGMENT 9549 (len 19) ---
+Nuplate
+
+--- SEGMENT 9566 (len 22) ---
+Dema Robes
+
+--- SEGMENT 9583 (len 24) ---
+Abysse Plate
+
+--- SEGMENT 9600 (len 16) ---
+Noxu
+
+--- SEGMENT 9617 (len 19) ---
+Scarlet"
+
+--- SEGMENT 9634 (len 17) ---
+Luona$
+
+--- SEGMENT 9651 (len 25) ---
+Purplelicious%
+
+--- SEGMENT 9668 (len 16) ---
+Haru(
+
+--- SEGMENT 9685 (len 19) ---
+Sacreda-
+
+--- SEGMENT 9702 (len 17) ---
+Azura7
+
+--- SEGMENT 9719 (len 19) ---
+Legiona<
+
+--- SEGMENT 9736 (len 21) ---
+
+Snowflake=
+
+--- SEGMENT 9753 (len 21) ---
+
+ArmorF 67@
+
+--- SEGMENT 9770 (len 21) ---
+
+ArmorF 68I
+
+--- SEGMENT 9787 (len 21) ---
+
+ArmorF 69u
+
+--- SEGMENT 9804 (len 25) ---
+Dragona Platev3
+
+--- SEGMENT 9821 (len 24) ---
+Steela Plate{
+
+--- SEGMENT 9838 (len 23) ---
+Noble Dressz
+
+--- SEGMENT 9855 (len 21) ---
+
+ArmorF 73x
+
+--- SEGMENT 9872 (len 21) ---
+
+ArmorF 74|
+
+--- SEGMENT 9889 (len 21) ---
+
+ArmorF 75w
+
+--- SEGMENT 9906 (len 21) ---
+
+ArmorF 76}
+
+--- SEGMENT 9923 (len 21) ---
+
+ArmorF 77~
+
+--- SEGMENT 9940 (len 21) ---
+
+ArmorF 78
+
+--- SEGMENT 9957 (len 21) ---
+
+ArmorF 79u
+
+--- SEGMENT 9974 (len 21) ---
+
+ArmorF 80–
+
+--- SEGMENT 9991 (len 27) ---
+Penguin Costume§
+
+--- SEGMENT 10008 (len 21) ---
+
+ArmorF 82«
+
+--- SEGMENT 10025 (len 21) ---
+
+ArmorF 83¾
+
+--- SEGMENT 10042 (len 21) ---
+
+ArmorF 84À
+
+--- SEGMENT 10059 (len 20) ---
+	Fur CoatÂ
+
+--- SEGMENT 10076 (len 24) ---
+Maid CostumeÍ
+
+--- SEGMENT 10093 (len 21) ---
+
+ArmorF 87Î
+
+--- SEGMENT 10110 (len 21) ---
+
+ArmorF 88Õ
+
+--- SEGMENT 10127 (len 21) ---
+
+ArmorF 89×
+
+--- SEGMENT 10144 (len 21) ---
+
+ArmorF 90ü
+
+--- SEGMENT 10161 (len 23) ---
+Royal Dress
+
+--- SEGMENT 10178 (len 26) ---
+Cursed Gladiusß
+
+--- SEGMENT 10195 (len 17) ---
+Corum
+
+--- SEGMENT 10212 (len 22) ---
+Skullmorne
+
+--- SEGMENT 10229 (len 19) ---
+Amaceng
+
+--- SEGMENT 10246 (len 21) ---
+
+Weapon 79
+
+--- SEGMENT 10263 (len 21) ---
+
+Weapon 80
+
+--- SEGMENT 10280 (len 21) ---
+
+Weapon 81
+
+--- SEGMENT 10297 (len 24) ---
+Giant Hammer
+
+--- SEGMENT 10314 (len 23) ---
+Nifty Spear
+
+--- SEGMENT 10331 (len 21) ---
+
+Weapon 84
+
+--- SEGMENT 10348 (len 22) ---
+Ablo Sword&
+
+--- SEGMENT 10365 (len 21) ---
+
+Weapon 86W
+
+--- SEGMENT 10382 (len 21) ---
+
+Weapon 87€
+
+--- SEGMENT 10399 (len 21) ---
+
+Weapon 88�
+
+--- SEGMENT 10416 (len 21) ---
+
+Bazar Axe‚
+
+--- SEGMENT 10433 (len 21) ---
+
+Weapon 90¬
+
+--- SEGMENT 10450 (len 21) ---
+
+Weapon 91ì
+
+--- SEGMENT 10467 (len 18) ---
+Hat 51ñ
+
+--- SEGMENT 10484 (len 18) ---
+Hat 52ò
+
+--- SEGMENT 10501 (len 24) ---
+Dragon Skull0
+
+--- SEGMENT 10518 (len 22) ---
+Sunglasses 
+
+--- SEGMENT 10535 (len 22) ---
+Blocto Hat*
+
+--- SEGMENT 10552 (len 18) ---
+Hat 56F
+
+--- SEGMENT 10569 (len 20) ---
+	Flad HatL
+
+--- SEGMENT 10586 (len 25) ---
+Black samuraiM
+
+--- SEGMENT 10603 (len 18) ---
+Hat 59N
+
+--- SEGMENT 10620 (len 18) ---
+Hat 60O
+
+--- SEGMENT 10637 (len 18) ---
+Hat 61P
+
+--- SEGMENT 10654 (len 18) ---
+Hat 62Q
+
+--- SEGMENT 10671 (len 18) ---
+Hat 63R
+
+--- SEGMENT 10688 (len 20) ---
+	Pwep HatS
+
+--- SEGMENT 10705 (len 18) ---
+Hat 65T
+
+--- SEGMENT 10722 (len 18) ---
+Hat 66U
+
+--- SEGMENT 10739 (len 22) ---
+Wingo MaskV
+
+--- SEGMENT 10756 (len 24) ---
+Jesaurus Hat\
+
+--- SEGMENT 10773 (len 18) ---
+Hat 69ƒ
+
+--- SEGMENT 10790 (len 22) ---
+Black Cowl„
+
+--- SEGMENT 10807 (len 22) ---
+Browl Cowl…
+
+--- SEGMENT 10824 (len 18) ---
+Hat 72†
+
+--- SEGMENT 10841 (len 18) ---
+Hat 73‡
+
+--- SEGMENT 10858 (len 22) ---
+Cowboy Hatˆ
+
+--- SEGMENT 10875 (len 27) ---
+Blue Winter Cap—
+
+--- SEGMENT 10892 (len 28) ---
+Brown Winter Cap˜
+
+--- SEGMENT 10909 (len 25) ---
+Shortcake Hat™
+
+--- SEGMENT 10926 (len 22) ---
+Snowie Hatš
+
+--- SEGMENT 10943 (len 27) ---
+Tiny Wizard Hat›
+
+--- SEGMENT 10960 (len 18) ---
+Hat 80œ
+
+--- SEGMENT 10977 (len 23) ---
+Red samurai£
+
+--- SEGMENT 10994 (len 22) ---
+Poopis Hat¼
+
+--- SEGMENT 11011 (len 18) ---
+Hat 83Ø
+
+--- SEGMENT 11028 (len 18) ---
+Hat 84é
+
+--- SEGMENT 11045 (len 21) ---
+
+Party Hatê
+
+--- SEGMENT 11062 (len 21) ---
+
+Party Hatë
+
+--- SEGMENT 11079 (len 27) ---
+Nightshade Helmï
+
+--- SEGMENT 11096 (len 25) ---
+Dragon Helmetğ
+
+--- SEGMENT 11113 (len 18) ---
+Hat 89ñ
+
+--- SEGMENT 11130 (len 18) ---
+Hat 90ò
+
+--- SEGMENT 11147 (len 18) ---
+Hat 91ó
+
+--- SEGMENT 11164 (len 18) ---
+Hat 92ô
+
+--- SEGMENT 11181 (len 18) ---
+Hat 93õ
+
+--- SEGMENT 11198 (len 18) ---
+Hat 94ö
+
+--- SEGMENT 11215 (len 18) ---
+Hat 95÷
+
+--- SEGMENT 11232 (len 18) ---
+Hat 96ø
+
+--- SEGMENT 11249 (len 16) ---
+Haloù
+
+--- SEGMENT 11266 (len 25) ---
+Twisted Hornsú
+
+--- SEGMENT 11283 (len 18) ---
+Hat 99û
+
+--- SEGMENT 11300 (len 23) ---
+Lotus Boots
+
+
+--- SEGMENT 11317 (len 20) ---
+	Boots 54!
+
+--- SEGMENT 11334 (len 28) ---
+Nightshade Boots£
+
+--- SEGMENT 11351 (len 20) ---
+	Boots 56±
+
+--- SEGMENT 11368 (len 34) ---
+Orange Enchanted Boots²
+
+--- SEGMENT 11385 (len 32) ---
+Teal Enchanted Boots³
+
+--- SEGMENT 11402 (len 34) ---
+Purple Enchanted Boots´
+
+--- SEGMENT 11419 (len 32) ---
+Pink Enchanted Bootsµ
+
+--- SEGMENT 11436 (len 34) ---
+Yellow Enchanted Boots¶
+
+--- SEGMENT 11453 (len 32) ---
+Aqua Enchanted Boots·
+
+--- SEGMENT 11470 (len 32) ---
+Grey Enchanted Boots¸
+
+--- SEGMENT 11487 (len 33) ---
+Black Enchanted Boots¹
+
+--- SEGMENT 11504 (len 33) ---
+Brown Enchanted Bootsº
+
+--- SEGMENT 11521 (len 22) ---
+Teddy BearE
+
+--- SEGMENT 11538 (len 21) ---
+
+Shield 22‰
+
+--- SEGMENT 11555 (len 21) ---
+
+Shield 23‹
+
+--- SEGMENT 11572 (len 21) ---
+
+Shield 24Š
+
+--- SEGMENT 11589 (len 21) ---
+
+Shield 25­
+
+--- SEGMENT 11606 (len 21) ---
+
+Buck Bone?
+
+--- SEGMENT 11623 (len 24) ---
+eSpooky Cloth4
+
+--- SEGMENT 11640 (len 26) ---
+eEddies Glasses¾
+
+--- SEGMENT 11657 (len 22) ---
+Sheep Woolı
+
+--- SEGMENT 11674 (len 22) ---
+Basic Hide 
+
+--- SEGMENT 11691 (len 22) ---
+Basic PeltË
+
+--- SEGMENT 11708 (len 19) ---
+Remains?
+
+--- SEGMENT 11725 (len 21) ---
+
+Rare Hide 
+
+--- SEGMENT 11742 (len 21) ---
+
+Rare PeltË
+
+--- SEGMENT 11759 (len 24) ---
+Basic DermisÙ
+
+--- SEGMENT 11776 (len 23) ---
+Rare DermisÙ
+
+--- SEGMENT 11793 (len 22) ---
+Usage Coin)
+
+--- SEGMENT 11810 (len 28) ---
+Christmas Coupons
+
+--- SEGMENT 11827 (len 20) ---
+	Yeti PawÅ
+
+--- SEGMENT 11844 (len 23) ---
+Forrest Bow
+
+--- SEGMENT 11861 (len 22) ---
+Royal Coin&
+
+--- SEGMENT 11878 (len 26) ---
+Plantain Charm²
+
+--- SEGMENT 11895 (len 22) ---
+Dragon Bow
+
+--- SEGMENT 11912 (len 27) ---
+Bottle of Water (hp)
+
+--- SEGMENT 11930 (len 20) ---
+	Blue Tux"
+
+--- SEGMENT 11947 (len 22) ---
+Purple Tux#
+
+--- SEGMENT 11964 (len 22) ---
+Beast Coin%
+
+--- SEGMENT 11981 (len 20) ---
+	New Coin&
+
+--- SEGMENT 11998 (len 23) ---
+Usage Token)
+
+--- SEGMENT 12015 (len 21) ---
+
+Empty Jarö
+
+--- SEGMENT 12032 (len 23) ---
+Festive Dye÷
+
+--- SEGMENT 12049 (len 17) ---
+AGI Scroll?
+
+--- SEGMENT 12067 (len 21) ---
+Defense Scroll?
+
+--- SEGMENT 12085 (len 26) ---
+Spell Attack Scroll?
+
+--- SEGMENT 12103 (len 19) ---
+Ice Bow
+
+--- SEGMENT 12120 (len 23) ---
+Scroll Of Anundo?
+
+--- SEGMENT 12138 (len 21) ---
+Scroll Of Octo?
+
+--- SEGMENT 12156 (len 20) ---
+	Backpack–
+
+--- SEGMENT 12173 (len 22) ---
+Glamor Gem”
+
+--- SEGMENT 12190 (len 21) ---
+
+Yeti TailÆ
+
+--- SEGMENT 12207 (len 24) ---
+Piggy (Lore)Ş
+
+--- SEGMENT 12224 (len 27) ---
+Bat Wing (Lore)B
+
+--- SEGMENT 12241 (len 23) ---
+Scroll Of Reaper?
+
+--- SEGMENT 12259 (len 25) ---
+Fishy-FishayyÖ
+
+--- SEGMENT 12276 (len 20) ---
+	Orc Handí
+
+--- SEGMENT 12293 (len 17) ---
+Birdy
+
+--- SEGMENT 12310 (len 21) ---
+
+Panda Furı
+
+--- SEGMENT 12327 (len 22) ---
+Evil Horns�
+
+--- SEGMENT 12344 (len 22) ---
+Pot Shop Scroll?
+
+--- SEGMENT 12362 (len 25) ---
+Crusade Armor
+
+--- SEGMENT 12379 (len 30) ---
+Scroll Of Haunted House?
+
+--- SEGMENT 12397 (len 24) ---
+King's Guard
+
+
+--- SEGMENT 12414 (len 24) ---
+King's Guard
+
+--- SEGMENT 12431 (len 17) ---
+Lost Souls
+
+--- SEGMENT 12449 (len 24) ---
+Dragon Wings4
+
+--- SEGMENT 12466 (len 27) ---
+Unprocessed Ore8
+
+--- SEGMENT 12483 (len 17) ---
+Ingot7
+
+--- SEGMENT 12500 (len 17) ---
+Wires9
+
+--- SEGMENT 12517 (len 19) ---
+Battery:
+
+--- SEGMENT 12534 (len 24) ---
+Lobster Meat;
+
+--- SEGMENT 12551 (len 30) ---
+Elite Dragon Wings5
+
+--- SEGMENT 12568 (len 25) ---
+Port-a-Locker!
+
+--- SEGMENT 12585 (len 31) ---
+Reward Bag (right click)
+
+--- SEGMENT 12603 (len 24) ---
+Ancient Bone
+
+--- SEGMENT 12620 (len 17) ---
+Vargut Gew
+
+--- SEGMENT 12638 (len 24) ---
+Bear CostumeC
+
+--- SEGMENT 12655 (len 24) ---
+Bear CostumeD
+
+--- SEGMENT 12672 (len 22) ---
+War BonnetG
+
+--- SEGMENT 12689 (len 22) ---
+Jester HatH
+
+--- SEGMENT 12706 (len 21) ---
+
+Straw HatI
+
+--- SEGMENT 12723 (len 23) ---
+Hamster (M)E
+
+--- SEGMENT 12740 (len 25) ---
+200 Health Potions
+
+--- SEGMENT 12758 (len 22) ---
+200 Big Potions
+
+--- SEGMENT 12776 (len 23) ---
+Hamster (F)F
+
+--- SEGMENT 12793 (len 22) ---
+Yellow Tux$
+
+--- SEGMENT 12810 (len 30) ---
+Elite Dragon Plate*
+
+--- SEGMENT 12827 (len 30) ---
+Elite Dragon Plate,
+
+--- SEGMENT 12844 (len 18) ---
+CarrotJ8
+
+--- SEGMENT 12861 (len 21) ---
+
+Bunny Hat
+
+--- SEGMENT 12878 (len 25) ---
+Bunny CostumeJ
+
+--- SEGMENT 12895 (len 25) ---
+Bunny CostumeK
+
+--- SEGMENT 12912 (len 24) ---
+Blood SampleL
+
+--- SEGMENT 12929 (len 22) ---
+Easter EggM
+
+--- SEGMENT 12946 (len 24) ---
+Dragon Boots1
+
+--- SEGMENT 12963 (len 24) ---
+Dragon Sword#
+
+--- SEGMENT 12980 (len 20) ---
+	Ice Ringâ
+
+--- SEGMENT 12997 (len 24) ---
+Ice Braceletã
+
+--- SEGMENT 13014 (len 20) ---
+	Ice Beltç
+
+--- SEGMENT 13031 (len 24) ---
+Ice Necklaceè
+
+--- SEGMENT 13048 (len 22) ---
+Basic Ring
+
+--- SEGMENT 13065 (len 26) ---
+Basic Bracelet
+
+--- SEGMENT 13082 (len 21) ---
+
+Rope Belt
+
+--- SEGMENT 13099 (len 24) ---
+Sundays Best6
+
+--- SEGMENT 13116 (len 24) ---
+Sundays Best«
+
+--- SEGMENT 13133 (len 22) ---
+Bloodforge Brew
+
+--- SEGMENT 13151 (len 55) ---
+High Elder RobesOòò…(…(ñññg
+
+--- SEGMENT 13161 (len 20) ---
+Dragon Scroll?
+
+--- SEGMENT 13178 (len 16) ---
+Test¡
+
+--- SEGMENT 13195 (len 23) ---
+Red Demonic
+
+--- SEGMENT 13212 (len 23) ---
+Red Demonic
+
+--- SEGMENT 13229 (len 24) ---
+Last Samurai
+
+--- SEGMENT 13246 (len 17) ---
+STR Scroll?
+
+--- SEGMENT 13264 (len 17) ---
+INT Scroll?
+
+--- SEGMENT 13282 (len 17) ---
+WIS Scroll?
+
+--- SEGMENT 13300 (len 17) ---
+CON Scroll?
+
+--- SEGMENT 13318 (len 17) ---
+CHA Scroll?
+
+--- SEGMENT 13336 (len 20) ---
+Reward Scroll?
+
+--- SEGMENT 13353 (len 24) ---
+Rare Present^
+
+--- SEGMENT 13370 (len 24) ---
+Epic Present`
+
+--- SEGMENT 13387 (len 29) ---
+Exclusive Present_
+
+--- SEGMENT 13404 (len 24) ---
+Dirty Pickleµ
+
+--- SEGMENT 13421 (len 25) ---
+Dungeon Beast CoreP
+
+--- SEGMENT 13439 (len 20) ---
+	Gift Box_
+
+--- SEGMENT 13456 (len 33) ---
+Unlore Turtle CostumeN
+
+--- SEGMENT 13473 (len 22) ---
+Ice Glovesb
+
+--- SEGMENT 13490 (len 22) ---
+Ice Bracerc
+
+--- SEGMENT 13507 (len 26) ---
+Shadow Demonice
+
+--- SEGMENT 13524 (len 26) ---
+Shadow Demonicf
+
+--- SEGMENT 13541 (len 25) ---
+Royal Demonicg
+
+--- SEGMENT 13558 (len 25) ---
+Royal Demonich
+
+--- SEGMENT 13575 (len 22) ---
+Black Beard
+
+--- SEGMENT 13592 (len 22) ---
+Black Beard
+
+--- SEGMENT 13609 (len 23) ---
+Royal Galoyj
+
+--- SEGMENT 13626 (len 24) ---
+Royal Galoyai
+
+--- SEGMENT 13643 (len 27) ---
+Samurai Costumev
+
+--- SEGMENT 13660 (len 27) ---
+Samurai Costumek
+
+--- SEGMENT 13677 (len 30) ---
+Trippie's Horned HelmetO
+
+--- SEGMENT 13695 (len 33) ---
+Calamity's Knob Staffƒ
+
+--- SEGMENT 13712 (len 30) ---
+Polar Bear Costumeƒ
+
+--- SEGMENT 13729 (len 30) ---
+Polar Bear Costume„
+
+--- SEGMENT 13746 (len 23) ---
+Heavy Plate}
+
+--- SEGMENT 13763 (len 23) ---
+Heavy Platew
+
+--- SEGMENT 13780 (len 24) ---
+Vexx's Galoyj
+
+--- SEGMENT 13797 (len 25) ---
+Vexx's Galoyaj
+
+--- SEGMENT 13814 (len 18) ---
+Aircot†
+
+--- SEGMENT 13831 (len 19) ---
+Aircota…
+
+--- SEGMENT 13848 (len 24) ---
+Captains Cap‡
+
+--- SEGMENT 13865 (len 30) ---
+Water Dragon Plate+
+
+--- SEGMENT 13882 (len 20) ---
+	Red CowlQ
+
+--- SEGMENT 13899 (len 31) ---
+King's Guard Helmet
+
+--- SEGMENT 13916 (len 24) ---
+Name Change Token@
+
+--- SEGMENT 13934 (len 23) ---
+Plant Fiber‰
+
+--- SEGMENT 13951 (len 26) ---
+Firefly Nectarï
+
+--- SEGMENT 13968 (len 16) ---
+
+GlowstoneX
+
+--- SEGMENT 13986 (len 21) ---
+
+Shark Fin�
+
+--- SEGMENT 14003 (len 27) ---
+Seagod Necklace
+
+--- SEGMENT 14020 (len 23) ---
+Seagod Ring
+
+--- SEGMENT 14037 (len 27) ---
+Seagod Bracelet
+
+--- SEGMENT 14054 (len 25) ---
+Seagod Bracer
+
+--- SEGMENT 14071 (len 23) ---
+Seagod Belt
+
+--- SEGMENT 14088 (len 18) ---
+Sea CrystalP
+
+--- SEGMENT 14106 (len 19) ---
+Seagod Stoneñ
+
+--- SEGMENT 14124 (len 21) ---
+Cursed CrystalR
+
+--- SEGMENT 14142 (len 19) ---
+Seagod Tears
+
+--- SEGMENT 14160 (len 25) ---
+Sea Gator Fini
+
+--- SEGMENT 14177 (len 28) ---
+Blue Crystalline�
+
+--- SEGMENT 14194 (len 22) ---
+Blue Conch˜
+
+--- SEGMENT 14211 (len 21) ---
+
+Red Conch–
+
+--- SEGMENT 14228 (len 25) ---
+Seagod Gloves¥
+
+--- SEGMENT 14245 (len 27) ---
+Nightshade OronŸ=
+
+--- SEGMENT 14262 (len 28) ---
+Nightshade Orona =
+
+--- SEGMENT 14279 (len 21) ---
+
+Shield 26‹
+
+--- SEGMENT 14296 (len 24) ---
+Seagod Blade�
+
+--- SEGMENT 14313 (len 29) ---
+Nightshade Arrows¢
+
+--- SEGMENT 14330 (len 29) ---
+eNightshade Gloves¤
+
+--- SEGMENT 14347 (len 20) ---
+Evil Skin Dye
+
+--- SEGMENT 14365 (len 19) ---
+Furry Potion
+
+--- SEGMENT 14383 (len 18) ---
+Salmon©
+
+--- SEGMENT 14400 (len 29) ---
+Green Crystalline¨
+
+--- SEGMENT 14417 (len 30) ---
+Purple Crystalline¦
+
+--- SEGMENT 14434 (len 30) ---
+Yellow Crystalline§
+
+--- SEGMENT 14451 (len 27) ---
+Red Crystallineœ
+
+--- SEGMENT 14468 (len 24) ---
+Liquid Shadeª
+
+--- SEGMENT 14485 (len 30) ---
+Golden Dragon Wing«
+
+--- SEGMENT 14502 (len 30) ---
+Golden Dragon Claw¬
+
+--- SEGMENT 14519 (len 20) ---
+	Loot Box`
+
+--- SEGMENT 14536 (len 25) ---
+Golden NuggetŸ
+
+--- SEGMENT 14553 (len 17) ---
+White Skin
+
+--- SEGMENT 14571 (len 15) ---
+	Tan Skin
+
+--- SEGMENT 14589 (len 18) ---
+Yellow Skin
+
+--- SEGMENT 14607 (len 24) ---
+Golden PlateŠ
+
+--- SEGMENT 14624 (len 25) ---
+Golden Helmet‰
+
+--- SEGMENT 14641 (len 17) ---
+AurumŸ
+
+--- SEGMENT 14658 (len 20) ---
+Devil Costume“
+
+--- SEGMENT 14676 (len 27) ---
+Admin Scroll (perma)?
+
+--- SEGMENT 14694 (len 25) ---
+Rare Gift Box_
+
+--- SEGMENT 14711 (len 18) ---
+Tier 2`
+
+--- SEGMENT 14728 (len 20) ---
+Devil Costume¥
+
+--- SEGMENT 14746 (len 26) ---
+Cleric Costume
+
+--- SEGMENT 14763 (len 26) ---
+Turtle CostumeN
+
+--- SEGMENT 14780 (len 36) ---
+Discontinued Costume Box`
+
+--- SEGMENT 14797 (len 34) ---
+Discontinued Armor Box^
+
+--- SEGMENT 14814 (len 22) ---
+Mummy Mask­
+
+--- SEGMENT 14831 (len 23) ---
+Undead Mask®
+
+--- SEGMENT 14848 (len 23) ---
+Bashee Mask¯
+
+--- SEGMENT 14865 (len 24) ---
+Hallow Token9
+
+--- SEGMENT 14882 (len 22) ---
+Candy Caneq
+
+--- SEGMENT 14899 (len 27) ---
+Gingerbread Manr
+
+--- SEGMENT 14916 (len 16) ---
+Mintt
+
+--- SEGMENT 14933 (len 25) ---
+Title Cert (perma)@
+
+--- SEGMENT 14951 (len 23) ---
+Penguin Pet­
+
+--- SEGMENT 14968 (len 23) ---
+White Scarf®
+
