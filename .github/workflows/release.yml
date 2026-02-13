@@ -136,7 +136,8 @@ jobs:
             -c Debug \
             -r osx-arm64 \
             --self-contained true \
-            -p:BuildContent=false \
+            -p:EnableMGCBItems=false \
+            -p:MonoGameContentReference= \
             -o publish/osx-arm64
 
       - name: Clean debug files
