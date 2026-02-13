@@ -366,43 +366,112 @@ namespace EndlessClient.HUD.Controls
             return retButton;
         }
 
-        private IGameComponent CreateCodeDrawnStateChangeButton(InGameStates whichState, int buttonIndex)
+        // Right-side navigation buttons order (excluding Chat and Help which have no icon button)
+        private static readonly InGameStates[] RightStackOrder = new[]
         {
-            const int ButtonWidth = 55;
-            const int ButtonHeight = 18;
+            InGameStates.ViewMapToggle,
+            InGameStates.Inventory,
+            InGameStates.ActiveSpells,
+            InGameStates.PassiveSpells,
+            InGameStates.Stats,
+            InGameStates.Paperdoll,
+            InGameStates.Macro,
+            InGameStates.OnlineList,
+            InGameStates.Party,
+            InGameStates.Settings,
+        };
 
-            var label = whichState switch
+        private const int ICON_BUTTON_SIZE = 32;
+        private const int ICON_BUTTON_GAP = 2;
+
+        private int GetRightStackIndex(InGameStates state)
+        {
+            for (int i = 0; i < RightStackOrder.Length; i++)
+                if (RightStackOrder[i] == state) return i;
+            return -1;
+        }
+
+        private Point GetRightStackPosition(int stackIndex)
+        {
+            const int RowsPerColumn = 5;
+            var col = stackIndex / RowsPerColumn; // 0 = left column, 1 = right column
+            var row = stackIndex % RowsPerColumn;
+            var totalHeight = RowsPerColumn * ICON_BUTTON_SIZE + (RowsPerColumn - 1) * ICON_BUTTON_GAP;
+            var xPos = _clientWindowSizeRepository.Width - (2 - col) * (ICON_BUTTON_SIZE + ICON_BUTTON_GAP);
+            var yStart = (_clientWindowSizeRepository.Height - totalHeight) / 2;
+            var yPos = yStart + row * (ICON_BUTTON_SIZE + ICON_BUTTON_GAP);
+            return new Point(xPos, yPos);
+        }
+
+        private Point GetLeftStackPosition(int stackIndex)
+        {
+            const int LeftStackCount = 5;
+            var totalHeight = LeftStackCount * ICON_BUTTON_SIZE + (LeftStackCount - 1) * ICON_BUTTON_GAP;
+            var yStart = (_clientWindowSizeRepository.Height - totalHeight) / 2;
+            var yPos = yStart + stackIndex * (ICON_BUTTON_SIZE + ICON_BUTTON_GAP);
+            return new Point(0, yPos);
+        }
+
+        private string GetIconTextureKey(InGameStates state)
+        {
+            return state switch
+            {
+                InGameStates.ViewMapToggle => ContentProvider.IconMap,
+                InGameStates.Inventory => ContentProvider.IconInventory,
+                InGameStates.ActiveSpells => ContentProvider.IconSpells,
+                InGameStates.PassiveSpells => ContentProvider.IconPassive,
+                InGameStates.Stats => ContentProvider.IconStats,
+                InGameStates.Paperdoll => ContentProvider.IconEquip,
+                InGameStates.Macro => ContentProvider.IconMacro,
+                InGameStates.OnlineList => ContentProvider.IconOnline,
+                InGameStates.Party => ContentProvider.IconParty,
+                InGameStates.Settings => ContentProvider.IconConfig,
+                _ => ContentProvider.IconConfig
+            };
+        }
+
+        private string GetTooltipText(InGameStates state)
+        {
+            return state switch
             {
                 InGameStates.ViewMapToggle => "Map",
-                InGameStates.Inventory => "Inv",
+                InGameStates.Inventory => "Inventory",
                 InGameStates.ActiveSpells => "Spells",
                 InGameStates.PassiveSpells => "Passive",
-                InGameStates.Chat => "Chat",
                 InGameStates.Stats => "Stats",
                 InGameStates.Paperdoll => "Equip",
                 InGameStates.Macro => "Macro",
                 InGameStates.OnlineList => "Online",
                 InGameStates.Party => "Party",
                 InGameStates.Settings => "Config",
-                InGameStates.Help => "Help",
-                _ => whichState.ToString()
+                _ => state.ToString()
             };
+        }
 
-            var yIndex = buttonIndex % 6 - 3;
-            var xPosition = buttonIndex < 6 ? 0 : _clientWindowSizeRepository.Width - ButtonWidth;
-            var yPosition = _clientWindowSizeRepository.Height / 2 + ButtonHeight * yIndex;
+        private IGameComponent CreateCodeDrawnStateChangeButton(InGameStates whichState, int buttonIndex)
+        {
+            var stackIndex = GetRightStackIndex(whichState);
 
-            var btn = new UI.Controls.CodeDrawnButton(
+            // States not in the icon stack (Chat, Help) — hide them
+            if (stackIndex < 0)
+            {
+                var placeholder = new XNALabel(Constants.FontSize08pt5) { DrawOrder = HUD_CONTROL_LAYER, Visible = false };
+                return placeholder;
+            }
+
+            var iconKey = GetIconTextureKey(whichState);
+            var pos = GetRightStackPosition(stackIndex);
+
+            var btn = new UI.Controls.CodeDrawnIconButton(
                 _styleProvider,
+                _contentProvider.Textures[iconKey],
                 _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
-                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
                 _clientWindowSizeRepository)
             {
-                Text = label,
-                DrawArea = new Rectangle(xPosition, yPosition, ButtonWidth, ButtonHeight),
-                DrawOrder = HUD_CONTROL_LAYER,
-                // Hide chat button in code UI mode (chat panel is always visible with integrated input)
-                Visible = whichState != InGameStates.Chat
+                TooltipText = GetTooltipText(whichState),
+                TooltipOnLeft = true,
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
+                DrawOrder = HUD_CONTROL_LAYER
             };
 
             btn.OnClick += (_, _) => DoHudStateChangeClick(whichState);
@@ -410,9 +479,8 @@ namespace EndlessClient.HUD.Controls
 
             _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
             {
-                var capturedXPos = buttonIndex < 6 ? 0 : _clientWindowSizeRepository.Width - ButtonWidth;
-                var capturedYPos = _clientWindowSizeRepository.Height / 2 + ButtonHeight * yIndex;
-                btn.DrawPosition = new Vector2(capturedXPos, capturedYPos);
+                var newPos = GetRightStackPosition(stackIndex);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
             };
 
             return btn;
@@ -608,37 +676,53 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateExpTrackerButton()
         {
-            var btn = new UI.Controls.CodeDrawnHudButton(
+            var pos = GetLeftStackPosition(0);
+            var btn = new UI.Controls.CodeDrawnIconButton(
                 _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconExp],
                 _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
-                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
                 _clientWindowSizeRepository)
             {
-                Text = "E",
-                DrawArea = new Rectangle(55, 0, 22, 14),
+                TooltipText = "Exp Tracker",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
                 DrawOrder = HUD_CONTROL_LAYER,
                 Visible = _configurationProvider.UIMode == UIMode.Code
             };
             btn.OnClick += (_, _) => _hudButtonController.ClickExpTracker();
             btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(0);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
             return btn;
         }
 
         private IGameComponent CreateQuestWindowButton()
         {
-            var btn = new UI.Controls.CodeDrawnHudButton(
+            var pos = GetLeftStackPosition(1);
+            var btn = new UI.Controls.CodeDrawnIconButton(
                 _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconQuests],
                 _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
-                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
                 _clientWindowSizeRepository)
             {
-                Text = "Q",
-                DrawArea = new Rectangle(77, 0, 22, 14),
+                TooltipText = "Quests",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
                 DrawOrder = HUD_CONTROL_LAYER,
                 Visible = _configurationProvider.UIMode == UIMode.Code
             };
             btn.OnClick += (_, _) => _hudButtonController.ClickQuestWindow();
             btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(1);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
             return btn;
         }
 
@@ -683,19 +767,27 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateBountyTrackerButton()
         {
-            var btn = new UI.Controls.CodeDrawnHudButton(
+            var pos = GetLeftStackPosition(2);
+            var btn = new UI.Controls.CodeDrawnIconButton(
                 _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconBounties],
                 _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
-                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
                 _clientWindowSizeRepository)
             {
-                Text = "B",
-                DrawArea = new Rectangle(99, 0, 22, 14),
+                TooltipText = "Bounties",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
                 DrawOrder = HUD_CONTROL_LAYER,
                 Visible = _configurationProvider.UIMode == UIMode.Code
             };
             btn.OnClick += (_, _) => _hudButtonController.ClickBountyTracker();
             btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(2);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
             return btn;
         }
 
@@ -720,19 +812,27 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateGuildInfoButton()
         {
-            var btn = new UI.Controls.CodeDrawnHudButton(
+            var pos = GetLeftStackPosition(3);
+            var btn = new UI.Controls.CodeDrawnIconButton(
                 _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconGuildInfo],
                 _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
-                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
                 _clientWindowSizeRepository)
             {
-                Text = "G",
-                DrawArea = new Rectangle(121, 0, 22, 14),
+                TooltipText = "Guild Info",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
                 DrawOrder = HUD_CONTROL_LAYER,
                 Visible = _configurationProvider.UIMode == UIMode.Code
             };
             btn.OnClick += (_, _) => _hudButtonController.ClickGuildInfo();
             btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(3);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
             return btn;
         }
 
@@ -757,19 +857,27 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateGuildPanelButton()
         {
-            var btn = new UI.Controls.CodeDrawnHudButton(
+            var pos = GetLeftStackPosition(4);
+            var btn = new UI.Controls.CodeDrawnIconButton(
                 _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconGuildPanel],
                 _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
-                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize10],
                 _clientWindowSizeRepository)
             {
-                Text = "GP",
-                DrawArea = new Rectangle(143, 0, 22, 14),
+                TooltipText = "Guild Panel",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
                 DrawOrder = HUD_CONTROL_LAYER,
                 Visible = _configurationProvider.UIMode == UIMode.Code
             };
             btn.OnClick += (_, _) => _hudButtonController.ClickGuildPanel();
             btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(4);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
             return btn;
         }
 

@@ -135,8 +135,15 @@ namespace EndlessClient.HUD.Panels
             {
                 case WhichSetting.Sfx:
                     {
+                        var nextVolume = _configurationRepository.SoundVolume switch
+                        {
+                            100 => 50,
+                            50 => 0,
+                            _ => 100
+                        };
+
                         // this alert is emulated even though it isn't needed
-                        if (!_soundChanged && !_configurationRepository.SoundEnabled)
+                        if (!_soundChanged && _configurationRepository.SoundVolume == 0 && nextVolume > 0)
                         {
                             var dlg = _messageBoxFactory.CreateMessageBox(DialogResourceID.SETTINGS_SOUND_DISABLED, EODialogButtons.OkCancel);
                             dlg.DialogClosing += (_, e) =>
@@ -145,7 +152,7 @@ namespace EndlessClient.HUD.Panels
                                     return;
 
                                 _soundChanged = true;
-                                _configurationRepository.SoundEnabled = !_configurationRepository.SoundEnabled;
+                                _configurationRepository.SoundVolume = nextVolume;
                                 _audioActions.ToggleSound();
 
                                 UpdateDisplayText();
@@ -155,7 +162,7 @@ namespace EndlessClient.HUD.Panels
                         else
                         {
                             _soundChanged = true;
-                            _configurationRepository.SoundEnabled = !_configurationRepository.SoundEnabled;
+                            _configurationRepository.SoundVolume = nextVolume;
                             _audioActions.ToggleSound();
                         }
                     }
@@ -245,7 +252,12 @@ namespace EndlessClient.HUD.Panels
 
         private void UpdateDisplayText()
         {
-            _labels[WhichSetting.Sfx].Text = _localizedStringFinder.GetString(_configurationRepository.SoundEnabled ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
+            _labels[WhichSetting.Sfx].Text = _configurationRepository.SoundVolume switch
+            {
+                100 => _localizedStringFinder.GetString(EOResourceID.SETTING_ENABLED),
+                0 => _localizedStringFinder.GetString(EOResourceID.SETTING_DISABLED),
+                _ => $"{_configurationRepository.SoundVolume}%"
+            };
             _labels[WhichSetting.Mfx].Text = _localizedStringFinder.GetString(_configurationRepository.MusicEnabled ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
             _labels[WhichSetting.Keyboard].Text = _localizedStringFinder.GetString(EOResourceID.SETTING_KEYBOARD_ENGLISH);
             _labels[WhichSetting.Language].Text = _localizedStringFinder.GetString(EOResourceID.SETTING_LANG_CURRENT);

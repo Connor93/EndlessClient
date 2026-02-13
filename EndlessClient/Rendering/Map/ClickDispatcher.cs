@@ -148,7 +148,7 @@ namespace EndlessClient.Rendering.Map
 
                 if (bounds.Contains(transformedPosition))
                 {
-                    if (DispatchClickToEntity(entity, eventArgs))
+                    if (DispatchClickToEntity(entity, eventArgs, transformedPosition))
                     {
                         _hudControlProvider.GetComponent<ICharacterAnimator>(HudControlIdentifier.CharacterAnimator)
                             .CancelClickToWalk();
@@ -171,12 +171,12 @@ namespace EndlessClient.Rendering.Map
             return false;
         }
 
-        private bool DispatchClickToEntity(IMapEntity entity, MouseEventArgs eventArgs)
+        private bool DispatchClickToEntity(IMapEntity entity, MouseEventArgs eventArgs, Point transformedMousePosition)
         {
             return entity switch
             {
                 DomainCharacter c => HandleCharacterClick(c, eventArgs.Button),
-                DomainNPC n => eventArgs.Button == MouseButton.Left && HandleNPCClick(n, _userInputProvider.CurrentMouseState.Position),
+                DomainNPC n => eventArgs.Button == MouseButton.Left && HandleNPCClick(n, transformedMousePosition),
                 SignMapEntity s => eventArgs.Button == MouseButton.Left && HandleSignClick(s),
                 TileSpecMapEntity ts => eventArgs.Button == MouseButton.Left && HandleTileSpecClick(ts),
                 _ => throw new ArgumentException()

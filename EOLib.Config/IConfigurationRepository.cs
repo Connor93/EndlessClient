@@ -22,7 +22,7 @@ namespace EOLib.Config
         bool ShowTransition { get; set; }
 
         bool MusicEnabled { get; set; }
-        bool SoundEnabled { get; set; }
+        int SoundVolume { get; set; }
 
         bool HearWhispers { get; set; }
         bool Interaction { get; set; }
@@ -67,6 +67,7 @@ namespace EOLib.Config
         bool ShowTransition { get; }
 
         bool MusicEnabled { get; }
+        int SoundVolume { get; }
         bool SoundEnabled { get; }
 
         bool HearWhispers { get; }
@@ -113,7 +114,8 @@ namespace EOLib.Config
         public bool ShowTransition { get; set; }
 
         public bool MusicEnabled { get; set; }
-        public bool SoundEnabled { get; set; }
+        public int SoundVolume { get; set; }
+        public bool SoundEnabled => SoundVolume > 0;
 
         public bool HearWhispers { get; set; }
         public bool Interaction { get; set; }

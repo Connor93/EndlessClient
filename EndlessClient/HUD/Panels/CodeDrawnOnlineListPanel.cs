@@ -489,9 +489,9 @@ namespace EndlessClient.HUD.Panels
                     _filteredList = _onlineList.Where(x => _partyDataProvider.Members.Any(y => string.Equals(y.Name, x.Name, StringComparison.InvariantCultureIgnoreCase))).ToList();
                     break;
                 case Filter.Guild:
-                    var myGuild = _characterProvider.MainCharacter.GuildName;
-                    _filteredList = !string.IsNullOrWhiteSpace(myGuild)
-                        ? _onlineList.Where(x => string.Equals(x.Guild, myGuild, StringComparison.InvariantCultureIgnoreCase)).ToList()
+                    var myGuildTag = _characterProvider.MainCharacter.GuildTag;
+                    _filteredList = !string.IsNullOrWhiteSpace(myGuildTag) && myGuildTag != "   "
+                        ? _onlineList.Where(x => string.Equals(x.Guild, myGuildTag, StringComparison.InvariantCultureIgnoreCase)).ToList()
                         : new List<OnlinePlayerInfo>();
                     break;
                 case Filter.All:

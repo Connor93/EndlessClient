@@ -61,6 +61,22 @@ namespace EndlessClient.Content
         public const string HPYellow = @"Party/hp-yellow";
         public const string HPGreen = @"Party/hp-green";
 
+        public const string IconMap = @"HudIcons/icon_map";
+        public const string IconInventory = @"HudIcons/icon_inventory";
+        public const string IconSpells = @"HudIcons/icon_spells";
+        public const string IconPassive = @"HudIcons/icon_passive";
+        public const string IconStats = @"HudIcons/icon_stats";
+        public const string IconEquip = @"HudIcons/icon_equip";
+        public const string IconMacro = @"HudIcons/icon_macro";
+        public const string IconOnline = @"HudIcons/icon_online";
+        public const string IconParty = @"HudIcons/icon_party";
+        public const string IconConfig = @"HudIcons/icon_config";
+        public const string IconExp = @"HudIcons/icon_exp";
+        public const string IconQuests = @"HudIcons/icon_quests";
+        public const string IconBounties = @"HudIcons/icon_bounties";
+        public const string IconGuildInfo = @"HudIcons/icon_guild_info";
+        public const string IconGuildPanel = @"HudIcons/icon_guild_panel";
+
         public IReadOnlyDictionary<string, Texture2D> Textures => _textures;
 
         public IReadOnlyDictionary<string, BitmapFont> Fonts => _fonts;
@@ -120,6 +136,22 @@ namespace EndlessClient.Content
             _textures[HPRed] = _content.Load<Texture2D>(HPRed);
             _textures[HPYellow] = _content.Load<Texture2D>(HPYellow);
             _textures[HPGreen] = _content.Load<Texture2D>(HPGreen);
+
+            _textures[IconMap] = _content.Load<Texture2D>(IconMap);
+            _textures[IconInventory] = _content.Load<Texture2D>(IconInventory);
+            _textures[IconSpells] = _content.Load<Texture2D>(IconSpells);
+            _textures[IconPassive] = _content.Load<Texture2D>(IconPassive);
+            _textures[IconStats] = _content.Load<Texture2D>(IconStats);
+            _textures[IconEquip] = _content.Load<Texture2D>(IconEquip);
+            _textures[IconMacro] = _content.Load<Texture2D>(IconMacro);
+            _textures[IconOnline] = _content.Load<Texture2D>(IconOnline);
+            _textures[IconParty] = _content.Load<Texture2D>(IconParty);
+            _textures[IconConfig] = _content.Load<Texture2D>(IconConfig);
+            _textures[IconExp] = _content.Load<Texture2D>(IconExp);
+            _textures[IconQuests] = _content.Load<Texture2D>(IconQuests);
+            _textures[IconBounties] = _content.Load<Texture2D>(IconBounties);
+            _textures[IconGuildInfo] = _content.Load<Texture2D>(IconGuildInfo);
+            _textures[IconGuildPanel] = _content.Load<Texture2D>(IconGuildPanel);
         }
 
         private void RefreshFonts()

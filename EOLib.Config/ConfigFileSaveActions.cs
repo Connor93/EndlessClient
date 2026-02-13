@@ -20,7 +20,7 @@ namespace EOLib.Config
             configFile.Load();
 
             SetValue(configFile, ConfigStrings.Settings, ConfigStrings.Music, _configProvider.MusicEnabled);
-            SetValue(configFile, ConfigStrings.Settings, ConfigStrings.Sound, _configProvider.SoundEnabled);
+            SetValue(configFile, ConfigStrings.Settings, ConfigStrings.Sound, _configProvider.SoundVolume.ToString());
             SetValue(configFile, ConfigStrings.Settings, ConfigStrings.ShowBaloons, _configProvider.ShowChatBubbles);
             SetValue(configFile, ConfigStrings.Settings, ConfigStrings.ShowShadows, _configProvider.ShowShadows);
 

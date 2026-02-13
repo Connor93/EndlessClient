@@ -45,7 +45,21 @@ namespace EOLib.Config
 
             _configRepository.ShowShadows = !configFile.GetValue(ConfigStrings.Settings, ConfigStrings.ShowShadows, out tempBool) || tempBool;
             _configRepository.MusicEnabled = configFile.GetValue(ConfigStrings.Settings, ConfigStrings.Music, out tempBool) && tempBool;
-            _configRepository.SoundEnabled = configFile.GetValue(ConfigStrings.Settings, ConfigStrings.Sound, out tempBool) && tempBool;
+            // Sound volume: supports legacy on/off or new int values (100, 50, 0)
+            string soundStr;
+            if (configFile.GetValue(ConfigStrings.Settings, ConfigStrings.Sound, out soundStr))
+            {
+                if (int.TryParse(soundStr, out var soundInt))
+                    _configRepository.SoundVolume = Math.Max(0, Math.Min(100, soundInt));
+                else if (soundStr.Equals("on", StringComparison.OrdinalIgnoreCase))
+                    _configRepository.SoundVolume = 100;
+                else
+                    _configRepository.SoundVolume = 0;
+            }
+            else
+            {
+                _configRepository.SoundVolume = 0;
+            }
             _configRepository.ShowChatBubbles = !configFile.GetValue(ConfigStrings.Settings, ConfigStrings.ShowBaloons, out tempBool) || tempBool;
 
             _configRepository.HearWhispers = !configFile.GetValue(ConfigStrings.Chat, ConfigStrings.HearWhisper, out tempBool) || tempBool;

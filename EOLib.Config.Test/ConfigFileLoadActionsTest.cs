@@ -56,7 +56,7 @@ namespace EOLib.Config.Test
             Assert.That(_configurationRepository.ShowTransition, Is.False);
 
             Assert.That(_configurationRepository.MusicEnabled, Is.False);
-            Assert.That(_configurationRepository.SoundEnabled, Is.False);
+            Assert.That(_configurationRepository.SoundVolume, Is.EqualTo(0));
 
             Assert.That(_configurationRepository.HearWhispers, Is.True);
             Assert.That(_configurationRepository.Interaction, Is.True);
@@ -118,7 +118,7 @@ Interaction=false";
                 Assert.That(_configurationRepository.AccountCreateTimeout, Is.EqualTo(TimeSpan.FromMilliseconds(12345)));
 
                 Assert.That(_configurationRepository.MusicEnabled, Is.True);
-                Assert.That(_configurationRepository.SoundEnabled, Is.True);
+                Assert.That(_configurationRepository.SoundVolume, Is.EqualTo(100));
 
                 Assert.That(_configurationRepository.HearWhispers, Is.False);
                 Assert.That(_configurationRepository.Interaction, Is.False);

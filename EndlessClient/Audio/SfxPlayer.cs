@@ -26,7 +26,7 @@ namespace EndlessClient.Audio
             if (!_configurationProvider.SoundEnabled)
                 return;
 
-            _contentProvider.SFX[id - 1].Play();
+            _contentProvider.SFX[id - 1].Play(_configurationProvider.SoundVolume / 100f, 0f, 0f);
         }
 
         public void PlayHarpNote(int index)
@@ -34,7 +34,7 @@ namespace EndlessClient.Audio
             if (!_configurationProvider.SoundEnabled || index < 0 || index >= _contentProvider.HarpNotes.Count)
                 return;
 
-            _contentProvider.HarpNotes[index].Play();
+            _contentProvider.HarpNotes[index].Play(_configurationProvider.SoundVolume / 100f, 0f, 0f);
         }
 
         public void PlayGuitarNote(int index)
@@ -42,7 +42,7 @@ namespace EndlessClient.Audio
             if (!_configurationProvider.SoundEnabled || index < 0 || index >= _contentProvider.GuitarNotes.Count)
                 return;
 
-            _contentProvider.GuitarNotes[index].Play();
+            _contentProvider.GuitarNotes[index].Play(_configurationProvider.SoundVolume / 100f, 0f, 0f);
         }
 
         public void PlayLoopingSfx(SoundEffectID id)
@@ -54,7 +54,7 @@ namespace EndlessClient.Audio
 
             _loopingSfx = _contentProvider.SFX[id - 1].CreateInstance();
             _loopingSfx.IsLooped = true;
-            _loopingSfx.Volume = 0.5f;
+            _loopingSfx.Volume = 0.5f * (_configurationProvider.SoundVolume / 100f);
             _loopingSfx.Play();
         }
 

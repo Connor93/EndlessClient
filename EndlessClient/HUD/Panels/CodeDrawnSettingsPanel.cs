@@ -339,7 +339,14 @@ namespace EndlessClient.HUD.Panels
             {
                 case WhichSetting.Sfx:
                     {
-                        if (!_soundChanged && !_configurationRepository.SoundEnabled)
+                        var nextVolume = _configurationRepository.SoundVolume switch
+                        {
+                            100 => 50,
+                            50 => 0,
+                            _ => 100
+                        };
+
+                        if (!_soundChanged && _configurationRepository.SoundVolume == 0 && nextVolume > 0)
                         {
                             var dlg = _messageBoxFactory.CreateMessageBox(DialogResourceID.SETTINGS_SOUND_DISABLED, EODialogButtons.OkCancel);
                             dlg.DialogClosing += (_, e) =>
@@ -348,7 +355,7 @@ namespace EndlessClient.HUD.Panels
                                     return;
 
                                 _soundChanged = true;
-                                _configurationRepository.SoundEnabled = !_configurationRepository.SoundEnabled;
+                                _configurationRepository.SoundVolume = nextVolume;
                                 _audioActions.ToggleSound();
 
                                 UpdateDisplayText();
@@ -358,7 +365,7 @@ namespace EndlessClient.HUD.Panels
                         else
                         {
                             _soundChanged = true;
-                            _configurationRepository.SoundEnabled = !_configurationRepository.SoundEnabled;
+                            _configurationRepository.SoundVolume = nextVolume;
                             _audioActions.ToggleSound();
                         }
                     }
@@ -460,7 +467,12 @@ namespace EndlessClient.HUD.Panels
 
         private void UpdateDisplayText()
         {
-            _settingValues[WhichSetting.Sfx] = _localizedStringFinder.GetString(_configurationRepository.SoundEnabled ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
+            _settingValues[WhichSetting.Sfx] = _configurationRepository.SoundVolume switch
+            {
+                100 => _localizedStringFinder.GetString(EOResourceID.SETTING_ENABLED),
+                0 => _localizedStringFinder.GetString(EOResourceID.SETTING_DISABLED),
+                _ => $"{_configurationRepository.SoundVolume}%"
+            };
             _settingValues[WhichSetting.Mfx] = _localizedStringFinder.GetString(_configurationRepository.MusicEnabled ? EOResourceID.SETTING_ENABLED : EOResourceID.SETTING_DISABLED);
             _settingValues[WhichSetting.Keyboard] = _localizedStringFinder.GetString(EOResourceID.SETTING_KEYBOARD_ENGLISH);
             _settingValues[WhichSetting.Language] = _localizedStringFinder.GetString(EOResourceID.SETTING_LANG_CURRENT);
