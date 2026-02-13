@@ -103,7 +103,7 @@ namespace EndlessClient.ControlSets
         {
             var tb = AccountInputTextBoxCreationHelper(GameControlIdentifier.CreateAccountPassword);
             tb.PasswordBox = true;
-            tb.MaxChars = 12;
+            tb.MaxChars = 16;
             return tb;
         }
 
@@ -111,7 +111,7 @@ namespace EndlessClient.ControlSets
         {
             var tb = AccountInputTextBoxCreationHelper(GameControlIdentifier.CreateAccountPasswordConfirm);
             tb.PasswordBox = true;
-            tb.MaxChars = 12;
+            tb.MaxChars = 16;
             return tb;
         }
 

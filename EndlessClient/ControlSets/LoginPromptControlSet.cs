@@ -119,7 +119,7 @@ namespace EndlessClient.ControlSets
                 _textBoxRight,
                 _textBoxCursor)
             {
-                MaxChars = 12,
+                MaxChars = 16,
                 PasswordBox = true,
                 LeftPadding = 4,
                 DefaultText = "",

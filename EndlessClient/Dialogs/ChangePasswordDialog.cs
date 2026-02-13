@@ -55,7 +55,7 @@ namespace EndlessClient.Dialogs
                 {
                     LeftPadding = 5,
                     DefaultText = " ",
-                    MaxChars = i == 0 ? 16 : 12,
+                    MaxChars = 16,
                     PasswordBox = i > 1,
                     TextColor = ColorConstants.LightBeigeText,
                     TabOrder = i + 1,
