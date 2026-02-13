@@ -114,7 +114,7 @@ jobs:
           path: EndlessClient-linux-x64.tar.gz
 
   build-macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
