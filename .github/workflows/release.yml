@@ -271,3 +271,52 @@ jobs:
             artifacts/EndlessClient-macos-arm64/EndlessClient-macos-arm64.zip
           draft: false
           prerelease: false
+
+      - name: Notify Discord
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          RELEASE_URL="https://github.com/${REPO}/releases/tag/${TAG}"
+          DL_BASE="https://github.com/${REPO}/releases/download/${TAG}"
+
+          # Build the JSON payload with Discord embed
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "🎮 EndlessClient ${TAG}",
+              "url": "${RELEASE_URL}",
+              "color": 5814783,
+              "description": "A new build of EndlessClient is available!",
+              "fields": [
+                {
+                  "name": "🪟 Windows (x64)",
+                  "value": "[Download .zip](${DL_BASE}/EndlessClient-win-x64.zip)\nExtract and run \`EndlessClient.exe\`",
+                  "inline": true
+                },
+                {
+                  "name": "🐧 Linux (x64)",
+                  "value": "[Download .tar.gz](${DL_BASE}/EndlessClient-linux-x64.tar.gz)\nExtract and run \`./linux-x64/EndlessClient\`",
+                  "inline": true
+                },
+                {
+                  "name": "🍎 macOS (Apple Silicon)",
+                  "value": "[Download .zip](${DL_BASE}/EndlessClient-macos-arm64.zip)\nExtract and open \`EndlessClient.app\`",
+                  "inline": true
+                }
+              ],
+              "footer": {
+                "text": "Commit ${SHA:0:7} • View full release page for details"
+              }
+            }]
+          }
+          EOF
+          )
+
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "Content-Type: application/json" \
+            -X POST "$DISCORD_WEBHOOK" \
+            -d "$PAYLOAD"
