@@ -114,7 +114,8 @@ jobs:
           path: EndlessClient-linux-x64.tar.gz
 
   build-macos:
-    runs-on: macos-latest
+    # Cross-compile on Ubuntu to avoid MonoGame MGCB FreeImage ARM64 incompatibility
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -136,8 +137,6 @@ jobs:
             -c Debug \
             -r osx-arm64 \
             --self-contained true \
-            -p:EnableMGCBItems=false \
-            -p:MonoGameContentReference= \
             -o publish/osx-arm64
 
       - name: Clean debug files
@@ -206,23 +205,6 @@ jobs:
           </dict>
           </plist>
           PLIST
-
-          # Convert icon if available
-          ICON_SOURCE="EndlessClient/Icon.ico"
-          if [ -f "$ICON_SOURCE" ]; then
-            ICONSET_DIR="$RESOURCES/AppIcon.iconset"
-            mkdir -p "$ICONSET_DIR"
-            for size in 16 32 128 256 512; do
-              sips -s format png -z $size $size "$ICON_SOURCE" --out "$ICONSET_DIR/icon_${size}x${size}.png" 2>/dev/null || true
-            done
-            sips -s format png -z 32 32 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_16x16@2x.png" 2>/dev/null || true
-            sips -s format png -z 64 64 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_32x32@2x.png" 2>/dev/null || true
-            sips -s format png -z 256 256 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_128x128@2x.png" 2>/dev/null || true
-            sips -s format png -z 512 512 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_256x256@2x.png" 2>/dev/null || true
-            sips -s format png -z 1024 1024 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_512x512@2x.png" 2>/dev/null || true
-            iconutil -c icns "$ICONSET_DIR" -o "$RESOURCES/AppIcon.icns" 2>/dev/null || true
-            rm -rf "$ICONSET_DIR"
-          fi
 
       - name: Zip .app bundle
         run: zip -r EndlessClient-macos-arm64.zip EndlessClient.app
