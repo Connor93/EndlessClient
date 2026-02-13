@@ -52,6 +52,15 @@ jobs:
             }
           }
 
+      - name: Copy instrument SFX from binaries package
+        run: |
+          $binSfx = "packages\endlessclient.binaries\1.4.0.2\build\net462\client\sfx"
+          $destSfx = "publish\win-x64\sfx"
+          if (Test-Path $binSfx) {
+            Copy-Item "$binSfx\har*" -Destination $destSfx -Force
+            Copy-Item "$binSfx\gui*" -Destination $destSfx -Force
+          }
+
       - name: Zip
         run: Compress-Archive -Path publish\win-x64\* -DestinationPath EndlessClient-win-x64.zip
 
@@ -100,6 +109,14 @@ jobs:
               cp -r "ClientAssets/$folder" "publish/linux-x64/$folder"
             fi
           done
+
+      - name: Copy instrument SFX from binaries package
+        run: |
+          BIN_SFX="packages/endlessclient.binaries/1.4.0.2/build/net462/client/sfx"
+          if [ -d "$BIN_SFX" ]; then
+            cp "$BIN_SFX"/har* "publish/linux-x64/sfx/" 2>/dev/null || true
+            cp "$BIN_SFX"/gui* "publish/linux-x64/sfx/" 2>/dev/null || true
+          fi
 
       - name: Make executable
         run: chmod +x publish/linux-x64/EndlessClient
@@ -151,6 +168,14 @@ jobs:
               cp -r "ClientAssets/$folder" "publish/osx-arm64/$folder"
             fi
           done
+
+      - name: Copy instrument SFX from binaries package
+        run: |
+          BIN_SFX="packages/endlessclient.binaries/1.4.0.2/build/net462/client/sfx"
+          if [ -d "$BIN_SFX" ]; then
+            cp "$BIN_SFX"/har* "publish/osx-arm64/sfx/" 2>/dev/null || true
+            cp "$BIN_SFX"/gui* "publish/osx-arm64/sfx/" 2>/dev/null || true
+          fi
 
       - name: Create .app bundle
         run: |
