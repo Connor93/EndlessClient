@@ -94,6 +94,7 @@ namespace EndlessClient.HUD.Windows
         private Rectangle[] _actionButtonRects = Array.Empty<Rectangle>();
         private string[] _actionButtonLabels = Array.Empty<string>();
         private string[] _actionButtonCommands = Array.Empty<string>();
+        private int _fixedButtonCount; // number of leading buttons that are fixed (non-scrolling)
 
         public CodeDrawnGuildPanel(
             IUIStyleProvider styleProvider,
@@ -181,13 +182,23 @@ namespace EndlessClient.HUD.Windows
 
             // Action button click detection (resolve relative rects to absolute)
             var area = DrawAreaWithParentOffset;
+            var clickScrollOffset = _tabScrollOffsets[(int)_activeTab];
+            var clickContentTop = area.Y + HeaderHeight + TabBarHeight;
+            var clickContentBottom = area.Y + PanelHeight - 36;
             for (int i = 0; i < _actionButtonRects.Length; i++)
             {
+                var rel = _actionButtonRects[i];
+                float btnY = rel.Y + area.Y;
+                var isScrollable = i >= _fixedButtonCount;
+                if (isScrollable)
+                    btnY -= clickScrollOffset;
                 var absRect = new Rectangle(
-                    _actionButtonRects[i].X + area.X,
-                    _actionButtonRects[i].Y + area.Y,
-                    _actionButtonRects[i].Width,
-                    _actionButtonRects[i].Height);
+                    rel.X + area.X,
+                    (int)btnY,
+                    rel.Width,
+                    rel.Height);
+                if (isScrollable && (absRect.Bottom <= clickContentTop || absRect.Y >= clickContentBottom))
+                    continue;
                 if (absRect.Contains(logicalMouseX, logicalMouseY))
                 {
                     HandleActionButtonClick(i);
@@ -285,13 +296,23 @@ namespace EndlessClient.HUD.Windows
 
             // Action button hover (resolve relative rects to absolute)
             _hoveredActionIndex = -1;
+            var hoverScrollOffset = _tabScrollOffsets[(int)_activeTab];
+            var hoverContentTop = area.Y + HeaderHeight + TabBarHeight;
+            var hoverContentBottom = area.Y + PanelHeight - 36;
             for (int i = 0; i < _actionButtonRects.Length; i++)
             {
+                var rel = _actionButtonRects[i];
+                float btnY = rel.Y + area.Y;
+                var isScrollable = i >= _fixedButtonCount;
+                if (isScrollable)
+                    btnY -= hoverScrollOffset;
                 var absRect = new Rectangle(
-                    _actionButtonRects[i].X + area.X,
-                    _actionButtonRects[i].Y + area.Y,
-                    _actionButtonRects[i].Width,
-                    _actionButtonRects[i].Height);
+                    rel.X + area.X,
+                    (int)btnY,
+                    rel.Width,
+                    rel.Height);
+                if (isScrollable && (absRect.Bottom <= hoverContentTop || absRect.Y >= hoverContentBottom))
+                    continue;
                 if (absRect.Contains(mouseX, mouseY))
                 {
                     _hoveredActionIndex = i;
@@ -438,6 +459,7 @@ namespace EndlessClient.HUD.Windows
                     };
                     _actionButtonLabels = new[] { "Donate Gold", "Storage", "Inbox" };
                     _actionButtonCommands = new[] { "donate", "#guild storage", "#guild inbox" };
+                    _fixedButtonCount = 3;
                     break;
 
                 case GuildTab.Bounties:
@@ -452,6 +474,8 @@ namespace EndlessClient.HUD.Windows
                     btyButtons.Add(new Rectangle(Padding + 88, PanelHeight - 28, 95, 20));
                     btyLabels.Add("Post Request");
                     btyCommands.Add("post_bounty");
+
+                    var btyFixedCount = btyButtons.Count; // fixed buttons added so far
 
                     // Per-bounty action buttons
                     var myName = _characterProvider?.MainCharacter?.Name ?? "";
@@ -473,8 +497,7 @@ namespace EndlessClient.HUD.Windows
 
                     foreach (var bounty in _customBounties)
                     {
-                        // Each bounty entry uses 2 lines
-                        if (btyLineY + RowHeight * 2 > PanelHeight - 36) break;
+                        // Each bounty entry uses 2 lines (no clipping — scroll handles visibility)
 
                         string btnLabel;
                         string btnCmd;
@@ -509,6 +532,7 @@ namespace EndlessClient.HUD.Windows
                     _actionButtonRects = btyButtons.ToArray();
                     _actionButtonLabels = btyLabels.ToArray();
                     _actionButtonCommands = btyCommands.ToArray();
+                    _fixedButtonCount = btyFixedCount;
                     break;
 
                 case GuildTab.Perks:
@@ -536,6 +560,7 @@ namespace EndlessClient.HUD.Windows
                     _actionButtonRects = perkButtons.ToArray();
                     _actionButtonLabels = perkLabels.ToArray();
                     _actionButtonCommands = perkCommands.ToArray();
+                    _fixedButtonCount = 0;
                     break;
 
                 case GuildTab.Buffs:
@@ -566,12 +591,14 @@ namespace EndlessClient.HUD.Windows
                     _actionButtonRects = buffButtons.ToArray();
                     _actionButtonLabels = buffLabels.ToArray();
                     _actionButtonCommands = buffCommands.ToArray();
+                    _fixedButtonCount = 0;
                     break;
 
                 case GuildTab.Members:
                     _actionButtonRects = Array.Empty<Rectangle>();
                     _actionButtonLabels = Array.Empty<string>();
                     _actionButtonCommands = Array.Empty<string>();
+                    _fixedButtonCount = 0;
                     break;
             }
         }
@@ -1196,15 +1223,28 @@ namespace EndlessClient.HUD.Windows
 
         private void DrawActionButtons(Vector2 pos, float scale, BitmapFont font)
         {
+            var scrollOffset = _tabScrollOffsets[(int)_activeTab] * scale;
+            var clipTop = pos.Y + (HeaderHeight + TabBarHeight) * scale;
+            var clipBottom = pos.Y + (PanelHeight - 36) * scale;
+
             for (int i = 0; i < _actionButtonRects.Length; i++)
             {
                 // Resolve panel-relative rect to absolute screen position
                 var rel = _actionButtonRects[i];
+                var btnY = pos.Y + rel.Y * scale;
+                var isScrollable = i >= _fixedButtonCount;
+                if (isScrollable)
+                    btnY -= scrollOffset;
+
                 var absRect = new Rectangle(
                     (int)(pos.X + rel.X * scale),
-                    (int)(pos.Y + rel.Y * scale),
+                    (int)btnY,
                     (int)(rel.Width * scale),
                     (int)(rel.Height * scale));
+
+                // Skip scrollable buttons that are clipped outside the visible area
+                if (isScrollable && (absRect.Bottom <= clipTop || absRect.Y >= clipBottom))
+                    continue;
 
                 var bg = i == _hoveredActionIndex ? ActionButtonHover : ActionButtonBg;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, absRect, bg);

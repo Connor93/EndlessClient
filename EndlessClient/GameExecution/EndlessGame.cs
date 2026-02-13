@@ -442,7 +442,16 @@ namespace EndlessClient.GameExecution
 
             foreach (var postScaleDrawable in postScaleDrawables)
             {
-                postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
+                try
+                {
+                    postScaleDrawable.DrawPostScale(_spriteBatch, scaleFactor, renderOffset);
+                }
+                catch (Exception)
+                {
+                    // Prevent one broken drawable from cascading failures to all others.
+                    // A common failure is an unmatched Begin/End on spriteBatch, which would
+                    // cause InvalidOperationException for subsequent drawables.
+                }
             }
         }
 

@@ -1,12 +1,14 @@
 ﻿using System;
+using EndlessClient.Rendering;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Input;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
 
 namespace EndlessClient.HUD.Controls
 {
-    public abstract class DraggablePanelItem<TRecord> : XNAControl
+    public abstract class DraggablePanelItem<TRecord> : XNAControl, IPostScaleDrawable
     {
         protected readonly IDraggableItemContainer _parentContainer;
 
@@ -28,6 +30,21 @@ namespace EndlessClient.HUD.Controls
         public event EventHandler DraggingStarted;
         public event EventHandler<DragCompletedEventArgs<TRecord>> DraggingFinishing;
         public event EventHandler<DragCompletedEventArgs<TRecord>> DraggingFinished;
+
+        // IPostScaleDrawable implementation
+        public virtual bool SkipRenderTargetDraw => IsDragging;
+        public int PostScaleDrawOrder => 500; // Above dialogs (100) and tooltips (200)
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (IsDragging)
+                DrawDraggedPostScale(spriteBatch, scaleFactor, renderOffset);
+        }
+
+        /// <summary>
+        /// Override in subclasses to draw the dragged item icon in the post-scale pass.
+        /// </summary>
+        protected virtual void DrawDraggedPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset) { }
 
         // assumes absolute coordinates (not based on parent position)
         protected abstract Rectangle GridArea { get; }

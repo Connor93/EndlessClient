@@ -331,7 +331,7 @@ namespace EndlessClient.Dialogs
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
-
+            if (!Visible) return;
 
             // Calculate scaled position based on where fills were drawn
             var drawPos = DrawAreaWithParentOffset;
@@ -351,113 +351,117 @@ namespace EndlessClient.Dialogs
                 font = _contentProvider.Fonts[Constants.FontSize08pt5];
 
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
-            // Draw borders
-            DrawingPrimitives.DrawRectBorder(spriteBatch,
-                new Rectangle(scaledX, scaledY, scaledWidth, scaledHeight),
-                _styleProvider.PanelBorder, (int)Math.Max(2, 2 * scaleFactor));
-
-            // Equipment area border
-            var equipAreaWidth = (int)(220 * scaleFactor);
-            var equipAreaTop = (int)(20 * scaleFactor);
-            var equipAreaHeight = (int)(260 * scaleFactor);
-            DrawingPrimitives.DrawRectBorder(spriteBatch,
-                new Rectangle(scaledX + (int)(8 * scaleFactor), scaledY + equipAreaTop, equipAreaWidth, equipAreaHeight),
-                _styleProvider.PanelBorder, 1);
-
-            // Title text
-            var titlePos = scaledPos + new Vector2(16 * scaleFactor, 8 * scaleFactor);
-            spriteBatch.DrawString(font, "Paperdoll", titlePos, _styleProvider.TitleBarText);
-
-            // Field labels and values
-            var labelX = scaledPos.X + 240 * scaleFactor;
-            var valueX = scaledPos.X + 300 * scaleFactor;
-            var maxValueWidth = (scaledPos.X + (DialogWidth - 8) * scaleFactor) - valueX;
-
-            var fieldLabels = new[]
+            try
             {
-                (38, "Name:", _nameLabel?.Text ?? ""),
-                (82, "Class:", _classLabel?.Text ?? ""),
-                (105, "Title:", _titleLabel?.Text ?? ""),
-                (147, "Partner:", _partnerLabel?.Text ?? ""),
-                (177, "Home:", _homeLabel?.Text ?? ""),
-                (195, "Guild:", _guildLabel?.Text ?? ""),
-                (216, "Rank:", _rankLabel?.Text ?? "")
-            };
+                // Draw borders
+                DrawingPrimitives.DrawRectBorder(spriteBatch,
+                    new Rectangle(scaledX, scaledY, scaledWidth, scaledHeight),
+                    _styleProvider.PanelBorder, (int)Math.Max(2, 2 * scaleFactor));
 
-            foreach (var (y, label, value) in fieldLabels)
-            {
-                var labelPos = new Vector2(labelX, scaledPos.Y + y * scaleFactor);
-                var valuePos = new Vector2(valueX, scaledPos.Y + y * scaleFactor);
-                spriteBatch.DrawString(font, label, labelPos, _styleProvider.TextSecondary);
+                // Equipment area border
+                var equipAreaWidth = (int)(220 * scaleFactor);
+                var equipAreaTop = (int)(20 * scaleFactor);
+                var equipAreaHeight = (int)(260 * scaleFactor);
+                DrawingPrimitives.DrawRectBorder(spriteBatch,
+                    new Rectangle(scaledX + (int)(8 * scaleFactor), scaledY + equipAreaTop, equipAreaWidth, equipAreaHeight),
+                    _styleProvider.PanelBorder, 1);
 
-                // Truncate value text if it overflows the dialog bounds
-                var displayValue = value;
-                if (!string.IsNullOrEmpty(displayValue))
+                // Title text
+                var titlePos = scaledPos + new Vector2(16 * scaleFactor, 8 * scaleFactor);
+                spriteBatch.DrawString(font, "Paperdoll", titlePos, _styleProvider.TitleBarText);
+
+                // Field labels and values
+                var labelX = scaledPos.X + 240 * scaleFactor;
+                var valueX = scaledPos.X + 300 * scaleFactor;
+                var maxValueWidth = (scaledPos.X + (DialogWidth - 8) * scaleFactor) - valueX;
+
+                var fieldLabels = new[]
                 {
-                    var textWidth = font.MeasureString(displayValue).Width;
-                    if (textWidth > maxValueWidth)
+                    (38, "Name:", _nameLabel?.Text ?? ""),
+                    (82, "Class:", _classLabel?.Text ?? ""),
+                    (105, "Title:", _titleLabel?.Text ?? ""),
+                    (147, "Partner:", _partnerLabel?.Text ?? ""),
+                    (177, "Home:", _homeLabel?.Text ?? ""),
+                    (195, "Guild:", _guildLabel?.Text ?? ""),
+                    (216, "Rank:", _rankLabel?.Text ?? "")
+                };
+
+                foreach (var (y, label, value) in fieldLabels)
+                {
+                    var labelPos = new Vector2(labelX, scaledPos.Y + y * scaleFactor);
+                    var valuePos = new Vector2(valueX, scaledPos.Y + y * scaleFactor);
+                    spriteBatch.DrawString(font, label, labelPos, _styleProvider.TextSecondary);
+
+                    // Truncate value text if it overflows the dialog bounds
+                    var displayValue = value;
+                    if (!string.IsNullOrEmpty(displayValue))
                     {
-                        var ellipsis = "...";
-                        while (displayValue.Length > 1 && font.MeasureString(displayValue + ellipsis).Width > maxValueWidth)
-                            displayValue = displayValue[..^1];
-                        displayValue += ellipsis;
+                        var textWidth = font.MeasureString(displayValue).Width;
+                        if (textWidth > maxValueWidth)
+                        {
+                            var ellipsis = "...";
+                            while (displayValue.Length > 1 && font.MeasureString(displayValue + ellipsis).Width > maxValueWidth)
+                                displayValue = displayValue[..^1];
+                            displayValue += ellipsis;
+                        }
+                    }
+
+                    spriteBatch.DrawString(font, displayValue, valuePos, _styleProvider.TextPrimary);
+                }
+
+                // OK button
+                if (_okButton != null)
+                {
+                    var buttonWidth = (int)(72 * scaleFactor);
+                    var buttonHeight = (int)(26 * scaleFactor);
+                    var buttonX = (int)(scaledPos.X + (DialogWidth / 2 - 36) * scaleFactor);
+                    var buttonY = (int)(scaledPos.Y + (DialogHeight - 36) * scaleFactor);
+
+                    // Button background
+                    DrawingPrimitives.DrawFilledRect(spriteBatch,
+                        new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+                        _okButton.MouseOver ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal);
+                    DrawingPrimitives.DrawRectBorder(spriteBatch,
+                        new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
+                        _styleProvider.ButtonBorder, 1);
+
+                    // Button text
+                    var textSize = font.MeasureString("OK");
+                    var textX = buttonX + (buttonWidth - textSize.Width) / 2;
+                    var textY = buttonY + (buttonHeight - textSize.Height) / 2;
+                    spriteBatch.DrawString(font, "OK", new Vector2(textX, textY), _styleProvider.ButtonText);
+                }
+
+                // Draw tooltip for hovered equipment items
+                foreach (var item in _equipmentItems)
+                {
+                    if (item.IsHovered && !string.IsNullOrEmpty(item.TooltipText))
+                    {
+                        var textSize = font.MeasureString(item.TooltipText);
+                        var padding = 8 * scaleFactor;
+                        var tooltipWidth = (int)(textSize.Width + padding * 2);
+                        var tooltipHeight = (int)(textSize.Height + padding * 2);
+
+                        // Position to right of slot, or left if overflows
+                        var slotScaledX = scaledX + (int)(item.DrawArea.X * scaleFactor);
+                        var slotScaledY = scaledY + (int)(item.DrawArea.Y * scaleFactor);
+                        var tooltipX = slotScaledX + (int)(item.DrawArea.Width * scaleFactor) + (int)(4 * scaleFactor);
+                        if (tooltipX + tooltipWidth > scaledX + scaledWidth)
+                            tooltipX = slotScaledX - tooltipWidth - (int)(4 * scaleFactor);
+
+                        var tooltipRect = new Rectangle(tooltipX, slotScaledY, tooltipWidth, tooltipHeight);
+
+                        DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipRect, Color.FromNonPremultiplied(20, 20, 20, 230));
+                        DrawingPrimitives.DrawRectBorder(spriteBatch, tooltipRect, _styleProvider.PanelBorder, 1);
+                        spriteBatch.DrawString(font, item.TooltipText,
+                            new Vector2(tooltipX + padding, slotScaledY + padding), Color.White);
                     }
                 }
-
-                spriteBatch.DrawString(font, displayValue, valuePos, _styleProvider.TextPrimary);
             }
-
-            // OK button
-            if (_okButton != null)
+            finally
             {
-                var buttonWidth = (int)(72 * scaleFactor);
-                var buttonHeight = (int)(26 * scaleFactor);
-                var buttonX = (int)(scaledPos.X + (DialogWidth / 2 - 36) * scaleFactor);
-                var buttonY = (int)(scaledPos.Y + (DialogHeight - 36) * scaleFactor);
-
-                // Button background
-                DrawingPrimitives.DrawFilledRect(spriteBatch,
-                    new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
-                    _okButton.MouseOver ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal);
-                DrawingPrimitives.DrawRectBorder(spriteBatch,
-                    new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight),
-                    _styleProvider.ButtonBorder, 1);
-
-                // Button text
-                var textSize = font.MeasureString("OK");
-                var textX = buttonX + (buttonWidth - textSize.Width) / 2;
-                var textY = buttonY + (buttonHeight - textSize.Height) / 2;
-                spriteBatch.DrawString(font, "OK", new Vector2(textX, textY), _styleProvider.ButtonText);
+                spriteBatch.End();
             }
-
-            // Draw tooltip for hovered equipment items
-            foreach (var item in _equipmentItems)
-            {
-                if (item.IsHovered && !string.IsNullOrEmpty(item.TooltipText))
-                {
-                    var textSize = font.MeasureString(item.TooltipText);
-                    var padding = 8 * scaleFactor;
-                    var tooltipWidth = (int)(textSize.Width + padding * 2);
-                    var tooltipHeight = (int)(textSize.Height + padding * 2);
-
-                    // Position to right of slot, or left if overflows
-                    var slotScaledX = scaledX + (int)(item.DrawArea.X * scaleFactor);
-                    var slotScaledY = scaledY + (int)(item.DrawArea.Y * scaleFactor);
-                    var tooltipX = slotScaledX + (int)(item.DrawArea.Width * scaleFactor) + (int)(4 * scaleFactor);
-                    if (tooltipX + tooltipWidth > scaledX + scaledWidth)
-                        tooltipX = slotScaledX - tooltipWidth - (int)(4 * scaleFactor);
-
-                    var tooltipRect = new Rectangle(tooltipX, slotScaledY, tooltipWidth, tooltipHeight);
-
-                    DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipRect, Color.FromNonPremultiplied(20, 20, 20, 230));
-                    DrawingPrimitives.DrawRectBorder(spriteBatch, tooltipRect, _styleProvider.PanelBorder, 1);
-                    spriteBatch.DrawString(font, item.TooltipText,
-                        new Vector2(tooltipX + padding, slotScaledY + padding), Color.White);
-                }
-            }
-
-            spriteBatch.End();
         }
 
         private void DrawFieldLabels(BitmapFont font)

@@ -157,7 +157,7 @@ namespace EndlessClient.Dialogs
                         }
                         else if (characterGold.Amount > 1)
                         {
-                            var dlg = _itemTransferDialogFactory.CreateItemTransferDialog(_eifFileProvider.EIFFile[1].Name, ItemTransferDialog.TransferType.BankTransfer, characterGold.Amount, EOResourceID.DIALOG_TRANSFER_DEPOSIT);
+                            var dlg = _itemTransferDialogFactory.CreateItemTransferDialog(_eifFileProvider.EIFFile[1].Name, CodeDrawnItemTransferDialog.TransferType.BankTransfer, characterGold.Amount, EOResourceID.DIALOG_TRANSFER_DEPOSIT);
                             dlg.DialogClosing += (_, e) =>
                             {
                                 if (e.Result == XNADialogResult.OK)
@@ -193,7 +193,7 @@ namespace EndlessClient.Dialogs
             }
             else if (_bankDataProvider.AccountValue > 1)
             {
-                var dlg = _itemTransferDialogFactory.CreateItemTransferDialog(_eifFileProvider.EIFFile[1].Name, ItemTransferDialog.TransferType.BankTransfer, _bankDataProvider.AccountValue, EOResourceID.DIALOG_TRANSFER_WITHDRAW);
+                var dlg = _itemTransferDialogFactory.CreateItemTransferDialog(_eifFileProvider.EIFFile[1].Name, CodeDrawnItemTransferDialog.TransferType.BankTransfer, _bankDataProvider.AccountValue, EOResourceID.DIALOG_TRANSFER_WITHDRAW);
                 dlg.DialogClosing += (_, e) =>
                 {
                     if (e.Result == XNADialogResult.OK)

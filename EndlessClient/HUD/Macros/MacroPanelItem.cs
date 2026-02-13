@@ -114,8 +114,8 @@ namespace EndlessClient.HUD.Macros
             return _macroPanel.GetSlotFromPosition(transformedPos.ToVector2());
         }
 
-        // True when in scaled mode - parent handles drawing icons in correct order
-        private bool SkipRenderTargetDraw => true;
+        // Always skip render-target draw - parent handles drawing icons in correct order via DrawIconPostScale
+        public override bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
@@ -148,6 +148,31 @@ namespace EndlessClient.HUD.Macros
             DrawIconScaled(scaleFactor, renderOffset);
 
             _spriteBatch.End();
+        }
+
+        protected override void DrawDraggedPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (_iconGraphic == null)
+                return;
+
+            var mouseState = MouseExtended.GetState();
+            var mousePos = mouseState.Position;
+
+            var halfWidth = _iconGraphic.Width / 2;
+            var srcRect = new Rectangle(MouseOver ? halfWidth : 0, 0, halfWidth, _iconGraphic.Height);
+            var iconWidth = (int)(srcRect.Width * scaleFactor);
+            var iconHeight = (int)(srcRect.Height * scaleFactor);
+
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Draw(_iconGraphic,
+                new Rectangle(
+                    mousePos.X - iconWidth / 2,
+                    mousePos.Y - iconHeight / 2,
+                    iconWidth,
+                    iconHeight),
+                srcRect,
+                Color.FromNonPremultiplied(255, 255, 255, 128));
+            spriteBatch.End();
         }
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)

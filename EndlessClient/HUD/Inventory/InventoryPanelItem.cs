@@ -4,6 +4,7 @@ using EndlessClient.Dialogs;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Panels;
 using EndlessClient.Input;
+using EndlessClient.Rendering;
 using EOLib.Domain.Character;
 using EOLib.Graphics;
 using EOLib.IO.Extensions;
@@ -23,6 +24,7 @@ namespace EndlessClient.HUD.Inventory
         private readonly IActiveDialogProvider _activeDialogProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly Texture2D _itemGraphic;
         private readonly Texture2D _highlightBackground;
         private readonly XNALabel _nameLabel;
@@ -71,6 +73,7 @@ namespace EndlessClient.HUD.Inventory
                                   IActiveDialogProvider activeDialogProvider,
                                   ISfxPlayer sfxPlayer,
                                   IUserInputProvider userInputProvider,
+                                  IClientWindowSizeProvider clientWindowSizeProvider,
                                   int slot,
                                   InventoryItem inventoryItem,
                                   EIFRecord data)
@@ -79,6 +82,7 @@ namespace EndlessClient.HUD.Inventory
             _activeDialogProvider = activeDialogProvider;
             _sfxPlayer = sfxPlayer;
             _userInputProvider = userInputProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
 
             Slot = slot;
             InventoryItem = inventoryItem;
@@ -157,6 +161,12 @@ namespace EndlessClient.HUD.Inventory
 
         protected override void OnDrawControl(GameTime gameTime)
         {
+            if (SkipRenderTargetDraw)
+            {
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
             _spriteBatch.Begin();
 
             _highlightDrawPosition.MatchSome(drawPosition =>
@@ -165,27 +175,28 @@ namespace EndlessClient.HUD.Inventory
                     _spriteBatch.Draw(_highlightBackground, DrawArea.WithPosition(drawPosition), Color.White);
             });
 
-            if (IsDragging)
-            {
-                // Use _userInputProvider which provides TRANSFORMED coordinates (game space)
-                // This is consistent with MacroPanelItem and SpellPanelItem behavior
-                var mousePos = _userInputProvider.CurrentMouseState.Position;
-                var sourceRect = new Rectangle(0, 0, _itemGraphic.Width, _itemGraphic.Height);
-                var targetRect = new Rectangle(
-                    mousePos.X - sourceRect.Width / 2,
-                    mousePos.Y - sourceRect.Height / 2,
-                    sourceRect.Width,
-                    sourceRect.Height);
-
-                _spriteBatch.Draw(_itemGraphic, targetRect, sourceRect, Color.FromNonPremultiplied(255, 255, 255, 128));
-            }
-            else
-            {
-                _spriteBatch.Draw(_itemGraphic, DrawPositionWithParentOffset, Color.FromNonPremultiplied(255, 255, 255, 255));
-            }
+            _spriteBatch.Draw(_itemGraphic, DrawPositionWithParentOffset, Color.FromNonPremultiplied(255, 255, 255, 255));
 
             _spriteBatch.End();
             base.OnDrawControl(gameTime);
+        }
+
+        protected override void DrawDraggedPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            var mouseState = MonoGame.Extended.Input.MouseExtended.GetState();
+            var mousePos = mouseState.Position;
+            var iconWidth = (int)(_itemGraphic.Width * scaleFactor);
+            var iconHeight = (int)(_itemGraphic.Height * scaleFactor);
+
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Draw(_itemGraphic,
+                new Rectangle(
+                    mousePos.X - iconWidth / 2,
+                    mousePos.Y - iconHeight / 2,
+                    iconWidth,
+                    iconHeight),
+                Color.FromNonPremultiplied(255, 255, 255, 128));
+            spriteBatch.End();
         }
 
         private void InventoryPanelItem_OnMouseOver(object sender, MouseStateExtended e)

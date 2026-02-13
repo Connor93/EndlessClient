@@ -3,11 +3,13 @@ using EndlessClient.Audio;
 using EndlessClient.HUD.Controls;
 using EndlessClient.HUD.Panels;
 using EndlessClient.Input;
+using EndlessClient.Rendering;
 using EOLib.Domain.Character;
 using EOLib.Graphics;
 using EOLib.IO.Pub;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.Input;
 using MonoGame.Extended.Input.InputListeners;
 using XNAControls;
 
@@ -19,6 +21,7 @@ namespace EndlessClient.HUD.Spells
 
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IUserInputProvider _userInputProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
 
         private readonly Texture2D _spellGraphic;
         private Rectangle _spellGraphicSourceRect;
@@ -52,6 +55,7 @@ namespace EndlessClient.HUD.Spells
         public SpellPanelItem(ActiveSpellsPanel spellPanel,
                               ISfxPlayer sfxPlayer,
                               IUserInputProvider userInputProvider,
+                              IClientWindowSizeProvider clientWindowSizeProvider,
                               int slot,
                               InventorySpell spell,
                               ESFRecord data)
@@ -59,6 +63,7 @@ namespace EndlessClient.HUD.Spells
         {
             _sfxPlayer = sfxPlayer;
             _userInputProvider = userInputProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
 
             Slot = DisplaySlot = slot;
             InventorySpell = spell;
@@ -90,6 +95,12 @@ namespace EndlessClient.HUD.Spells
 
         protected override void OnDrawControl(GameTime gameTime)
         {
+            if (SkipRenderTargetDraw)
+            {
+                base.OnDrawControl(gameTime);
+                return;
+            }
+
             _spriteBatch.Begin();
 
             DrawLevelAndHighlight();
@@ -98,6 +109,28 @@ namespace EndlessClient.HUD.Spells
             _spriteBatch.End();
 
             base.OnDrawControl(gameTime);
+        }
+
+        protected override void DrawDraggedPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            var mouseState = MouseExtended.GetState();
+            var mousePos = mouseState.Position;
+
+            var halfWidth = _spellGraphic.Width / 2;
+            var srcRect = new Rectangle(MouseOver ? halfWidth : 0, 0, halfWidth, _spellGraphic.Height);
+            var iconWidth = (int)(srcRect.Width * scaleFactor);
+            var iconHeight = (int)(srcRect.Height * scaleFactor);
+
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            spriteBatch.Draw(_spellGraphic,
+                new Rectangle(
+                    mousePos.X - iconWidth / 2,
+                    mousePos.Y - iconHeight / 2,
+                    iconWidth,
+                    iconHeight),
+                srcRect,
+                Color.FromNonPremultiplied(255, 255, 255, 128));
+            spriteBatch.End();
         }
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)

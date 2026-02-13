@@ -247,7 +247,7 @@ namespace EndlessClient.HUD.Panels
 
                     actualSlot.MatchSome(slot =>
                     {
-                        var newChild = new SpellPanelItem(this, _sfxPlayer, _userInputProvider, slot, spell, spellData);
+                        var newChild = new SpellPanelItem(this, _sfxPlayer, _userInputProvider, _clientWindowSizeProvider, slot, spell, spellData);
                         newChild.Initialize();
                         newChild.SetParentControl(this);
 

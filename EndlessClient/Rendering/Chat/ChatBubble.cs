@@ -19,8 +19,6 @@ namespace EndlessClient.Rendering.Chat
     public class ChatBubble : DrawableGameComponent, IChatBubble, IPostScaleDrawable
     {
         private const int Padding = 8;        // Padding around text inside bubble
-        private const int ExtraWidthMargin = 30; // Extra width beyond MaxTextWidth to guarantee fit
-        private const int ExtraHeightMargin = 12; // Extra height to prevent vertical clipping
         private const int MaxTextWidth = 96;  // Max width before wrapping
         private const int NubHeight = 6;      // Height of the speech bubble "nub" pointing at character
 
@@ -44,12 +42,11 @@ namespace EndlessClient.Rendering.Chat
 
         private bool _isGroupChat;
         private Vector2 _bubblePosition;  // Top-left of bubble
-        private Vector2 _textPosition;    // Where text starts
         private Option<Stopwatch> _startTime;
 
         // IPostScaleDrawable implementation
         public int PostScaleDrawOrder => 5; // Below HUD panels (0+), buttons (50), dialogs (100)
-        public bool SkipRenderTargetDraw => false;
+        public bool SkipRenderTargetDraw => true;
 
         public ChatBubble(IMapActor referenceRenderer,
                           IChatBubbleTextureProvider chatBubbleTextureProvider,  // Keep for interface compatibility
@@ -169,16 +166,10 @@ namespace EndlessClient.Rendering.Chat
 
         public override void Update(GameTime gameTime)
         {
-            // Extra margins are only needed at 1:1 scale to compensate for font measurement issues
-            // When scaled up, the base padding is sufficient and extra margins look excessive
-            var isActuallyScaled = _clientWindowSizeProvider.ScaleFactor > 1.0f;
-            var effectivePadding = isActuallyScaled ? 4 : Padding;  // Use smaller padding when scaled
-            var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;
-            var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin;
-
-            // Auto-size bubble width to actual text content
-            var bubbleWidth = (int)_textWidth + effectivePadding * 2 + extraWidth;
-            var bubbleHeight = _textHeight + effectivePadding * 2 + extraHeight;
+            // Compute bubble position in render-target coordinates (640x480)
+            // DrawPostScale() will convert these to screen-space
+            var bubbleWidth = (int)_textWidth + Padding * 2;
+            var bubbleHeight = _textHeight + Padding * 2;
 
             // Position bubble centered above character
             var bubbleX = _parent.HorizontalCenter - bubbleWidth / 2.0f;
@@ -190,18 +181,13 @@ namespace EndlessClient.Rendering.Chat
             {
                 var centerX = _clientWindowSizeProvider.GameWidth / 2f;
                 var centerY = _clientWindowSizeProvider.GameHeight / 2f;
-                // Zoom the character's horizontal center and name label anchor
                 var zoomedCenterX = (_parent.HorizontalCenter - centerX) * zoom + centerX;
                 var zoomedNameY = (_parent.NameLabelY - centerY) * zoom + centerY;
-                // Apply bubble offset AFTER zoom so it doesn't scale with distance
                 bubbleX = zoomedCenterX - bubbleWidth / 2.0f;
                 bubbleY = zoomedNameY - bubbleHeight - NubHeight + 10;
             }
 
-            // CRITICAL: Floor to integer to match what Draw() does when casting to Rectangle
-            // This ensures text and bubble are on the same pixel grid
             _bubblePosition = new Vector2((int)bubbleX, (int)bubbleY);
-            _textPosition = new Vector2((int)bubbleX + effectivePadding, (int)bubbleY + effectivePadding);
 
             // Auto-hide after timeout
             _startTime.MatchSome(st =>
@@ -218,19 +204,50 @@ namespace EndlessClient.Rendering.Chat
 
         public override void Draw(GameTime gameTime)
         {
-            if (_wrappedLines.Count == 0)
+            // Drawing is handled by DrawPostScale for crisp rendering at any scale
+        }
+
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        {
+            if (_wrappedLines.Count == 0 || !Visible)
                 return;
 
-            var font = _contentProvider.Fonts[Constants.FontSize08pt5];
+            // Pick the best available font for this scale factor
+            var font = FontScaleHelper.GetScaledFont(_contentProvider, scaleFactor);
 
-            // Use same conditional margin logic as Update()
-            var isActuallyScaled = _clientWindowSizeProvider.ScaleFactor > 1.0f;
-            var effectivePadding = isActuallyScaled ? 4 : Padding;
-            var extraWidth = isActuallyScaled ? 0 : ExtraWidthMargin;
-            var extraHeight = isActuallyScaled ? 0 : ExtraHeightMargin;
+            // Re-wrap text with the scaled font for correct line breaks
+            var scaledMaxTextWidth = (int)(MaxTextWidth * scaleFactor);
+            var scaledWrappedLines = WrapTextForFont(font, scaledMaxTextWidth);
+            if (scaledWrappedLines.Count == 0)
+                return;
 
-            var bubbleWidth = (int)_textWidth + effectivePadding * 2 + extraWidth;
-            var bubbleHeight = (int)(_textHeight + effectivePadding * 2 + extraHeight);
+            // Measure text dimensions with the scaled font
+            float scaledTextWidth = 0;
+            foreach (var line in scaledWrappedLines)
+            {
+                var lineWidth = font.MeasureString(line).Width;
+                if (lineWidth > scaledTextWidth)
+                    scaledTextWidth = lineWidth;
+            }
+            var scaledTextHeight = scaledWrappedLines.Count * font.LineHeight;
+
+            // Scale padding and margins
+            var scaledPadding = (int)(Padding * scaleFactor);
+
+            var bubbleWidth = (int)scaledTextWidth + scaledPadding * 2;
+            var bubbleHeight = (int)scaledTextHeight + scaledPadding * 2;
+
+            // Convert render-target-space position to screen-space
+            var screenX = (int)(_bubblePosition.X * scaleFactor) + renderOffset.X;
+            var screenY = (int)(_bubblePosition.Y * scaleFactor) + renderOffset.Y;
+
+            // Re-center the bubble horizontally around the scaled character center
+            // (_bubblePosition.X was set to center the bubble at 1x scale, so we need to re-center for new width)
+            var originalBubbleWidthScaled = (int)(_textWidth + Padding * 2) * scaleFactor;
+            var centerX = screenX + (int)(originalBubbleWidthScaled / 2);
+            screenX = centerX - bubbleWidth / 2;
+
+            var scaledNubHeight = (int)(NubHeight * scaleFactor);
 
             // Colors
             var bubbleColor = _isGroupChat
@@ -238,9 +255,9 @@ namespace EndlessClient.Rendering.Chat
                 : Color.FromNonPremultiplied(255, 255, 255, 232);
             var borderColor = Color.FromNonPremultiplied(0, 0, 0, 200);
 
-            var bubbleRect = new Rectangle((int)_bubblePosition.X, (int)_bubblePosition.Y, bubbleWidth, bubbleHeight);
+            var bubbleRect = new Rectangle(screenX, screenY, bubbleWidth, bubbleHeight);
 
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             // Draw bubble background
             _spriteBatch.Draw(_whitePixel, bubbleRect, bubbleColor);
@@ -252,32 +269,86 @@ namespace EndlessClient.Rendering.Chat
             _spriteBatch.Draw(_whitePixel, new Rectangle(bubbleRect.Right - 1, bubbleRect.Y, 1, bubbleRect.Height), borderColor);
 
             // Draw nub (small triangle pointing down at character)
-            var nubX = bubbleRect.X + bubbleRect.Width / 2 - 4;
+            var nubBaseWidth = (int)(8 * scaleFactor);
+            var nubX = bubbleRect.X + bubbleRect.Width / 2 - nubBaseWidth / 2;
             var nubY = bubbleRect.Bottom;
-            for (int i = 0; i < NubHeight; i++)
+            for (int i = 0; i < scaledNubHeight; i++)
             {
-                var nubWidth = 8 - i * 2;
+                var progress = (float)i / scaledNubHeight;
+                var nubWidth = (int)(nubBaseWidth * (1 - progress));
                 if (nubWidth > 0)
                 {
-                    _spriteBatch.Draw(_whitePixel, new Rectangle(nubX + i, nubY + i, nubWidth, 1), bubbleColor);
+                    var offset = (nubBaseWidth - nubWidth) / 2;
+                    _spriteBatch.Draw(_whitePixel, new Rectangle(nubX + offset, nubY + i, nubWidth, 1), bubbleColor);
                 }
             }
 
-            // Draw text inside bubble (in render target so dialogs/windows properly occlude it)
+            // Draw text inside bubble
             var lineHeight = font.LineHeight;
-            for (int i = 0; i < _wrappedLines.Count; i++)
+            var textX = bubbleRect.X + scaledPadding;
+            var textY = bubbleRect.Y + scaledPadding;
+            for (int i = 0; i < scaledWrappedLines.Count; i++)
             {
-                var linePos = new Vector2(_textPosition.X, _textPosition.Y + i * lineHeight);
-                _spriteBatch.DrawString(font, _wrappedLines[i], linePos, Color.Black);
+                var linePos = new Vector2(textX, textY + i * lineHeight);
+                _spriteBatch.DrawString(font, scaledWrappedLines[i], linePos, Color.Black);
             }
 
             _spriteBatch.End();
         }
 
-        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
+        /// <summary>
+        /// Wraps the current message for a specific font and max width.
+        /// Used by DrawPostScale to re-wrap text for the scaled font.
+        /// </summary>
+        private List<string> WrapTextForFont(BitmapFont font, int maxWidth)
         {
-            // Text is now drawn in Draw() so it stays within the render target
-            // and is properly occluded by dialogs/windows
+            var lines = new List<string>();
+            var words = _message.Split(' ');
+            var currentLine = "";
+
+            foreach (var word in words)
+            {
+                var wordToProcess = word;
+                while (font.MeasureString(wordToProcess).Width > maxWidth)
+                {
+                    var fitting = "";
+                    for (int i = 0; i < wordToProcess.Length; i++)
+                    {
+                        var test = wordToProcess.Substring(0, i + 1) + "-";
+                        if (font.MeasureString(test).Width > maxWidth)
+                            break;
+                        fitting = wordToProcess.Substring(0, i + 1);
+                    }
+
+                    if (fitting.Length == 0)
+                        fitting = wordToProcess.Substring(0, 1);
+
+                    if (!string.IsNullOrEmpty(currentLine))
+                    {
+                        lines.Add(currentLine);
+                        currentLine = "";
+                    }
+                    lines.Add(fitting + "-");
+                    wordToProcess = wordToProcess.Substring(fitting.Length);
+                }
+
+                var testLine = string.IsNullOrEmpty(currentLine) ? wordToProcess : currentLine + " " + wordToProcess;
+
+                if (font.MeasureString(testLine).Width > maxWidth && !string.IsNullOrEmpty(currentLine))
+                {
+                    lines.Add(currentLine);
+                    currentLine = wordToProcess;
+                }
+                else
+                {
+                    currentLine = testLine;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(currentLine))
+                lines.Add(currentLine);
+
+            return lines;
         }
 
         protected override void Dispose(bool disposing)
