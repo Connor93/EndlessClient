@@ -162,6 +162,7 @@ namespace EndlessClient.HUD.Panels
                     else
                     {
                         info.CachedScrollOffset = Math.Max(0, info.Renderables.Count - VisibleLines);
+                        info.HasUnread = true;
                     }
                 }
             }
@@ -531,7 +532,7 @@ namespace EndlessClient.HUD.Panels
                 var absRect = new Rectangle((int)pos.X + tabRect.X, (int)pos.Y + tabRect.Y, tabRect.Width, tabRect.Height);
 
                 // Draw tab background
-                var bgColor = info.Active ? _styleProvider.ButtonPressed : _styleProvider.ButtonNormal;
+                var bgColor = info.Active ? _styleProvider.ButtonPressed : info.HasUnread ? new Color(180, 140, 60) : _styleProvider.ButtonNormal;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, absRect, bgColor);
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
 
@@ -566,7 +567,7 @@ namespace EndlessClient.HUD.Panels
                     (int)(tabRect.Height * scale));
 
                 // Draw tab background
-                var bgColor = info.Active ? _styleProvider.ButtonPressed : _styleProvider.ButtonNormal;
+                var bgColor = info.Active ? _styleProvider.ButtonPressed : info.HasUnread ? new Color(180, 140, 60) : _styleProvider.ButtonNormal;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, absRect, bgColor);
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
 
@@ -641,6 +642,7 @@ namespace EndlessClient.HUD.Panels
             var newInfo = _tabs[clickedTab];
             newInfo.Visible = true;
             newInfo.Active = true;
+            newInfo.HasUnread = false;
             _scrollBar.SetScrollOffset(newInfo.CachedScrollOffset);
 
             _scrollBar.UpdateDimensions(_chatProvider.AllChat[clickedTab].Count);
@@ -671,6 +673,7 @@ namespace EndlessClient.HUD.Panels
             public HashSet<ChatData> CachedChat { get; set; } = new HashSet<ChatData>();
             public List<IChatRenderable> Renderables { get; set; } = new List<IChatRenderable>();
             public int CachedScrollOffset { get; set; }
+            public bool HasUnread { get; set; }
 
             public CodeDrawnChatTabInfo(string label, bool active)
             {

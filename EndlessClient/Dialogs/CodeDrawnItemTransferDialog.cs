@@ -50,7 +50,7 @@ namespace EndlessClient.Dialogs
         private int DialogWidth { get; } = 265;
         private int DialogHeight { get; } = 170;
 
-        public int PostScaleDrawOrder => 200;
+        public int PostScaleDrawOrder => 210; // Above scrolling list dialogs (200), below toasts (250)
         public bool SkipRenderTargetDraw => true;
 
         public int SelectedAmount => int.Parse(_amount.Text);
