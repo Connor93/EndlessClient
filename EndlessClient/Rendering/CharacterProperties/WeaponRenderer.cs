@@ -43,7 +43,7 @@ namespace EndlessClient.Rendering.CharacterProperties
             var factor = _renderProperties.IsFacing(EODirection.Down, EODirection.Left) ? -1 : 1;
             var isDownOrRight = _renderProperties.IsFacing(EODirection.Down, EODirection.Right);
 
-            resX += (parentCharacterDrawArea.Width / 1.5f - 3) * factor;
+            resX += (parentCharacterDrawArea.Width / 1.5f - 8) * factor;
             if (_renderProperties.RenderAttackFrame == 2)
                 resX += 2 * factor;
             else if (_renderProperties.RenderAttackFrame == 1 && ranged)
