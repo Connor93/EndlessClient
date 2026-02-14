@@ -45,8 +45,9 @@ namespace EndlessClient.HUD.Windows
         private readonly Stopwatch _pollStopwatch = new Stopwatch();
 
         // Header accent color (purple/gold theme for guild bounties)
-        private static readonly Color HeaderColor = new Color(70, 45, 80, 230);
-        private static readonly Color HeaderAccent = new Color(200, 170, 80);
+        // Theme-aware colors (read from style provider)
+        private Color HeaderColor => new Color(_styleProvider.TitleBarBackground, 0.90f);
+        private Color HeaderAccent => _styleProvider.TitleBarText;
 
         public CodeDrawnBountyTrackerWindow(
             IUIStyleProvider styleProvider,

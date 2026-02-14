@@ -54,5 +54,26 @@ namespace EndlessClient.UI.Styles
         public Color ToastActionBorder => new Color(80, 180, 120, 200);
         public Color ToastGuildBackground => new Color(140, 110, 30, 220);
         public Color ToastGuildBorder => new Color(210, 180, 60, 200);
+
+        // Grid tile - glass effect tiles
+        public Color GridTileBackground => new Color(30, 40, 60, 160);
+        public Color GridTileBorder => new Color(80, 100, 130, 180);
+        public Color GridTileHover => new Color(60, 80, 120, 200);
+
+        // Tab - glass tabs
+        public Color TabActive => new Color(60, 80, 120, 220);
+        public Color TabInactive => new Color(30, 40, 60, 160);
+        public Color TabText => new Color(220, 225, 235);
+
+        // Input - glass input fields
+        public Color InputBackground => new Color(15, 20, 30, 200);
+        public Color InputBorder => new Color(80, 100, 130, 180);
+        public Color InputText => new Color(230, 235, 245);
+        public Color InputPlaceholder => new Color(120, 130, 150);
+
+        // Tooltip - slightly brighter glass
+        public Color TooltipBackground => new Color(25, 30, 45, 230);
+        public Color TooltipBorder => new Color(100, 130, 170, 220);
+        public Color TooltipText => new Color(230, 235, 245);
     }
 }

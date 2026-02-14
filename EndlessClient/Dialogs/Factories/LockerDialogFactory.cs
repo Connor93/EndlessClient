@@ -79,7 +79,7 @@ namespace EndlessClient.Dialogs.Factories
         {
             if (_configProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnLockerDialog(_styleProviderFactory.Create(),
+                return new CodeDrawnGridLockerDialog(_styleProviderFactory.Create(),
                     _gameStateProvider,
                     _clientWindowSizeProvider,
                     _graphicsDeviceProvider,

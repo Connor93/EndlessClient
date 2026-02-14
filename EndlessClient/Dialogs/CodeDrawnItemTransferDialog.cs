@@ -211,7 +211,7 @@ namespace EndlessClient.Dialogs
             var trackW = (int)(122 * scaleFactor);
             var trackH = (int)(4 * scaleFactor);
             var trackBounds = new Rectangle(trackX, trackY, trackW, trackH);
-            DrawingPrimitives.DrawFilledRect(spriteBatch, trackBounds, new Color(60, 60, 60));
+            DrawingPrimitives.DrawFilledRect(spriteBatch, trackBounds, _styleProvider.StatusBarBackground);
             DrawingPrimitives.DrawRectBorder(spriteBatch, trackBounds, _styleProvider.PanelBorder, 1);
 
             // Slider handle
@@ -230,7 +230,7 @@ namespace EndlessClient.Dialogs
             var inputW = (int)(77 * scaleFactor);
             var inputH = (int)(19 * scaleFactor);
             var inputBounds = new Rectangle(inputX, inputY, inputW, inputH);
-            DrawingPrimitives.DrawFilledRect(spriteBatch, inputBounds, new Color(20, 20, 20));
+            DrawingPrimitives.DrawFilledRect(spriteBatch, inputBounds, _styleProvider.InputBackground);
             DrawingPrimitives.DrawRectBorder(spriteBatch, inputBounds, _styleProvider.PanelBorder, 1);
 
             // Draw the text from the input box

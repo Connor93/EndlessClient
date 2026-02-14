@@ -283,7 +283,7 @@ namespace EndlessClient.HUD.Panels
                 (int)pos.Y + padding,
                 panelWidth - (int)(30 * scale),
                 visibleLinesHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, new Color(120, 110, 100, 255));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, _styleProvider.PanelBackgroundAlt);
 
             // Draw input bar fill
             var inputBarY = (int)pos.Y + padding + visibleLinesHeight + padding;
@@ -292,7 +292,7 @@ namespace EndlessClient.HUD.Panels
                 inputBarY,
                 panelWidth - (int)(12 * scale),
                 inputHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, new Color(100, 90, 80, 255));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, _styleProvider.InputBackground);
 
             // Draw ">" prompt
             _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), Color.White);
@@ -362,7 +362,7 @@ namespace EndlessClient.HUD.Panels
                 visibleLinesHeight);
             if (!skipMessageAreaFill)
             {
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, new Color(120, 110, 100, 255));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, messageAreaRect, _styleProvider.PanelBackgroundAlt);
             }
 
             // Draw input bar area
@@ -374,7 +374,7 @@ namespace EndlessClient.HUD.Panels
                 inputHeight);
             if (!skipMessageAreaFill)
             {
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, new Color(100, 90, 80, 255));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, _styleProvider.InputBackground);
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
 
                 // Draw ">" prompt

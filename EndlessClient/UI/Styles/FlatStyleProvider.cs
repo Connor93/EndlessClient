@@ -54,5 +54,26 @@ namespace EndlessClient.UI.Styles
         public Color ToastActionBorder => new Color(80, 180, 120);
         public Color ToastGuildBackground => new Color(160, 130, 40);
         public Color ToastGuildBorder => new Color(220, 190, 70);
+
+        // Grid tile - solid flat tiles
+        public Color GridTileBackground => new Color(45, 55, 70);
+        public Color GridTileBorder => new Color(60, 70, 90);
+        public Color GridTileHover => new Color(65, 80, 105);
+
+        // Tab - flat tabs
+        public Color TabActive => new Color(70, 85, 115);
+        public Color TabInactive => new Color(45, 55, 70);
+        public Color TabText => Color.White;
+
+        // Input - flat input fields
+        public Color InputBackground => new Color(25, 30, 40);
+        public Color InputBorder => new Color(60, 70, 90);
+        public Color InputText => Color.White;
+        public Color InputPlaceholder => new Color(130, 140, 160);
+
+        // Tooltip - flat tooltip
+        public Color TooltipBackground => new Color(35, 40, 55);
+        public Color TooltipBorder => new Color(70, 85, 110);
+        public Color TooltipText => Color.White;
     }
 }

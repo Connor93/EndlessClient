@@ -69,22 +69,22 @@ namespace EndlessClient.HUD.Windows
         private readonly float[] _tabScrollOffsets = new float[TabCount];
         private readonly Stopwatch _pollStopwatch = new Stopwatch();
 
-        // Blue/silver theme
-        private static readonly Color HeaderColor = new Color(40, 55, 85, 230);
-        private static readonly Color HeaderAccent = new Color(180, 200, 230);
-        private static readonly Color TabActiveColor = new Color(50, 70, 100, 240);
-        private static readonly Color TabInactiveColor = new Color(30, 40, 60, 200);
-        private static readonly Color TabHoverColor = new Color(60, 80, 110, 220);
-        private static readonly Color TabTextActive = new Color(220, 230, 240);
-        private static readonly Color TabTextInactive = new Color(140, 150, 170);
-        private static readonly Color ExpBarBg = new Color(30, 30, 30, 200);
-        private static readonly Color ExpBarFill = new Color(80, 160, 220);
+        // Theme-aware colors (read from style provider)
+        private Color HeaderColor => new Color(_styleProvider.TitleBarBackground, 0.90f);
+        private Color HeaderAccent => _styleProvider.TitleBarText;
+        private Color TabActiveColor => new Color(_styleProvider.TabActive, 0.94f);
+        private Color TabInactiveColor => new Color(_styleProvider.TabInactive, 0.78f);
+        private Color TabHoverColor => new Color(_styleProvider.GridTileHover, 0.86f);
+        private Color TabTextActive => _styleProvider.TabText;
+        private Color TabTextInactive => _styleProvider.TextSecondary;
+        private Color ExpBarBg => new Color(_styleProvider.StatusBarBackground, 0.78f);
+        private Color ExpBarFill => _styleProvider.TNLBarFill;
         private static readonly Color BuffActiveColor = new Color(100, 220, 130);
-        private static readonly Color SectionHeaderColor = new Color(160, 180, 210);
-        private static readonly Color ActionButtonBg = new Color(60, 100, 140, 220);
-        private static readonly Color ActionButtonHover = new Color(80, 120, 160, 240);
-        private static readonly Color ActionButtonText = new Color(220, 235, 255);
-        private static readonly Color DividerColor = new Color(70, 85, 110, 150);
+        private Color SectionHeaderColor => _styleProvider.TextHighlight;
+        private Color ActionButtonBg => new Color(_styleProvider.ButtonNormal, 0.86f);
+        private Color ActionButtonHover => new Color(_styleProvider.ButtonHover, 0.94f);
+        private Color ActionButtonText => _styleProvider.ButtonText;
+        private Color DividerColor => new Color(_styleProvider.PanelBorder, 0.59f);
 
         // Tab hover tracking
         private int _hoveredTabIndex = -1;

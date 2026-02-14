@@ -42,11 +42,12 @@ namespace EndlessClient.HUD.Windows
         private GuildInfoData _guildInfo;
         private readonly Stopwatch _pollStopwatch = new Stopwatch();
 
-        // Blue/silver theme for guild info
-        private static readonly Color HeaderColor = new Color(40, 55, 85, 230);
-        private static readonly Color HeaderAccent = new Color(180, 200, 230);
-        private static readonly Color ExpBarBg = new Color(30, 30, 30, 200);
-        private static readonly Color ExpBarFill = new Color(80, 160, 220);
+
+        // Theme-aware colors (read from style provider)
+        private Color HeaderColor => new Color(_styleProvider.TitleBarBackground, 0.90f);
+        private Color HeaderAccent => _styleProvider.TitleBarText;
+        private Color ExpBarBg => new Color(_styleProvider.StatusBarBackground, 0.78f);
+        private Color ExpBarFill => _styleProvider.TNLBarFill;
         private static readonly Color BuffActiveColor = new Color(100, 220, 130);
         private static readonly Color BuffInactiveColor = new Color(100, 100, 100);
 

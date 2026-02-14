@@ -51,5 +51,26 @@ namespace EndlessClient.UI.Styles
         Color ToastActionBorder { get; }
         Color ToastGuildBackground { get; }
         Color ToastGuildBorder { get; }
+
+        // Grid tile styling
+        Color GridTileBackground { get; }
+        Color GridTileBorder { get; }
+        Color GridTileHover { get; }
+
+        // Tab/category styling
+        Color TabActive { get; }
+        Color TabInactive { get; }
+        Color TabText { get; }
+
+        // Search/input styling
+        Color InputBackground { get; }
+        Color InputBorder { get; }
+        Color InputText { get; }
+        Color InputPlaceholder { get; }
+
+        // Tooltip styling
+        Color TooltipBackground { get; }
+        Color TooltipBorder { get; }
+        Color TooltipText { get; }
     }
 }

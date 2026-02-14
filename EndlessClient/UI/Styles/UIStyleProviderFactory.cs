@@ -15,16 +15,19 @@ namespace EndlessClient.UI.Styles
         private readonly GlassmorphismStyleProvider _glassStyle;
         private readonly FlatStyleProvider _flatStyle;
         private readonly ClassicStyleProvider _classicStyle;
+        private readonly ParchmentStyleProvider _parchmentStyle;
 
         public UIStyleProviderFactory(IConfigurationProvider configProvider,
                                       GlassmorphismStyleProvider glassStyle,
                                       FlatStyleProvider flatStyle,
-                                      ClassicStyleProvider classicStyle)
+                                      ClassicStyleProvider classicStyle,
+                                      ParchmentStyleProvider parchmentStyle)
         {
             _configProvider = configProvider;
             _glassStyle = glassStyle;
             _flatStyle = flatStyle;
             _classicStyle = classicStyle;
+            _parchmentStyle = parchmentStyle;
         }
 
         public IUIStyleProvider Create()
@@ -34,6 +37,7 @@ namespace EndlessClient.UI.Styles
                 UIStyle.Glass => _glassStyle,
                 UIStyle.Flat => _flatStyle,
                 UIStyle.Classic => _classicStyle,
+                UIStyle.Parchment => _parchmentStyle,
                 _ => _glassStyle
             };
         }

@@ -320,7 +320,7 @@ namespace EndlessClient.Dialogs
             var equipAreaWidth = 220;
             var equipAreaTop = 20;
             var equipAreaHeight = 260;
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), new Color(20, 20, 30, 200));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(8, equipAreaTop, equipAreaWidth, equipAreaHeight), new Color(_styleProvider.InputBackground, 0.78f));
 
             _spriteBatch.End();
 
@@ -451,10 +451,10 @@ namespace EndlessClient.Dialogs
 
                         var tooltipRect = new Rectangle(tooltipX, slotScaledY, tooltipWidth, tooltipHeight);
 
-                        DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipRect, Color.FromNonPremultiplied(20, 20, 20, 230));
-                        DrawingPrimitives.DrawRectBorder(spriteBatch, tooltipRect, _styleProvider.PanelBorder, 1);
+                        DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipRect, _styleProvider.TooltipBackground);
+                        DrawingPrimitives.DrawRectBorder(spriteBatch, tooltipRect, _styleProvider.TooltipBorder, 1);
                         spriteBatch.DrawString(font, item.TooltipText,
-                            new Vector2(tooltipX + padding, slotScaledY + padding), Color.White);
+                            new Vector2(tooltipX + padding, slotScaledY + padding), _styleProvider.TooltipText);
                     }
                 }
             }

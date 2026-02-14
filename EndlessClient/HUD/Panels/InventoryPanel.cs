@@ -482,6 +482,7 @@ namespace EndlessClient.HUD.Panels
                                 _inventoryController.DropItemInChest(item.Data, item.InventoryItem); break;
                             case LockerDialog:
                             case CodeDrawnLockerDialog:
+                            case CodeDrawnGridLockerDialog:
                                 _inventoryController.DropItemInLocker(item.Data, item.InventoryItem); break;
                             case BankAccountDialog:
                                 if (item.Data.ID == 1)

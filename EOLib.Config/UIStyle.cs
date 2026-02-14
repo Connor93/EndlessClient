@@ -18,6 +18,11 @@ namespace EOLib.Config
         /// <summary>
         /// Classic - beveled 3D-style borders like old Windows
         /// </summary>
-        Classic
+        Classic,
+
+        /// <summary>
+        /// Parchment - warm beige/cream RPG-style with brown accents
+        /// </summary>
+        Parchment
     }
 }
