@@ -125,6 +125,7 @@ namespace EOLib.PacketHandlers.NPC
                 if (expDifference > _characterSessionRepository.BestKillExp)
                     _characterSessionRepository.BestKillExp = expDifference;
                 _characterSessionRepository.TodayTotalExp += Convert.ToUInt64(Math.Max(expDifference, 0));
+                _characterSessionRepository.KillCount++;
             }
 
             UpdateCharacterStat(CharacterStat.Experience, experienceValue);

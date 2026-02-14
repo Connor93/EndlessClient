@@ -85,6 +85,8 @@ namespace EndlessClient.HUD.Controls
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IUIStyleProvider _styleProvider;
         private readonly ICharacterSessionProvider _characterSessionProvider;
+        private readonly ICharacterSessionRepository _characterSessionRepository;
+        private readonly ICharacterInventoryProvider _characterInventoryProvider;
         private readonly IQuestDataProvider _questDataProvider;
         private readonly IQuestActions _questActions;
         private readonly IBountyDataProvider _bountyDataProvider;
@@ -141,7 +143,9 @@ namespace EndlessClient.HUD.Controls
                                   IChatActions chatActions,
                                   ITextInputDialogFactory textInputDialogFactory,
                                   ITextMultiInputDialogFactory textMultiInputDialogFactory,
-                                  ILockerDataRepository lockerDataRepository)
+                                  ILockerDataRepository lockerDataRepository,
+                                  ICharacterSessionRepository characterSessionRepository,
+                                  ICharacterInventoryProvider characterInventoryProvider)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -189,6 +193,8 @@ namespace EndlessClient.HUD.Controls
             _textInputDialogFactory = textInputDialogFactory;
             _textMultiInputDialogFactory = textMultiInputDialogFactory;
             _lockerDataRepository = lockerDataRepository;
+            _characterSessionRepository = characterSessionRepository;
+            _characterInventoryProvider = characterInventoryProvider;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -730,12 +736,14 @@ namespace EndlessClient.HUD.Controls
         {
             var window = new Windows.CodeDrawnExpTrackerWindow(
                 (ICharacterProvider)_characterRepository,
+                _characterSessionRepository,
                 _characterSessionProvider,
                 _experienceTableProvider,
                 _styleProvider,
                 _graphicsDeviceProvider,
                 _contentProvider,
-                _clientWindowSizeRepository)
+                _clientWindowSizeRepository,
+                _characterInventoryProvider)
             {
                 DrawOrder = HUD_CONTROL_LAYER + 20
             };
