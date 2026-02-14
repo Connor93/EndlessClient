@@ -109,6 +109,7 @@ namespace EndlessClient.Dialogs
                 ClickSoundEffect?.Invoke(this, EventArgs.Empty);
             };
             _questSwitcher.SetParentControl(this);
+            _questSwitcher.SuppressPostScaleDraw = true;
 
             // Back button
             _backButton = new CodeDrawnButton(styleProvider, font)
@@ -119,6 +120,7 @@ namespace EndlessClient.Dialogs
             };
             _backButton.OnClick += PreviousPage;
             _backButton.SetParentControl(this);
+            _backButton.SuppressPostScaleDraw = true;
 
             // Next button
             _nextButton = new CodeDrawnButton(styleProvider, font)
@@ -129,6 +131,7 @@ namespace EndlessClient.Dialogs
             };
             _nextButton.OnClick += NextPage;
             _nextButton.SetParentControl(this);
+            _nextButton.SuppressPostScaleDraw = true;
 
             // Cancel button
             _cancelButton = new CodeDrawnButton(styleProvider, font)
@@ -139,6 +142,7 @@ namespace EndlessClient.Dialogs
             };
             _cancelButton.OnClick += (_, _) => Close(XNADialogResult.Cancel);
             _cancelButton.SetParentControl(this);
+            _cancelButton.SuppressPostScaleDraw = true;
 
             // OK button
             _okButton = new CodeDrawnButton(styleProvider, font)
@@ -149,6 +153,7 @@ namespace EndlessClient.Dialogs
             };
             _okButton.OnClick += (_, _) => Close(XNADialogResult.OK);
             _okButton.SetParentControl(this);
+            _okButton.SuppressPostScaleDraw = true;
 
             CenterInGameView();
         }

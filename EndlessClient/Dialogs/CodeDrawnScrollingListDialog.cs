@@ -240,6 +240,7 @@ namespace EndlessClient.Dialogs
                 DrawArea = new Rectangle((int)position.X, (int)position.Y, width, height)
             };
             button.SetParentControl(this);
+            button.SuppressPostScaleDraw = true; // Dialog draws buttons manually; suppress independent draw
             return button;
         }
 

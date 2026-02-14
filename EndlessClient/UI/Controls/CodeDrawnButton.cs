@@ -37,6 +37,13 @@ namespace EndlessClient.UI.Controls
         public event EventHandler OnClick;
 
         /// <summary>
+        /// When true, the button's own DrawPostScale is suppressed.
+        /// Use this when a parent dialog manually draws the button in its own DrawPostScale
+        /// to prevent double-draw, while keeping the button parented for input handling.
+        /// </summary>
+        public bool SuppressPostScaleDraw { get; set; }
+
+        /// <summary>
         /// Legacy constructor without scaled mode support (for backwards compatibility).
         /// Buttons created with this constructor will not have crisp text in scaled mode.
         /// </summary>
@@ -118,17 +125,15 @@ namespace EndlessClient.UI.Controls
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            // Draw fills into the render target (they scale fine as solid shapes).
-            // Borders and text are drawn later in DrawPostScale at native resolution for crispness.
-            DrawFills();
-
-            base.OnDrawControl(gameTime);
+            // All drawing (fills, borders, text) is done in DrawPostScale for correct z-ordering.
+            // Don't draw anything here or in children.
         }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
             if (_spriteBatch == null) return;
             if (!Visible) return;
+            if (SuppressPostScaleDraw) return;
             if (ImmediateParent != null && !ImmediateParent.Visible) return;
 
             var gamePos = DrawAreaWithParentOffset;
@@ -136,13 +141,13 @@ namespace EndlessClient.UI.Controls
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
-            DrawBordersAndText(scaledPos, scaleFactor);
+            DrawAllPostScale(scaledPos, scaleFactor);
         }
 
         /// <summary>
-        /// Draw only fills for render target phase in scaled mode.
+        /// Draw everything (fill, border, text) in the post-scale phase for correct z-ordering.
         /// </summary>
-        private void DrawFills()
+        private void DrawAllPostScale(Vector2 scaledPos, float scale)
         {
             var backgroundColor = _state switch
             {
@@ -150,28 +155,6 @@ namespace EndlessClient.UI.Controls
                 ButtonState.Hover => _styleProvider.ButtonHover,
                 _ => _styleProvider.ButtonNormal
             };
-            var cornerRadius = _styleProvider.CornerRadius;
-
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
-
-            _spriteBatch.Begin(transformMatrix: transform);
-
-            // Draw background only
-            if (cornerRadius > 0)
-                DrawingPrimitives.DrawRoundedRect(_spriteBatch, bounds, backgroundColor, cornerRadius);
-            else
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, bounds, backgroundColor);
-
-            _spriteBatch.End();
-        }
-
-        /// <summary>
-        /// Draw borders and text in post-scale phase for crisp rendering.
-        /// </summary>
-        private void DrawBordersAndText(Vector2 scaledPos, float scale)
-        {
             var borderColor = _styleProvider.ButtonBorder;
             var textColor = _styleProvider.ButtonText;
             var cornerRadius = _styleProvider.CornerRadius;
@@ -188,6 +171,12 @@ namespace EndlessClient.UI.Controls
 
             _spriteBatch.Begin();
 
+            // Draw fill
+            if (cornerRadius > 0)
+                DrawingPrimitives.DrawRoundedRect(_spriteBatch, scaledBounds, backgroundColor, (int)(cornerRadius * scale));
+            else
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, scaledBounds, backgroundColor);
+
             // Draw border
             if (cornerRadius > 0)
                 DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, scaledBounds, borderColor, (int)(cornerRadius * scale), Math.Max(1, (int)(borderThickness * scale)));
@@ -202,16 +191,13 @@ namespace EndlessClient.UI.Controls
                     (int)(scaledPos.X + (scaledWidth - textSize.Width) / 2),
                     (int)(scaledPos.Y + (scaledHeight - textSize.Height) / 2));
 
-                // Shadow (1px offset, dark)
-                var shadowColor = new Color(0, 0, 0, 180);
-                _spriteBatch.DrawString(font, _text, textPos + new Vector2(1, 1), shadowColor);
-
-                // Main text
                 _spriteBatch.DrawString(font, _text, textPos, textColor);
             }
 
             _spriteBatch.End();
         }
+
+
 
 
     }

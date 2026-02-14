@@ -50,7 +50,8 @@ namespace EndlessClient.HUD.Panels
                 .MatchNone(() =>
                 {
                     _dragging = Option.Some(this);
-                    DrawPosition = DrawPositionWithParentOffset + eventArgs.DistanceMoved;
+                    var scale = XNADialog.GameViewportProvider?.ScaleFactor ?? 1f;
+                    DrawPosition += eventArgs.DistanceMoved / scale;
                 });
 
             return true;

@@ -38,7 +38,12 @@ namespace EndlessClient.HUD.Panels
         // Base font pixel size for dynamic scaling (14px = FontSize11)
         private const int BaseFontPixelSize = 14;
 
-        private readonly ScrollBar _scrollBar;
+        // Inline scroll state (replaces ScrollBar child which can't render in post-scale mode)
+        private int _scrollOffset;
+        private int _totalLines;
+        private bool _isDraggingThumb;
+        private int _dragStartY;
+        private int _dragStartOffset;
         private readonly INativeGraphicsManager _nativeGraphicsManager;
         private readonly Dictionary<ChatTab, CodeDrawnChatTabInfo> _tabs;
 
@@ -46,6 +51,24 @@ namespace EndlessClient.HUD.Panels
         private const int PanelHeight = 186; // 10 lines (130) + extra buffer (8) + gaps + input bar (22) + tabs (14) + padding
         private const int VisibleLines = 10; // Reduced from 10 to fit larger FontSize10 text
         private const int InputBarHeight = 22;
+
+        // Collapse/expand state
+        private const int CollapsedButtonSize = 28;
+        private const int MinimizeButtonSize = 12;
+        private const int BadgeSize = 16;
+        private bool _isCollapsed;
+        private int _unreadCount;
+        private Dictionary<ChatTab, int> _lastSeenCounts = new Dictionary<ChatTab, int>();
+        private int _lastScrollWheelValue;
+
+        // Scrollbar layout constants (in panel-local unscaled coords)
+        private const int ScrollBarWidth = 16;
+        private const int ScrollArrowHeight = 16;
+        private const int ScrollBarLeft = PanelWidth - ScrollBarWidth - 4; // 469
+        private const int ScrollBarTop = 2;
+        private int ScrollBarHeight => VisibleLines * 13 + 8; // message area height = 138
+        private int ScrollTrackHeight => ScrollBarHeight - ScrollArrowHeight * 2;
+        private int MaxScrollOffset => Math.Max(0, _totalLines - VisibleLines);
 
         // Integrated text input
         private ChatInputTextBox _inputTextBox;
@@ -95,15 +118,6 @@ namespace EndlessClient.HUD.Panels
 
             DrawArea = new Rectangle(102, 280, PanelWidth, PanelHeight); // Y position adjusted for taller panel
 
-            // Message area height: roughly 10 lines * 13px = 130px
-            _scrollBar = new ScrollBar(new Vector2(467, 2), new Vector2(16, 127), ScrollBarColors.LightOnMed, _nativeGraphicsManager)
-            {
-                LinesToRender = VisibleLines,
-                Visible = true
-            };
-            _scrollBar.SetParentControl(this);
-            SetScrollWheelHandler(_scrollBar);
-
             // Create integrated text input box with WASD filtering
             // Position: below message area (130px + 8 buffer) + gap (4) = 146, relative to panel
             var inputY = 4 + VisibleLines * 13 + 8 + 4 + 3; // message area top + height + buffer + gap + padding inside input bar
@@ -133,7 +147,6 @@ namespace EndlessClient.HUD.Panels
         public override void Initialize()
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
-            _scrollBar.Initialize();
             _inputTextBox.Initialize();
 
             // Initialize max width after font is loaded
@@ -154,15 +167,72 @@ namespace EndlessClient.HUD.Panels
                     info.CachedChat = _chatProvider.AllChat[tab].ToHashSet();
                     info.Renderables = _chatRenderableGenerator.GenerateChatRenderables(info.CachedChat).ToList();
 
-                    if (info.Active)
+                    if (info.Active && !_isCollapsed)
                     {
-                        _scrollBar.UpdateDimensions(info.Renderables.Count);
-                        _scrollBar.ScrollToEnd();
+                        _totalLines = info.Renderables.Count;
+                        ScrollToEnd();
                     }
                     else
                     {
                         info.CachedScrollOffset = Math.Max(0, info.Renderables.Count - VisibleLines);
                         info.HasUnread = true;
+                    }
+                }
+            }
+
+            // Track unread messages while collapsed (excluding System tab)
+            if (_isCollapsed)
+            {
+                _unreadCount = 0;
+                foreach (var tab in _tabs.Keys.Where(t => t != ChatTab.System))
+                {
+                    var currentCount = _chatProvider.AllChat[tab].Count;
+                    if (_lastSeenCounts.TryGetValue(tab, out var lastCount) && currentCount > lastCount)
+                        _unreadCount += currentCount - lastCount;
+                }
+            }
+
+            // Handle scroll wheel
+            if (!_isCollapsed)
+            {
+                var mouseState = Mouse.GetState();
+                var wheelDelta = mouseState.ScrollWheelValue - _lastScrollWheelValue;
+                _lastScrollWheelValue = mouseState.ScrollWheelValue;
+                if (wheelDelta != 0)
+                {
+                    // Check if mouse is over the panel
+                    var transformedMouse = TransformMousePosition(new Point(mouseState.X, mouseState.Y));
+                    var panelRect = new Rectangle(DrawAreaWithParentOffset.X, DrawAreaWithParentOffset.Y, PanelWidth, PanelHeight);
+                    if (panelRect.Contains(transformedMouse))
+                    {
+                        if (wheelDelta > 0)
+                            ScrollUp(3);
+                        else
+                            ScrollDown(3);
+                    }
+                }
+            }
+
+            // Handle thumb dragging
+            if (_isDraggingThumb)
+            {
+                var mouseState = Mouse.GetState();
+                if (mouseState.LeftButton == ButtonState.Released)
+                {
+                    _isDraggingThumb = false;
+                }
+                else if (MaxScrollOffset > 0)
+                {
+                    var currentMousePos = TransformMousePosition(new Point(mouseState.X, mouseState.Y));
+                    var localY = currentMousePos.Y - DrawAreaWithParentOffset.Y;
+
+                    var thumbHeight = GetThumbHeight();
+                    var usableTrack = ScrollTrackHeight - thumbHeight;
+                    if (usableTrack > 0)
+                    {
+                        var dragDelta = localY - _dragStartY;
+                        var offsetDelta = (int)((dragDelta / (float)usableTrack) * MaxScrollOffset);
+                        _scrollOffset = Math.Clamp(_dragStartOffset + offsetDelta, 0, MaxScrollOffset);
                     }
                 }
             }
@@ -175,6 +245,56 @@ namespace EndlessClient.HUD.Panels
             // Transform mouse position for scaled mode
             var mousePos = TransformMousePosition(eventArgs.Position);
             var panelPos = DrawAreaWithParentOffset;
+
+            // If collapsed, check if clicking the collapsed button to expand
+            if (_isCollapsed)
+            {
+                var btnRect = new Rectangle(panelPos.X, panelPos.Y, CollapsedButtonSize, CollapsedButtonSize);
+                if (btnRect.Contains(mousePos))
+                {
+                    _isCollapsed = false;
+                    _unreadCount = 0;
+                    _lastSeenCounts.Clear();
+                    _inputTextBox.Selected = true;
+
+                    // Expand panel rightward from collapsed button's current position, clamped to screen
+                    var expandedX = DrawArea.X;
+                    var expandedY = DrawArea.Y;
+                    expandedX = Math.Clamp(expandedX, 0, WindowSizeProvider.GameWidth - PanelWidth);
+                    expandedY = Math.Clamp(expandedY, 0, WindowSizeProvider.GameHeight - PanelHeight);
+                    DrawArea = new Rectangle(expandedX, expandedY, PanelWidth, PanelHeight);
+
+                    // Refresh the active tab's scroll state
+                    var activeInfo = _tabs[CurrentTab];
+                    _totalLines = activeInfo.Renderables.Count;
+                    ScrollToEnd();
+                }
+                return true;
+            }
+
+            // Check minimize button (top-left corner of panel)
+            var minBtnRect = new Rectangle(
+                panelPos.X + 4,
+                panelPos.Y + 2,
+                MinimizeButtonSize,
+                MinimizeButtonSize);
+            if (minBtnRect.Contains(mousePos))
+            {
+                _isCollapsed = true;
+                _unreadCount = 0;
+                _lastSeenCounts.Clear();
+                _inputTextBox.Selected = false;
+                foreach (var tab in _tabs.Keys)
+                    _lastSeenCounts[tab] = _chatProvider.AllChat[tab].Count;
+
+                // Shrink DrawArea to just the collapsed button (left side / top-left corner)
+                DrawArea = new Rectangle(
+                    DrawArea.X,
+                    DrawArea.Y,
+                    CollapsedButtonSize,
+                    CollapsedButtonSize);
+                return true;
+            }
 
             // Check if clicked on a tab
             foreach (var pair in _tabs.Where(x => x.Value.Visible))
@@ -205,12 +325,77 @@ namespace EndlessClient.HUD.Panels
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
         {
+            if (_isCollapsed) return true;
+
             if (eventArgs.Button == MouseButton.Right)
             {
                 HandleRightClick(eventArgs);
+                return true;
+            }
+
+            // Check scrollbar interaction (must be in HandleMouseDown to prevent base drag from moving window)
+            var mousePos = TransformMousePosition(eventArgs.Position);
+            var panelPos = DrawAreaWithParentOffset;
+            var localX = mousePos.X - panelPos.X;
+            var localY = mousePos.Y - panelPos.Y;
+
+            if (localX >= ScrollBarLeft && localX < ScrollBarLeft + ScrollBarWidth
+                && localY >= ScrollBarTop && localY < ScrollBarTop + ScrollBarHeight)
+            {
+                var sbLocalY = localY - ScrollBarTop;
+
+                // Up arrow
+                if (sbLocalY < ScrollArrowHeight)
+                {
+                    ScrollUp();
+                    return true;
+                }
+
+                // Down arrow
+                if (sbLocalY >= ScrollBarHeight - ScrollArrowHeight)
+                {
+                    ScrollDown();
+                    return true;
+                }
+
+                // Track area — page scroll or start thumb drag
+                if (_totalLines > VisibleLines)
+                {
+                    var trackLocalY = sbLocalY - ScrollArrowHeight;
+                    var thumbY = GetThumbY();
+                    var thumbHeight = GetThumbHeight();
+
+                    if (trackLocalY >= thumbY && trackLocalY < thumbY + thumbHeight)
+                    {
+                        // Start thumb drag
+                        _isDraggingThumb = true;
+                        _dragStartY = localY;
+                        _dragStartOffset = _scrollOffset;
+                    }
+                    else if (trackLocalY < thumbY)
+                    {
+                        _scrollOffset = Math.Max(0, _scrollOffset - VisibleLines);
+                    }
+                    else
+                    {
+                        _scrollOffset = Math.Min(MaxScrollOffset, _scrollOffset + VisibleLines);
+                    }
+                }
+
+                return true;
             }
 
             return base.HandleMouseDown(control, eventArgs);
+        }
+
+        protected override bool HandleDrag(IXNAControl control, MouseEventArgs eventArgs)
+        {
+            // When dragging the scrollbar thumb, suppress the base DraggableHudPanel behavior
+            // which would move the entire window
+            if (_isDraggingThumb)
+                return true;
+
+            return base.HandleDrag(control, eventArgs);
         }
 
         private void HandleRightClick(MouseEventArgs eventArgs)
@@ -219,9 +404,9 @@ namespace EndlessClient.HUD.Panels
             var clickedChatRow = (int)Math.Round(clickedYRelativeToTopOfPanel / 13.0) - 1;
             var currentTabInfo = _tabs[CurrentTab];
 
-            if (clickedChatRow >= 0 && _scrollBar.ScrollOffset + clickedChatRow < currentTabInfo.CachedChat.Count)
+            if (clickedChatRow >= 0 && _scrollOffset + clickedChatRow < currentTabInfo.CachedChat.Count)
             {
-                var who = _chatProvider.AllChat[CurrentTab][_scrollBar.ScrollOffset + clickedChatRow].Who;
+                var who = _chatProvider.AllChat[CurrentTab][_scrollOffset + clickedChatRow].Who;
                 if (!string.IsNullOrEmpty(who))
                 {
                     // Use integrated text input
@@ -242,6 +427,12 @@ namespace EndlessClient.HUD.Panels
 
             var scaledPos = CalculateScaledPosition(scaleFactor, renderOffset);
 
+            if (_isCollapsed)
+            {
+                DrawCollapsedButton(scaledPos, scaleFactor);
+                return;
+            }
+
             // Draw fills first, then text/borders - each panel complete before next
             DrawPanelFills(scaledPos, scaleFactor);
 
@@ -253,6 +444,12 @@ namespace EndlessClient.HUD.Panels
 
             // Draw input textbox text post-scale for crisp text
             DrawInputTextScaled(scaledPos, scaleFactor);
+
+            // Draw scrollbar
+            DrawScrollbar(scaledPos, scaleFactor);
+
+            // Draw minimize button in top-left corner
+            DrawMinimizeButton(scaledPos, scaleFactor);
         }
 
         // Required by base class but not used since we override DrawPostScale completely with custom drawing
@@ -295,7 +492,7 @@ namespace EndlessClient.HUD.Panels
             DrawingPrimitives.DrawFilledRect(_spriteBatch, inputBarRect, _styleProvider.InputBackground);
 
             // Draw ">" prompt
-            _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), Color.White);
+            _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), _styleProvider.InputText);
 
             _spriteBatch.End();
         }
@@ -378,7 +575,7 @@ namespace EndlessClient.HUD.Panels
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, inputBarRect, _styleProvider.PanelBorder, 1);
 
                 // Draw ">" prompt
-                _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), Color.White);
+                _spriteBatch.DrawString(_labelFont, ">", new Vector2(inputBarRect.X + padding, inputBarRect.Y + (int)(3 * scale)), _styleProvider.InputText);
             }
 
             // Draw tabs (scaled)
@@ -414,7 +611,7 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
 
             var activeTabInfo = _tabs[CurrentTab];
-            foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
+            foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollOffset).Take(VisibleLines).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
                 renderable.RenderWithClipping(this, _spriteBatch, _chatFont);
@@ -454,7 +651,7 @@ namespace EndlessClient.HUD.Panels
             _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
 
             var activeTabInfo = _tabs[CurrentTab];
-            foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollBar.ScrollOffset).Take(_scrollBar.LinesToRender).Select((r, i) => (i, r)))
+            foreach (var (ndx, renderable) in activeTabInfo.Renderables.Skip(_scrollOffset).Take(VisibleLines).Select((r, i) => (i, r)))
             {
                 renderable.DisplayIndex = ndx;
                 renderable.RenderScaledWithClipping(_spriteBatch, FontScaleHelper.GetScaledFont(_contentProvider, BaseFontPixelSize, scaleFactor), messageAreaPos, scaleFactor);
@@ -513,7 +710,7 @@ namespace EndlessClient.HUD.Panels
             graphicsDevice.ScissorRectangle = scissorRect;
 
             _spriteBatch.Begin(rasterizerState: _scissorRasterizerState);
-            _spriteBatch.DrawString(scaledFont, text, inputTextPos, Color.White);
+            _spriteBatch.DrawString(scaledFont, text, inputTextPos, _styleProvider.InputText);
             _spriteBatch.End();
 
             graphicsDevice.ScissorRectangle = previousScissorRectangle;
@@ -537,7 +734,7 @@ namespace EndlessClient.HUD.Panels
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
 
                 // Draw tab label
-                var labelColor = info.Active ? Color.White : _styleProvider.TextSecondary;
+                var labelColor = info.Active ? _styleProvider.TabText : _styleProvider.TextSecondary;
                 var textPos = new Vector2(absRect.X + 16, absRect.Y + 2);
                 _spriteBatch.DrawString(_labelFont, info.Label, textPos, labelColor);
 
@@ -546,7 +743,7 @@ namespace EndlessClient.HUD.Panels
                 {
                     var closeRect = new Rectangle(absRect.X + 3, absRect.Y + 3, 12, 12);
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, new Color(150, 50, 50));
-                    _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + 2, closeRect.Y - 1), Color.White);
+                    _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + 2, closeRect.Y - 1), _styleProvider.TabText);
                 }
             }
         }
@@ -572,7 +769,7 @@ namespace EndlessClient.HUD.Panels
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
 
                 // Draw tab label
-                var labelColor = info.Active ? Color.White : _styleProvider.TextSecondary;
+                var labelColor = info.Active ? _styleProvider.TabText : _styleProvider.TextSecondary;
                 var textPos = new Vector2(absRect.X + (int)(16 * scale), absRect.Y + (int)(2 * scale));
                 _spriteBatch.DrawString(_labelFont, info.Label, textPos, labelColor);
 
@@ -582,9 +779,191 @@ namespace EndlessClient.HUD.Panels
                     var closeSize = (int)(12 * scale);
                     var closeRect = new Rectangle(absRect.X + (int)(3 * scale), absRect.Y + (int)(3 * scale), closeSize, closeSize);
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, new Color(150, 50, 50));
-                    _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + (int)(2 * scale), closeRect.Y - (int)(1 * scale)), Color.White);
+                    _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + (int)(2 * scale), closeRect.Y - (int)(1 * scale)), _styleProvider.TabText);
                 }
             }
+        }
+
+        private void DrawCollapsedButton(Vector2 scaledPos, float scale)
+        {
+            var btnSize = (int)(CollapsedButtonSize * scale);
+            // When collapsed, DrawArea is already positioned at the right side, so scaledPos is correct
+            var btnRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, btnSize, btnSize);
+
+            _spriteBatch.Begin();
+
+            // Button background with border
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, btnRect, _styleProvider.PanelBackground);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, btnRect, _styleProvider.PanelBorder, Math.Max(1, (int)(2 * scale)));
+
+            // Draw chat bubble icon using lines/shapes
+            var iconMargin = (int)(6 * scale);
+            var iconRect = new Rectangle(btnRect.X + iconMargin, btnRect.Y + iconMargin,
+                                          btnSize - iconMargin * 2, btnSize - iconMargin * 2);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, iconRect, _styleProvider.ButtonNormal);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, iconRect, _styleProvider.PanelBorder, 1);
+
+            // Draw "..." dots inside the chat bubble
+            var dotSize = Math.Max(2, (int)(2 * scale));
+            var dotY = iconRect.Y + (iconRect.Height - dotSize) / 2;
+            var dotSpacing = (iconRect.Width - dotSize * 3) / 4;
+            for (int i = 0; i < 3; i++)
+            {
+                var dotX = iconRect.X + dotSpacing * (i + 1) + dotSize * i;
+                var dotRect = new Rectangle(dotX, dotY, dotSize, dotSize);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, dotRect, _styleProvider.TextPrimary);
+            }
+
+            // Draw unread badge if there are unread messages
+            if (_unreadCount > 0)
+            {
+                var badgeRadius = (int)(BadgeSize * scale / 2);
+                var badgeCenterX = btnRect.Right - badgeRadius + (int)(2 * scale);
+                var badgeCenterY = btnRect.Top + badgeRadius - (int)(2 * scale);
+                var badgeRect = new Rectangle(badgeCenterX - badgeRadius, badgeCenterY - badgeRadius,
+                                               badgeRadius * 2, badgeRadius * 2);
+
+                // Red badge circle (approximated with filled rect — matches code-drawn style)
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeRect, new Color(220, 50, 50));
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, badgeRect, new Color(180, 30, 30), 1);
+
+                // Badge text
+                var badgeText = _unreadCount > 99 ? "99+" : _unreadCount.ToString();
+                var textSize = _labelFont.MeasureString(badgeText);
+                var textPos = new Vector2(
+                    badgeCenterX - textSize.Width / 2,
+                    badgeCenterY - textSize.Height / 2);
+                _spriteBatch.DrawString(_labelFont, badgeText, textPos, Color.White);
+            }
+
+            _spriteBatch.End();
+        }
+
+        private void DrawMinimizeButton(Vector2 scaledPos, float scale)
+        {
+            var btnW = (int)(MinimizeButtonSize * scale);
+            var btnH = (int)(MinimizeButtonSize * scale);
+            var btnX = (int)(scaledPos.X + 4 * scale);
+            var btnY = (int)(scaledPos.Y + 2 * scale);
+            var btnRect = new Rectangle(btnX, btnY, btnW, btnH);
+
+            // Check hover state for visual feedback
+            var mouseState = Mouse.GetState();
+            var isHovered = mouseState.X >= btnX && mouseState.X < btnX + btnW
+                         && mouseState.Y >= btnY && mouseState.Y < btnY + btnH;
+
+            _spriteBatch.Begin();
+
+            var bgColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, btnRect, bgColor);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, btnRect, _styleProvider.PanelBorder, 1);
+
+            // Draw "—" line in center of button
+            var lineY = btnY + btnH / 2;
+            var lineMargin = (int)(3 * scale);
+            var lineRect = new Rectangle(btnX + lineMargin, lineY, btnW - lineMargin * 2, Math.Max(1, (int)(2 * scale)));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, lineRect, _styleProvider.TextPrimary);
+
+            _spriteBatch.End();
+        }
+
+        private void DrawScrollbar(Vector2 pos, float scale)
+        {
+            var sbX = (int)(pos.X + ScrollBarLeft * scale);
+            var sbY = (int)(pos.Y + ScrollBarTop * scale);
+            var sbW = (int)(ScrollBarWidth * scale);
+            var sbH = (int)(ScrollBarHeight * scale);
+            var arrowH = (int)(ScrollArrowHeight * scale);
+
+            var trackColor = _styleProvider.PanelBackground;
+            var borderColor = _styleProvider.PanelBorder;
+            var btnColor = _styleProvider.ButtonNormal;
+            var btnHover = _styleProvider.ButtonHover;
+
+            _spriteBatch.Begin();
+
+            // Track background
+            var trackRect = new Rectangle(sbX, sbY, sbW, sbH);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, trackRect, trackColor);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, trackRect, borderColor, 1);
+
+            // Check mouse hover for button highlights
+            var mouseState = Mouse.GetState();
+            var mouseOverUp = mouseState.X >= sbX && mouseState.X < sbX + sbW
+                           && mouseState.Y >= sbY && mouseState.Y < sbY + arrowH;
+            var mouseOverDown = mouseState.X >= sbX && mouseState.X < sbX + sbW
+                             && mouseState.Y >= sbY + sbH - arrowH && mouseState.Y < sbY + sbH;
+
+            // Up arrow button
+            var upRect = new Rectangle(sbX, sbY, sbW, arrowH);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, upRect, mouseOverUp ? btnHover : btnColor);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, upRect, borderColor, 1);
+            var arrowSize = (int)(5 * scale);
+            DrawArrow(_spriteBatch, sbX + sbW / 2, sbY + arrowH / 2, arrowSize, true, _styleProvider.TextPrimary);
+
+            // Down arrow button
+            var downRect = new Rectangle(sbX, sbY + sbH - arrowH, sbW, arrowH);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, downRect, mouseOverDown ? btnHover : btnColor);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, downRect, borderColor, 1);
+            DrawArrow(_spriteBatch, sbX + sbW / 2, sbY + sbH - arrowH / 2, arrowSize, false, _styleProvider.TextPrimary);
+
+            // Thumb
+            if (_totalLines > VisibleLines)
+            {
+                var thumbHeight = (int)(GetThumbHeight() * scale);
+                var thumbYPos = sbY + arrowH + (int)(GetThumbY() * scale);
+                var thumbRect = new Rectangle(sbX + (int)(2 * scale), thumbYPos, sbW - (int)(4 * scale), thumbHeight);
+
+                var thumbColor = _isDraggingThumb ? _styleProvider.ButtonPressed : btnHover;
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, thumbRect, thumbColor);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, borderColor, 1);
+            }
+
+            _spriteBatch.End();
+        }
+
+        private static void DrawArrow(SpriteBatch sb, int cx, int cy, int size, bool up, Color color)
+        {
+            var dir = up ? -1 : 1;
+            for (int row = 0; row < size; row++)
+            {
+                var width = (row * 2) + 1;
+                var x = cx - row;
+                var y = cy + dir * (size / 2 - row);
+                DrawingPrimitives.DrawFilledRect(sb, new Rectangle(x, y, width, 1), color);
+            }
+        }
+
+        private int GetThumbHeight()
+        {
+            if (_totalLines <= VisibleLines)
+                return ScrollTrackHeight;
+            return Math.Max(20, (int)(ScrollTrackHeight * ((float)VisibleLines / _totalLines)));
+        }
+
+        private int GetThumbY()
+        {
+            if (MaxScrollOffset <= 0) return 0;
+            var thumbHeight = GetThumbHeight();
+            var usableTrack = ScrollTrackHeight - thumbHeight;
+            return (int)(usableTrack * ((float)_scrollOffset / MaxScrollOffset));
+        }
+
+        private void ScrollUp(int lines = 1)
+        {
+            if (_totalLines <= VisibleLines) return;
+            _scrollOffset = Math.Max(0, _scrollOffset - lines);
+        }
+
+        private void ScrollDown(int lines = 1)
+        {
+            if (_totalLines <= VisibleLines) return;
+            _scrollOffset = Math.Min(MaxScrollOffset, _scrollOffset + lines);
+        }
+
+        private void ScrollToEnd()
+        {
+            _scrollOffset = MaxScrollOffset;
         }
 
         private Rectangle GetTabRect(ChatTab tab)
@@ -637,15 +1016,15 @@ namespace EndlessClient.HUD.Panels
 
             var currentInfo = _tabs[CurrentTab];
             currentInfo.Active = false;
-            currentInfo.CachedScrollOffset = _scrollBar.ScrollOffset;
+            currentInfo.CachedScrollOffset = _scrollOffset;
 
             var newInfo = _tabs[clickedTab];
             newInfo.Visible = true;
             newInfo.Active = true;
             newInfo.HasUnread = false;
-            _scrollBar.SetScrollOffset(newInfo.CachedScrollOffset);
+            _scrollOffset = newInfo.CachedScrollOffset;
 
-            _scrollBar.UpdateDimensions(_chatProvider.AllChat[clickedTab].Count);
+            _totalLines = _chatProvider.AllChat[clickedTab].Count;
         }
 
         public void ClosePMTab(ChatTab whichTab)

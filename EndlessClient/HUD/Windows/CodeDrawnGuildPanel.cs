@@ -55,6 +55,7 @@ namespace EndlessClient.HUD.Windows
         private const int Padding = 6;
         private const int RowHeight = 16;
         private const int ExpBarHeight = 10;
+        private const int ScrollBarWidth = 8;
         private const int ContentAreaHeight = PanelHeight - HeaderHeight - TabBarHeight - 36; // visible scrollable area
         private const double PollIntervalSeconds = 2.0;
 
@@ -95,6 +96,11 @@ namespace EndlessClient.HUD.Windows
         private string[] _actionButtonLabels = Array.Empty<string>();
         private string[] _actionButtonCommands = Array.Empty<string>();
         private int _fixedButtonCount; // number of leading buttons that are fixed (non-scrolling)
+
+        // Scrollbar drag state
+        private bool _isDraggingScrollbar;
+        private int _scrollbarDragStartY;
+        private float _scrollbarDragStartOffset;
 
         public CodeDrawnGuildPanel(
             IUIStyleProvider styleProvider,
@@ -153,6 +159,33 @@ namespace EndlessClient.HUD.Windows
             }
         }
 
+        protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
+        {
+            if (eventArgs.Button == MonoGame.Extended.Input.MouseButton.Left)
+            {
+                // Check if mouse-down is on the scrollbar thumb to start dragging
+                var scale = _clientWindowSizeProvider.ScaleFactor;
+                var offset = _clientWindowSizeProvider.RenderOffset;
+                var logicalMouseX = (int)((eventArgs.Position.X - offset.X) / scale);
+                var logicalMouseY = (int)((eventArgs.Position.Y - offset.Y) / scale);
+
+                if (TryStartScrollbarDrag(logicalMouseX, logicalMouseY))
+                    return true;
+            }
+
+            return base.HandleMouseDown(control, eventArgs);
+        }
+
+        protected override bool HandleDrag(IXNAControl control, MouseEventArgs eventArgs)
+        {
+            // When dragging the scrollbar thumb, suppress the base DraggableHudPanel behavior
+            // which would move the entire window
+            if (_isDraggingScrollbar)
+                return true;
+
+            return base.HandleDrag(control, eventArgs);
+        }
+
         protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
         {
             if (eventArgs.Button != MonoGame.Extended.Input.MouseButton.Left)
@@ -166,6 +199,10 @@ namespace EndlessClient.HUD.Windows
 
             var localX = logicalMouseX - DrawAreaWithParentOffset.X;
             var localY = logicalMouseY - DrawAreaWithParentOffset.Y;
+
+            // Scrollbar click detection (before other content)
+            if (HandleScrollbarClick(logicalMouseX, logicalMouseY))
+                return true;
 
             // Tab bar click detection
             if (localY >= HeaderHeight && localY < HeaderHeight + TabBarHeight)
@@ -260,6 +297,7 @@ namespace EndlessClient.HUD.Windows
                 }
 
                 HandleScrollWheel();
+                HandleScrollbarDrag();
                 UpdateHoverState();
             }
             else
@@ -749,6 +787,7 @@ namespace EndlessClient.HUD.Windows
             DrawTabBar(scaledPos, scale, font);
             DrawTabContent(scaledPos, scale, font);
             DrawActionButtons(scaledPos, scale, font);
+            DrawScrollbar(scaledPos, scale);
 
             _spriteBatch.End();
         }
@@ -768,6 +807,7 @@ namespace EndlessClient.HUD.Windows
             DrawTabBar(pos, 1f, _labelFont);
             DrawTabContent(pos, 1f, _labelFont);
             DrawActionButtons(pos, 1f, _labelFont);
+            DrawScrollbar(pos, 1f);
 
             _spriteBatch.End();
         }
@@ -1257,6 +1297,212 @@ namespace EndlessClient.HUD.Windows
                         absRect.Y + (absRect.Height - textSize.Height) / 2),
                     ActionButtonText);
             }
+        }
+
+        private bool IsScrollableTab => _activeTab != GuildTab.Overview;
+
+        /// <summary>
+        /// Gets the scrollbar geometry for the current tab, in scaled screen coordinates.
+        /// </summary>
+        private (Rectangle track, Rectangle thumb, Rectangle upArrow, Rectangle downArrow) GetScrollbarGeometry(Vector2 pos, float scale)
+        {
+            var contentTop = (int)(pos.Y + (HeaderHeight + TabBarHeight) * scale);
+            var contentBottom = (int)(pos.Y + (PanelHeight - 36) * scale);
+            var trackHeight = contentBottom - contentTop;
+            var sbX = (int)(pos.X + (PanelWidth - ScrollBarWidth) * scale);
+            var sbW = (int)(ScrollBarWidth * scale);
+            var arrowH = Math.Max(1, (int)(10 * scale));
+
+            var track = new Rectangle(sbX, contentTop, sbW, trackHeight);
+            var upArrow = new Rectangle(sbX, contentTop, sbW, arrowH);
+            var downArrow = new Rectangle(sbX, contentBottom - arrowH, sbW, arrowH);
+
+            // Thumb
+            var tabIndex = (int)_activeTab;
+            var contentHeight = GetContentHeight(_activeTab);
+            var innerTrack = trackHeight - arrowH * 2;
+            var thumbHeight = innerTrack;
+            var thumbY = contentTop + arrowH;
+
+            if (contentHeight > ContentAreaHeight && ContentAreaHeight > 0)
+            {
+                thumbHeight = Math.Max(arrowH, (int)(innerTrack * ((float)ContentAreaHeight / contentHeight)));
+                var maxScroll = contentHeight - ContentAreaHeight;
+                var scrollRatio = Math.Clamp(_tabScrollOffsets[tabIndex] / maxScroll, 0f, 1f);
+                thumbY = contentTop + arrowH + (int)((innerTrack - thumbHeight) * scrollRatio);
+            }
+
+            var thumb = new Rectangle(sbX, thumbY, sbW, thumbHeight);
+            return (track, thumb, upArrow, downArrow);
+        }
+
+        /// <summary>
+        /// Draws an inline scrollbar on the right edge of scrollable tab content.
+        /// </summary>
+        private void DrawScrollbar(Vector2 pos, float scale)
+        {
+            if (!IsScrollableTab) return;
+
+            var (track, thumb, upArrow, downArrow) = GetScrollbarGeometry(pos, scale);
+            var borderColor = _styleProvider.PanelBorder;
+
+            // Track background
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, track, new Color(_styleProvider.PanelBackground, 0.95f));
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, track, borderColor, 1);
+
+            // Up arrow
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, upArrow, ActionButtonBg);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, upArrow, borderColor, 1);
+
+            // Down arrow
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, downArrow, ActionButtonBg);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, downArrow, borderColor, 1);
+
+            // Thumb
+            var thumbColor = _isDraggingScrollbar ? _styleProvider.ButtonPressed : _styleProvider.ButtonHover;
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, thumb, thumbColor);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, thumb, borderColor, 1);
+        }
+
+        /// <summary>
+        /// Handle scrollbar thumb dragging during update.
+        /// </summary>
+        private void HandleScrollbarDrag()
+        {
+            if (!_isDraggingScrollbar) return;
+
+            var mouseState = Microsoft.Xna.Framework.Input.Mouse.GetState();
+            if (mouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
+            {
+                _isDraggingScrollbar = false;
+                return;
+            }
+
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var mouseY = (int)((mouseState.Y - offset.Y) / scale);
+
+            var area = DrawAreaWithParentOffset;
+            var contentTop = area.Y + HeaderHeight + TabBarHeight;
+            var contentBottom = area.Y + PanelHeight - 36;
+            var trackHeight = contentBottom - contentTop;
+            var arrowH = 10;
+            var innerTrack = trackHeight - arrowH * 2;
+
+            var contentHeight = GetContentHeight(_activeTab);
+            if (contentHeight <= ContentAreaHeight) return;
+
+            var thumbHeight = Math.Max(arrowH, (int)(innerTrack * ((float)ContentAreaHeight / contentHeight)));
+            var usableTrack = innerTrack - thumbHeight;
+            if (usableTrack <= 0) return;
+
+            var dragDelta = mouseY - _scrollbarDragStartY;
+            var maxScroll = contentHeight - ContentAreaHeight;
+            var newOffset = _scrollbarDragStartOffset + (dragDelta / (float)usableTrack) * maxScroll;
+            var tabIndex = (int)_activeTab;
+            _tabScrollOffsets[tabIndex] = Math.Clamp(newOffset, 0f, maxScroll);
+        }
+
+        /// <summary>
+        /// Try to start scrollbar thumb drag — called from HandleMouseDown.
+        /// Returns true if the mouse is on the scrollbar thumb.
+        /// </summary>
+        private bool TryStartScrollbarDrag(int logicalMouseX, int logicalMouseY)
+        {
+            if (!IsScrollableTab) return false;
+
+            var area = DrawAreaWithParentOffset;
+            var sbX = area.X + PanelWidth - ScrollBarWidth;
+            if (logicalMouseX < sbX || logicalMouseX > area.X + PanelWidth)
+                return false;
+
+            var contentTop = area.Y + HeaderHeight + TabBarHeight;
+            var contentBottom = area.Y + PanelHeight - 36;
+            if (logicalMouseY < contentTop || logicalMouseY > contentBottom)
+                return false;
+
+            var tabIndex = (int)_activeTab;
+            var contentHeight = GetContentHeight(_activeTab);
+            var maxScroll = contentHeight - ContentAreaHeight;
+            if (maxScroll <= 0) return false;
+
+            var trackHeight = contentBottom - contentTop;
+            var arrowH = 10;
+            var localY = logicalMouseY - contentTop;
+
+            // Only handle thumb region
+            if (localY < arrowH || localY > trackHeight - arrowH)
+                return false;
+
+            var innerTrack = trackHeight - arrowH * 2;
+            var thumbHeight = Math.Max(arrowH, (int)(innerTrack * ((float)ContentAreaHeight / contentHeight)));
+            var scrollRatio = Math.Clamp(_tabScrollOffsets[tabIndex] / maxScroll, 0f, 1f);
+            var thumbY = arrowH + (int)((innerTrack - thumbHeight) * scrollRatio);
+
+            if (localY >= thumbY && localY <= thumbY + thumbHeight)
+            {
+                _isDraggingScrollbar = true;
+                _scrollbarDragStartY = logicalMouseY;
+                _scrollbarDragStartOffset = _tabScrollOffsets[tabIndex];
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Handle scrollbar click (arrows, track) — called from HandleClick.
+        /// Thumb drag is handled via HandleMouseDown + TryStartScrollbarDrag.
+        /// Returns true if the click was consumed.
+        /// </summary>
+        private bool HandleScrollbarClick(int logicalMouseX, int logicalMouseY)
+        {
+            if (!IsScrollableTab) return false;
+
+            var area = DrawAreaWithParentOffset;
+            var sbX = area.X + PanelWidth - ScrollBarWidth;
+            if (logicalMouseX < sbX || logicalMouseX > area.X + PanelWidth)
+                return false;
+
+            var contentTop = area.Y + HeaderHeight + TabBarHeight;
+            var contentBottom = area.Y + PanelHeight - 36;
+            if (logicalMouseY < contentTop || logicalMouseY > contentBottom)
+                return false;
+
+            var tabIndex = (int)_activeTab;
+            var contentHeight = GetContentHeight(_activeTab);
+            var maxScroll = contentHeight - ContentAreaHeight;
+            if (maxScroll <= 0) return true;
+
+            var trackHeight = contentBottom - contentTop;
+            var arrowH = 10;
+            var localY = logicalMouseY - contentTop;
+
+            // Up arrow
+            if (localY < arrowH)
+            {
+                _tabScrollOffsets[tabIndex] = Math.Max(0, _tabScrollOffsets[tabIndex] - RowHeight);
+                return true;
+            }
+
+            // Down arrow
+            if (localY > trackHeight - arrowH)
+            {
+                _tabScrollOffsets[tabIndex] = Math.Min(maxScroll, _tabScrollOffsets[tabIndex] + RowHeight);
+                return true;
+            }
+
+            // Track click — page up/down
+            var innerTrack = trackHeight - arrowH * 2;
+            var thumbHeight = Math.Max(arrowH, (int)(innerTrack * ((float)ContentAreaHeight / contentHeight)));
+            var scrollRatio = Math.Clamp(_tabScrollOffsets[tabIndex] / maxScroll, 0f, 1f);
+            var thumbY = arrowH + (int)((innerTrack - thumbHeight) * scrollRatio);
+
+            if (localY < thumbY)
+                _tabScrollOffsets[tabIndex] = Math.Max(0, _tabScrollOffsets[tabIndex] - ContentAreaHeight);
+            else if (localY > thumbY + thumbHeight)
+                _tabScrollOffsets[tabIndex] = Math.Min(maxScroll, _tabScrollOffsets[tabIndex] + ContentAreaHeight);
+            return true;
         }
     }
 }

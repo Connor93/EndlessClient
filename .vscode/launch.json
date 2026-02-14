@@ -41,11 +41,13 @@
             "name": "EndlessClient - Mac (arm64)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build-client-mac-arm",
-            "program": "${workspaceFolder}/bin/Debug/client/net8.0-macos/osx-arm64/EndlessClient.app/Contents/MacOS/EndlessClient",
-            "args": [],
-            "cwd": "${workspaceFolder}/bin/Debug/client/net8.0-macos/osx-arm64/EndlessClient.app",
-            "console": "internalConsole",
+            "preLaunchTask": "setup-and-build-client-mac",
+            "program": "dotnet",
+            "args": [
+                "${workspaceFolder}/bin/Debug/client/net10.0/osx-arm64/EndlessClient.dll"
+            ],
+            "cwd": "${workspaceFolder}/bin/Debug/client/net10.0/osx-arm64",
+            "console": "externalTerminal",
             "stopAtEntry": false
         },
         {

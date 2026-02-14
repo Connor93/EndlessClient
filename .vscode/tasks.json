@@ -45,9 +45,38 @@
                 "build",
                 "${workspaceFolder}/EndlessClient/EndlessClient.csproj",
                 "-r",
-                "osx-arm64"
+                "osx-arm64",
+                "-p:CheckEolWorkloads=false",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "setup-client-mac",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/bin/Debug/client/net10.0/osx-arm64 && mkdir -p mfx sfx jbox maps && ln -sfn ${workspaceFolder}/ClientAssets/gfx gfx && ln -sfn ${workspaceFolder}/ClientAssets/data data && ln -sfn ${workspaceFolder}/ClientAssets/pub pub && ln -sfn ${workspaceFolder}/ClientAssets/config config",
+            "problemMatcher": []
+        },
+        {
+            "label": "setup-and-build-client-mac",
+            "dependsOn": [
+                "build-client-mac-arm",
+                "setup-client-mac"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "run-client-mac",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/bin/Debug/client/net10.0/osx-arm64 && dotnet EndlessClient.dll",
+            "dependsOn": "setup-and-build-client-mac",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
         },
     ]
 }

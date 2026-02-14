@@ -145,6 +145,7 @@ namespace EndlessClient.Dialogs
             };
             _okButton.OnClick += (_, _) => Close(XNADialogResult.OK);
             _okButton.SetParentControl(this);
+            _okButton.SuppressPostScaleDraw = true;
 
             _cancelButton = new CodeDrawnButton(_styleProvider, _font, _contentProvider, _clientWindowSizeProvider)
             {
@@ -153,6 +154,7 @@ namespace EndlessClient.Dialogs
             };
             _cancelButton.OnClick += (_, _) => Close(XNADialogResult.Cancel);
             _cancelButton.SetParentControl(this);
+            _cancelButton.SuppressPostScaleDraw = true;
 
             DialogClosed += (_, _) => chatTextBoxActions.FocusChatTextBox();
 

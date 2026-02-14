@@ -190,7 +190,7 @@ namespace EndlessClient.UI.Controls
             var tooltipBounds = new Rectangle(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
 
             spriteBatch.Begin();
-            DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipBounds, new Color(20, 20, 25, 220));
+            DrawingPrimitives.DrawFilledRect(spriteBatch, tooltipBounds, _styleProvider.TooltipBackground);
             DrawingPrimitives.DrawRectBorder(spriteBatch, tooltipBounds, _styleProvider.ButtonBorder, 1);
             spriteBatch.DrawString(_tooltipFont, _tooltipText,
                 new Vector2(tooltipX + TOOLTIP_PAD_H, tooltipY + TOOLTIP_PAD_V),

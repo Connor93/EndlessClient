@@ -49,6 +49,7 @@ namespace EndlessClient.Dialogs
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly IContentProvider _contentProvider;
         private readonly BitmapFont _font;
+        private readonly BitmapFont _buttonFont;
 
         private HashSet<InventoryItem> _cachedItems;
         private ItemCategory _activeCategory = ItemCategory.All;
@@ -117,6 +118,7 @@ namespace EndlessClient.Dialogs
             _eifFileProvider = eifFileProvider;
             _contentProvider = contentProvider;
             _font = contentProvider.Fonts[Constants.FontSize08pt5];
+            _buttonFont = contentProvider.Fonts[Constants.FontSize10];
 
             _cachedItems = new HashSet<InventoryItem>();
 
@@ -175,8 +177,7 @@ namespace EndlessClient.Dialogs
                 }
                 else if (MaxScrollOffset > 0)
                 {
-                    var drawPos = DrawAreaWithParentOffset;
-                    var localY = mouseState.Y - drawPos.Y;
+                    var (_, localY) = ScreenToLocal(mouseState.X, mouseState.Y);
 
                     var thumbHeight = GetThumbHeight();
                     var usableTrack = ScrollTrackHeight - thumbHeight;
@@ -198,10 +199,7 @@ namespace EndlessClient.Dialogs
         private void UpdateHoveredTile()
         {
             var mouseState = Mouse.GetState();
-            var drawPos = DrawAreaWithParentOffset;
-
-            var localX = mouseState.X - drawPos.X;
-            var localY = mouseState.Y - drawPos.Y;
+            var (localX, localY) = ScreenToLocal(mouseState.X, mouseState.Y);
 
             _hoveredTileIndex = -1;
 
@@ -298,6 +296,22 @@ namespace EndlessClient.Dialogs
         {
             if (_totalRows <= VisibleRows) return;
             _scrollOffset = Math.Min(MaxScrollOffset, _scrollOffset + lines);
+        }
+
+        /// <summary>
+        /// Converts screen-space (window pixel) coordinates to dialog-local game-space coordinates.
+        /// Accounts for render scale factor and letterbox/pillarbox offset so that
+        /// hit-testing matches the visually rendered positions.
+        /// </summary>
+        private (int X, int Y) ScreenToLocal(int screenX, int screenY)
+        {
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var drawPos = DrawAreaWithParentOffset;
+
+            var localX = (int)((screenX - offset.X) / scale) - drawPos.X;
+            var localY = (int)((screenY - offset.Y) / scale) - drawPos.Y;
+            return (localX, localY);
         }
 
         private string GetDialogTitle()
@@ -609,11 +623,11 @@ namespace EndlessClient.Dialogs
             DrawingPrimitives.DrawFilledRect(_spriteBatch, btnRect, btnColor);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, btnRect, _styleProvider.ButtonBorder, 1);
 
-            var btnTextSize = font.MeasureString("Close");
+            var btnTextSize = _buttonFont.MeasureString("Close");
             var btnTextPos = new Vector2(
                 btnX + (btnW - btnTextSize.Width) / 2,
                 btnY + (btnH - btnTextSize.Height) / 2);
-            _spriteBatch.DrawString(font, "Close", btnTextPos, _styleProvider.ButtonText);
+            _spriteBatch.DrawString(_buttonFont, "Close", btnTextPos, _styleProvider.ButtonText);
         }
 
         private void DrawTabs(Vector2 pos, float scale, BitmapFont font)
@@ -741,9 +755,7 @@ namespace EndlessClient.Dialogs
 
         protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
         {
-            var drawPos = DrawAreaWithParentOffset;
-            var localX = eventArgs.Position.X - drawPos.X;
-            var localY = eventArgs.Position.Y - drawPos.Y;
+            var (localX, localY) = ScreenToLocal(eventArgs.Position.X, eventArgs.Position.Y);
 
             // Tab clicks
             if (localY >= TabAreaTop && localY < TabAreaTop + TabHeight)
@@ -798,9 +810,7 @@ namespace EndlessClient.Dialogs
                 return true;
             }
 
-            var drawPos = DrawAreaWithParentOffset;
-            var localX = eventArgs.Position.X - drawPos.X;
-            var localY = eventArgs.Position.Y - drawPos.Y;
+            var (localX, localY) = ScreenToLocal(eventArgs.Position.X, eventArgs.Position.Y);
 
             // Scrollbar interactions — must be handled here (not HandleClick)
             // to prevent the base XNADialog.HandleDrag from moving the window

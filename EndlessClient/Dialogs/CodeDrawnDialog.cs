@@ -38,7 +38,7 @@ namespace EndlessClient.Dialogs
         public string Message { get; set; } = string.Empty;
         public string Caption { get; set; } = string.Empty;
 
-        public int PostScaleDrawOrder => 100;
+        public int PostScaleDrawOrder => 300; // Message boxes render above all other dialogs
         public bool SkipRenderTargetDraw => true;
 
         /// <summary>
@@ -68,6 +68,10 @@ namespace EndlessClient.Dialogs
         {
             _font = font;
             _contentProvider = contentProvider;
+
+            // Auto-size dialog based on message content
+            AutoSizeDialog(font);
+
             DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
 
             // Title/Caption label
@@ -118,12 +122,60 @@ namespace EndlessClient.Dialogs
                     break;
             }
 
-            // Hide the child labels to prevent them from drawing in the render target
-            // (text is drawn post-scale for crisp rendering)
+            // Hide the child labels to prevent them from drawing independently.
+            // All rendering is handled in DrawPostScale for correct z-ordering.
             _captionLabel?.SetControlUnparented();
             _messageLabel?.SetControlUnparented();
+            // Suppress button post-scale drawing (dialog draws them manually)
+            // but keep them parented for input handling.
+            if (_okButton != null) _okButton.SuppressPostScaleDraw = true;
+            if (_cancelButton != null) _cancelButton.SuppressPostScaleDraw = true;
 
             CenterInGameView();
+        }
+
+        private void AutoSizeDialog(BitmapFont font)
+        {
+            if (string.IsNullOrEmpty(Message))
+                return;
+
+            var titleBarHeight = _styleProvider.TitleBarHeight;
+            var lineHeight = font.LineHeight;
+            var padding = 40; // horizontal padding (16 each side + margin)
+            var buttonAreaHeight = 48; // button height + bottom margin
+
+            // Split by explicit newlines first
+            var explicitLines = Message.Split('\n');
+            var totalLines = 0;
+            var maxLineWidth = 0f;
+
+            foreach (var explicitLine in explicitLines)
+            {
+                var lineWidth = font.MeasureString(explicitLine).Width;
+                if (lineWidth > maxLineWidth)
+                    maxLineWidth = lineWidth;
+
+                // Count wrapped lines within each explicit line
+                var availableWidth = DialogWidth - padding;
+                if (lineWidth <= availableWidth)
+                {
+                    totalLines++;
+                }
+                else
+                {
+                    // Estimate line wrapping
+                    totalLines += Math.Max(1, (int)Math.Ceiling(lineWidth / availableWidth));
+                }
+            }
+
+            // Widen if needed (cap at 360)
+            if (maxLineWidth + padding > DialogWidth)
+                DialogWidth = Math.Min(360, (int)(maxLineWidth + padding));
+
+            // Calculate required height
+            var contentHeight = titleBarHeight + 12 + (totalLines * lineHeight) + buttonAreaHeight;
+            if (contentHeight > DialogHeight)
+                DialogHeight = contentHeight;
         }
 
         private CodeDrawnButton CreateButton(string text, Vector2 position, int width, int height)
@@ -139,9 +191,22 @@ namespace EndlessClient.Dialogs
 
         public override void CenterInGameView()
         {
-            base.CenterInGameView();
+            int centerWidth, centerHeight;
+            if (_clientWindowSizeProvider != null)
+            {
+                centerWidth = _clientWindowSizeProvider.GameWidth;
+                centerHeight = _clientWindowSizeProvider.GameHeight;
+            }
+            else if (Game?.GraphicsDevice != null)
+            {
+                var viewport = Game.GraphicsDevice.Viewport;
+                centerWidth = viewport.Width;
+                centerHeight = viewport.Height;
+            }
+            else return;
 
-            // Window is always resizable in scaled mode, no special centering needed
+            DrawPosition = new Vector2(centerWidth / 2 - DialogWidth / 2,
+                                       centerHeight / 2 - DialogHeight / 2);
         }
 
         public override void Initialize()
@@ -161,36 +226,8 @@ namespace EndlessClient.Dialogs
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            DrawFills();
-
-            // Let child buttons draw their fills
-            base.OnDrawControl(gameTime);
-        }
-
-        /// <summary>
-        /// Draws only fills for the render target phase in scaled mode
-        /// </summary>
-        private void DrawFills()
-        {
-            var cornerRadius = _styleProvider.CornerRadius;
-            var borderThickness = _styleProvider.BorderThickness;
-            var titleBarHeight = _styleProvider.TitleBarHeight;
-
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
-
-            _spriteBatch.Begin(transformMatrix: transform);
-
-            // Main panel background (no border, that's drawn post-scale)
-            DrawingPrimitives.DrawRoundedRect(_spriteBatch, bounds, _styleProvider.PanelBackground, cornerRadius);
-
-            // Title bar fill
-            DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle(borderThickness, borderThickness, DrawArea.Width - borderThickness * 2, titleBarHeight - borderThickness),
-                _styleProvider.TitleBarBackground);
-
-            _spriteBatch.End();
+            // All drawing (background, buttons, text) is done in DrawPostScale
+            // for correct z-ordering. Don't draw children here.
         }
 
 
@@ -209,9 +246,9 @@ namespace EndlessClient.Dialogs
                 logicalX * scaleFactor + renderOffset.X,
                 logicalY * scaleFactor + renderOffset.Y);
 
-            // Choose font based on scale factor using adaptive helper
+            // Choose font for button text - use FontSize10 to match Close button style
             var font = _contentProvider != null
-                ? FontScaleHelper.GetScaledFont(_contentProvider, scaleFactor)
+                ? _contentProvider.Fonts[Constants.FontSize10]
                 : _font;
 
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
@@ -220,6 +257,15 @@ namespace EndlessClient.Dialogs
             var scaledWidth = (int)(DialogWidth * scaleFactor);
             var scaledHeight = (int)(DialogHeight * scaleFactor);
             var bounds = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, scaledWidth, scaledHeight);
+
+            // Draw background fills at post-scale so dialog appears above other dialogs
+            DrawingPrimitives.DrawRoundedRect(spriteBatch, bounds, _styleProvider.PanelBackground, cornerRadius);
+            DrawingPrimitives.DrawFilledRect(spriteBatch,
+                new Rectangle((int)scaledPos.X + (int)(borderThickness * scaleFactor),
+                              (int)scaledPos.Y + (int)(borderThickness * scaleFactor),
+                              scaledWidth - (int)(borderThickness * 2 * scaleFactor),
+                              (int)((titleBarHeight - borderThickness) * scaleFactor)),
+                _styleProvider.TitleBarBackground);
 
             // Border
             DrawingPrimitives.DrawRoundedRectBorder(spriteBatch, bounds, _styleProvider.PanelBorder, cornerRadius, borderThickness);
@@ -274,42 +320,56 @@ namespace EndlessClient.Dialogs
             var buttonRect = new Rectangle(x, y, width, height);
             var buttonColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
             DrawingPrimitives.DrawFilledRect(spriteBatch, buttonRect, buttonColor);
-            DrawingPrimitives.DrawRectBorder(spriteBatch, buttonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(spriteBatch, buttonRect, _styleProvider.ButtonBorder, 1);
 
             var textSize = font.MeasureString(text);
             var textPos = new Vector2(
                 x + (width - textSize.Width) / 2,
                 y + (height - textSize.Height) / 2);
-            spriteBatch.DrawString(font, text, textPos, Color.White);
+            spriteBatch.DrawString(font, text, textPos, _styleProvider.ButtonText);
         }
 
         private void DrawWrappedText(SpriteBatch spriteBatch, BitmapFont font, string text, float x, float y, float maxWidth, Color color)
         {
-            var words = text.Split(' ');
-            var line = "";
             var currentY = y;
             var lineHeight = font.LineHeight;
 
-            foreach (var word in words)
+            // Split by explicit newlines first, then word-wrap each segment
+            var paragraphs = text.Split('\n');
+            foreach (var paragraph in paragraphs)
             {
-                var testLine = string.IsNullOrEmpty(line) ? word : line + " " + word;
-                var testSize = font.MeasureString(testLine);
+                if (string.IsNullOrEmpty(paragraph))
+                {
+                    currentY += lineHeight;
+                    continue;
+                }
 
-                if (testSize.Width > maxWidth && !string.IsNullOrEmpty(line))
+                var words = paragraph.Split(' ');
+                var line = "";
+
+                foreach (var word in words)
+                {
+                    var testLine = string.IsNullOrEmpty(line) ? word : line + " " + word;
+                    var testSize = font.MeasureString(testLine);
+
+                    if (testSize.Width > maxWidth && !string.IsNullOrEmpty(line))
+                    {
+                        spriteBatch.DrawString(font, line, new Vector2(x, currentY), color);
+                        currentY += lineHeight;
+                        line = word;
+                    }
+                    else
+                    {
+                        line = testLine;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(line))
                 {
                     spriteBatch.DrawString(font, line, new Vector2(x, currentY), color);
-                    currentY += lineHeight;
-                    line = word;
                 }
-                else
-                {
-                    line = testLine;
-                }
-            }
 
-            if (!string.IsNullOrEmpty(line))
-            {
-                spriteBatch.DrawString(font, line, new Vector2(x, currentY), color);
+                currentY += lineHeight;
             }
         }
     }

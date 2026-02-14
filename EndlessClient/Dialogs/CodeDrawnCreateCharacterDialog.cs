@@ -274,14 +274,10 @@ namespace EndlessClient.Dialogs
         }
 
         /// <summary>
-        /// Draws text with a dark shadow and double-strike for a bolder, more readable appearance.
+        /// Draws text. Previously used shadow + double-strike but now renders clean single-pass text.
         /// </summary>
         private void DrawBoldString(string text, Vector2 position, Color color)
         {
-            // Draw fully opaque black shadow for depth
-            _spriteBatch.DrawString(_labelFont, text, position + new Vector2(1, 1), Color.Black);
-            // Double-strike: draw twice at same position to boost alpha of antialiased pixels
-            _spriteBatch.DrawString(_labelFont, text, position, color);
             _spriteBatch.DrawString(_labelFont, text, position, color);
         }
 

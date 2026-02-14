@@ -106,6 +106,7 @@ namespace EndlessClient.Dialogs
             };
             _cancelButton.OnClick += (_, _) => Close(XNADialogResult.Cancel);
             _cancelButton.SetParentControl(this);
+            _cancelButton.SuppressPostScaleDraw = true;
         }
 
         public override void Initialize()

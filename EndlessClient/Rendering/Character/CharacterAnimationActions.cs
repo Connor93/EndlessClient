@@ -177,7 +177,8 @@ namespace EndlessClient.Rendering.Character
         public void NotifyStartSpellCast(int playerId, int spellId)
         {
             var shoutName = _pubFileProvider.ESFFile[spellId].Shout;
-            _characterRendererProvider.CharacterRenderers[playerId].ShoutSpellPrep(shoutName.ToLower());
+            if (_characterRendererProvider.CharacterRenderers.ContainsKey(playerId))
+                _characterRendererProvider.CharacterRenderers[playerId].ShoutSpellPrep(shoutName.ToLower());
         }
 
         public void NotifyTargetNpcSpellCast(int playerId)
@@ -204,7 +205,7 @@ namespace EndlessClient.Rendering.Character
                     cr.ShowDamageCounter(spellHp, percentHealth, isHeal: true);
                 });
             }
-            else
+            else if (_characterRendererProvider.CharacterRenderers.ContainsKey(playerId))
             {
                 Animator.StartOtherCharacterSpellCast(playerId);
                 _characterRendererProvider.CharacterRenderers[playerId].ShoutSpellCast();
@@ -219,7 +220,7 @@ namespace EndlessClient.Rendering.Character
             {
                 _characterRendererProvider.MainCharacterRenderer.MatchSome(cr => cr.ShoutSpellCast());
             }
-            else
+            else if (_characterRendererProvider.CharacterRenderers.ContainsKey(sourcePlayerID))
             {
                 Animator.StartOtherCharacterSpellCast(sourcePlayerID);
                 _characterRendererProvider.CharacterRenderers[sourcePlayerID].ShoutSpellCast();
@@ -235,7 +236,7 @@ namespace EndlessClient.Rendering.Character
                     cr.ShowDamageCounter(recoveredHP, targetPercentHealth, isHeal: spellData.Type == EOLib.IO.SpellType.Heal);
                 });
             }
-            else
+            else if (_characterRendererProvider.CharacterRenderers.ContainsKey(targetPlayerID))
             {
                 _characterRendererProvider.CharacterRenderers[targetPlayerID].PlayEffect(spellData.Graphic);
                 _characterRendererProvider.CharacterRenderers[targetPlayerID].ShowDamageCounter(recoveredHP, targetPercentHealth, isHeal: spellData.Type == EOLib.IO.SpellType.Heal);
