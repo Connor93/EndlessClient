@@ -264,10 +264,18 @@ namespace EndlessClient.HUD.Panels
                     expandedY = Math.Clamp(expandedY, 0, WindowSizeProvider.GameHeight - PanelHeight);
                     DrawArea = new Rectangle(expandedX, expandedY, PanelWidth, PanelHeight);
 
-                    // Refresh the active tab's scroll state
-                    var activeInfo = _tabs[CurrentTab];
+                    // Force re-sync: regenerate renderables from current chat data
+                    // to ensure messages received while collapsed are displayed
+                    var activeTab = CurrentTab;
+                    var activeInfo = _tabs[activeTab];
+                    activeInfo.CachedChat = _chatProvider.AllChat[activeTab].ToHashSet();
+                    activeInfo.Renderables = _chatRenderableGenerator.GenerateChatRenderables(activeInfo.CachedChat).ToList();
                     _totalLines = activeInfo.Renderables.Count;
                     ScrollToEnd();
+
+                    // Clear cached chat for other tabs so they re-sync on next switch
+                    foreach (var otherTab in _tabs.Where(t => t.Key != activeTab && t.Value.Visible))
+                        otherTab.Value.CachedChat.Clear();
                 }
                 return true;
             }

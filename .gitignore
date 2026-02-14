@@ -266,3 +266,6 @@ launchSettings.json
 
 # Monogame stats file
 .mgstats
+
+# Source GFX files (already copied to ClientAssets/gfx/)
+gfx 2/

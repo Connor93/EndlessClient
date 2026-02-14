@@ -73,10 +73,62 @@ namespace EOLib.Graphics
                 }
             }
 
-            using var ms = rawData.AsStream();
+            var fixedData = FixBitmapData(rawData);
+            using var ms = new System.IO.MemoryStream(fixedData);
             var ret = Texture2D.FromStream(_graphicsDeviceProvider.GraphicsDevice, ms, processAction);
 
             return ret;
+        }
+
+        /// <summary>
+        /// Fixes BMP data produced by PELoaderLib for BI_BITFIELDS compression.
+        /// PELoaderLib's BitmapFileHeader does not account for color mask bytes
+        /// when calculating bfOffBits, causing StbImageSharp to fail with "bad BMP".
+        /// </summary>
+        private static byte[] FixBitmapData(ReadOnlyMemory<byte> rawData)
+        {
+            var span = rawData.Span;
+            var result = rawData.ToArray();
+
+            // Need at least BMP file header (14) + minimum info header (40)
+            if (span.Length < 54)
+                return result;
+
+            // Check BMP magic "BM"
+            if (span[0] != 0x42 || span[1] != 0x4D)
+                return result;
+
+            // Read info header size (at file offset 14)
+            var infoHeaderSize = BitConverter.ToInt32(result, 14);
+            if (infoHeaderSize < 40)
+                return result;
+
+            // Read biCompression (at file offset 14 + 16 = 30)
+            const int BI_BITFIELDS = 3;
+            var compression = BitConverter.ToInt32(result, 30);
+            if (compression != BI_BITFIELDS)
+                return result;
+
+            if (infoHeaderSize == 40)
+            {
+                // Standard 40-byte BITMAPINFOHEADER with BI_BITFIELDS:
+                // Color masks (3 DWORDs = 12 bytes) sit between the header and pixel data,
+                // but PELoaderLib sets bfOffBits = 14 + 40 = 54, missing the 12 mask bytes.
+                // Fix: set bfOffBits = 14 + 40 + 12 = 66
+                const int COLOR_MASK_BYTES = 12;
+                var correctOffset = 14 + 40 + COLOR_MASK_BYTES;
+                BitConverter.GetBytes(correctOffset).CopyTo(result, 10);
+            }
+            else if (infoHeaderSize >= 56)
+            {
+                // BITMAPV3INFOHEADER (56+ bytes): color masks are part of the header,
+                // so bfOffBits is correct. However, StbImageSharp may not support
+                // BI_BITFIELDS with V3+ headers. Change to BI_RGB since the masks
+                // are standard BGRA byte order.
+                BitConverter.GetBytes(0).CopyTo(result, 30); // BI_RGB = 0
+            }
+
+            return result;
         }
 
         private static unsafe void CrossPlatformMakeTransparent(byte[] data, bool isHat = false, bool checkClip = false)
