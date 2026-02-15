@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using EndlessClient.Rendering.Map;
 using EOLib.Domain.Character;
 using Microsoft.Xna.Framework;
@@ -11,7 +12,8 @@ namespace EndlessClient.Rendering.MapEntityRenderers
     {
         private static readonly Dictionary<MapRenderLayer, Point> _layerOffsets;
 
-        private static DateTime _lastFrameTime = DateTime.Now;
+        private static long _lastFrameTimestamp = Stopwatch.GetTimestamp();
+        private static readonly double _ticksPerMs = Stopwatch.Frequency / 1000.0;
         protected static int _frameIndex = 0;
 
         static BaseMapEntityRenderer()
@@ -71,9 +73,10 @@ namespace EndlessClient.Rendering.MapEntityRenderers
 
         public virtual void RenderElementAt(SpriteBatch spriteBatch, int row, int col, int alpha, Vector2 additionalOffset = default)
         {
-            if ((DateTime.Now - _lastFrameTime).TotalMilliseconds > 600)
+            var now = Stopwatch.GetTimestamp();
+            if ((now - _lastFrameTimestamp) / _ticksPerMs > 600)
             {
-                _lastFrameTime = DateTime.Now;
+                _lastFrameTimestamp = now;
                 _frameIndex = (_frameIndex + 1) % 4;
             }
         }

@@ -62,7 +62,9 @@ namespace EndlessClient.Rendering.Character
 
         private bool _lastIsDead;
 
-        private Color[] _rtColorData;
+        private Color[] _clipColorData;
+        private const int ClipRegionPadding = 40;
+        private const int LocalRenderPadding = 128;
 
         public EOLib.Domain.Character.Character Character
         {
@@ -283,7 +285,7 @@ namespace EndlessClient.Rendering.Character
             {
                 lock (_rt_locker_)
                 {
-                    spriteBatch.Draw(_charRenderTarget, new Vector2(0, GetSteppingStoneOffset(Character.RenderProperties)), GetAlphaColor());
+                    spriteBatch.Draw(_charRenderTarget, new Vector2(DrawArea.X - LocalRenderPadding, DrawArea.Y - LocalRenderPadding + GetSteppingStoneOffset(Character.RenderProperties)), GetAlphaColor());
                 }
             }
 
@@ -319,8 +321,11 @@ namespace EndlessClient.Rendering.Character
                     var characterPropertyRenderers = _characterPropertyRendererBuilder
                         .BuildList(_characterTextures, _character.RenderProperties)
                         .Where(x => x.CanRender);
+                    // Render at padded local origin so RT content is position-independent.
+                    // Padding provides headroom for sprites extending beyond the character bounds.
+                    var localDrawArea = new Rectangle(LocalRenderPadding, LocalRenderPadding, DrawArea.Width, DrawArea.Height);
                     foreach (var renderer in characterPropertyRenderers)
-                        renderer.Render(_sb, DrawArea, weaponMetadata);
+                        renderer.Render(_sb, localDrawArea, weaponMetadata);
 
                     _sb.End();
                     GraphicsDevice.SetRenderTarget(null);
@@ -366,7 +371,7 @@ namespace EndlessClient.Rendering.Character
                 // size of standing still skin texture
                 DrawArea = new Rectangle(xPosition, yPosition, 18, 58);
                 HorizontalCenter = xPosition + 9;
-                _textureUpdateRequired = true;
+                // No _textureUpdateRequired here: RT content is now position-independent
             }
         }
 
@@ -506,18 +511,42 @@ namespace EndlessClient.Rendering.Character
 
             lock (_rt_locker_)
             {
-                // oof. I really need to learn how to use shaders or stencil buffer.
-                // https://gamedev.stackexchange.com/questions/38118/best-way-to-mask-2d-sprites-in-xna/38150#38150
+                // Optimized: only read/write the sub-rectangle around the character content
+                // instead of the full 640x480 render target. This reduces GPU-CPU transfer
+                // from ~1.2MB to ~64KB per call.
+                var clipRect = GetCharacterClipBounds();
+                if (clipRect.Width <= 0 || clipRect.Height <= 0)
+                    return;
 
-                // note: this operation causes a high number of GC events as the character's frame changes (walking/attacking)
-                _charRenderTarget.GetData(_rtColorData);
-                for (int i = 0; i < _rtColorData.Length; i++)
+                var pixelCount = clipRect.Width * clipRect.Height;
+                if (_clipColorData == null || _clipColorData.Length < pixelCount)
+                    _clipColorData = new Color[pixelCount];
+
+                _charRenderTarget.GetData(0, clipRect, _clipColorData, 0, pixelCount);
+
+                var modified = false;
+                for (int i = 0; i < pixelCount; i++)
                 {
-                    if (_rtColorData[i] == Color.Black)
-                        _rtColorData[i].A = 0;
+                    if (_clipColorData[i] == Color.Black)
+                    {
+                        _clipColorData[i].A = 0;
+                        modified = true;
+                    }
                 }
-                _charRenderTarget.SetData(_rtColorData);
+
+                if (modified)
+                    _charRenderTarget.SetData(0, clipRect, _clipColorData, 0, pixelCount);
             }
+        }
+
+        private Rectangle GetCharacterClipBounds()
+        {
+            // Character content is rendered at LocalRenderPadding offset in the RT
+            var x = Math.Max(0, LocalRenderPadding - ClipRegionPadding);
+            var y = Math.Max(0, LocalRenderPadding - ClipRegionPadding);
+            var right = Math.Min(_charRenderTarget.Width, LocalRenderPadding + DrawArea.Width + ClipRegionPadding);
+            var bottom = Math.Min(_charRenderTarget.Height, LocalRenderPadding + DrawArea.Height + ClipRegionPadding);
+            return new Rectangle(x, y, right - x, bottom - y);
         }
 
         #endregion
@@ -589,7 +618,7 @@ namespace EndlessClient.Rendering.Character
                 _charRenderTarget?.Dispose();
                 _charRenderTarget = _renderTargetFactory.CreateRenderTarget();
 
-                _rtColorData = new Color[_charRenderTarget.Width * _charRenderTarget.Height];
+                _clipColorData = null; // will be lazily allocated at correct size in ClipHair
             }
         }
 
