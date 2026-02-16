@@ -452,9 +452,32 @@ namespace EndlessClient.Controllers
             if (!hasLocker)
                 return;
 
-            _lockerDataRepository.SuppressDialog = true;
-            _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
-            _lockerActions.AddItemToLocker(inventoryItem.WithAmount(1));
+            if (inventoryItem.Amount > 1)
+            {
+                var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(
+                    itemData.Name,
+                    CodeDrawnItemTransferDialog.TransferType.ShopTransfer,
+                    inventoryItem.Amount,
+                    EOResourceID.DIALOG_TRANSFER_TRANSFER);
+
+                transferDialog.DialogClosing += (_, e) =>
+                {
+                    if (e.Result == XNADialogResult.OK)
+                    {
+                        _lockerDataRepository.SuppressDialog = true;
+                        _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
+                        _lockerActions.AddItemToLocker(inventoryItem.WithAmount(transferDialog.SelectedAmount));
+                    }
+                };
+
+                transferDialog.ShowDialog();
+            }
+            else
+            {
+                _lockerDataRepository.SuppressDialog = true;
+                _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
+                _lockerActions.AddItemToLocker(inventoryItem.WithAmount(1));
+            }
         }
 
         public void GlamorItem(EIFRecord itemData)
