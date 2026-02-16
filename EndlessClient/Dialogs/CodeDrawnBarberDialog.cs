@@ -327,8 +327,12 @@ namespace EndlessClient.Dialogs
 
         private int CalculateCost()
         {
+            // Must match server formula: BarberBase + max(1, level) * BarberStep
+            // Server config: BarberBase = 5, BarberStep = 5
+            const int BarberBase = 5;
+            const int BarberStep = 5;
             var level = (int)_characterRepository.MainCharacter.Stats[CharacterStat.Level];
-            return 200 + Math.Max(level - 1, 0) * 200;
+            return BarberBase + Math.Max(1, level) * BarberStep;
         }
 
         private void BuyHair()

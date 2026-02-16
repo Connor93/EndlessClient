@@ -35,12 +35,16 @@ namespace EOLib.PacketHandlers.Locker
         public override bool HandlePacket(LockerOpenServerPacket packet)
         {
             var savedContext = _lockerDataRepository.Context;
+            var savedSuppress = _lockerDataRepository.SuppressDialog;
             _lockerDataRepository.ResetState();
             _lockerDataRepository.Context = savedContext;
             _lockerDataRepository.Location = new MapCoordinate(packet.LockerCoords.X, packet.LockerCoords.Y);
 
             foreach (var item in packet.LockerItems)
                 _lockerDataRepository.Items.Add(new InventoryItem(item.Id, item.Amount));
+
+            if (savedSuppress)
+                return true;
 
             foreach (var notifier in _userInterfaceNotifiers)
                 notifier.NotifyPacketDialog(Family);

@@ -31,15 +31,16 @@ namespace EndlessClient.HUD.Panels
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IContentProvider _contentProvider;
         private readonly BitmapFont _labelFont;
 
-        private const int PanelWidth = 476;
-        private const int PanelHeight = 118;
+        private const int PanelWidth = 196;
+        private const int PanelHeight = 296;
         private const int SlotWidth = 26;
         private const int SlotHeight = 26;
-        // Items are positioned at (13 + 26*col, 9 + 26*row) per InventoryPanelItem.GetPosition
+        // Items are positioned at (13 + 26*col, 28 + 26*row) per InventoryPanelItem.GetPosition
         private const int SlotsStartX = 13;
-        private const int SlotsStartY = 9;
+        private const int SlotsStartY = 28;
 
         // IZOrderedWindow implementation
         private int _zOrder;
@@ -80,6 +81,7 @@ namespace EndlessClient.HUD.Panels
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _contentProvider = contentProvider;
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
             // Remove the texture-based background
@@ -91,9 +93,38 @@ namespace EndlessClient.HUD.Panels
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
             base.Initialize();
-            // Note: We keep the original buttons visible because hiding them breaks
-            // MouseOver detection needed for drop/junk functionality.
-            // Our styled buttons draw on top via the OnDrawControl override.
+        }
+
+        private bool _sortButtonWasPressed;
+
+        protected override void OnUnconditionalUpdateControl(GameTime gameTime)
+        {
+            base.OnUnconditionalUpdateControl(gameTime);
+
+            var mouseState = MonoGame.Extended.Input.MouseExtended.GetState();
+            var transformedPos = TransformMousePosition(mouseState.Position);
+            var mousePos = new Point((int)transformedPos.X, (int)transformedPos.Y);
+
+            // Check if the mouse is over the sort button area
+            var pos = DrawPositionWithParentOffset;
+            var sortRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 4, PanelWidth - 8, 20);
+
+            if (sortRect.Contains(mousePos) && mouseState.IsButtonDown(MonoGame.Extended.Input.MouseButton.Left))
+            {
+                _sortButtonWasPressed = true;
+            }
+            else if (_sortButtonWasPressed && mouseState.IsButtonUp(MonoGame.Extended.Input.MouseButton.Left))
+            {
+                _sortButtonWasPressed = false;
+                if (sortRect.Contains(mousePos))
+                {
+                    SortInventory();
+                }
+            }
+            else if (!sortRect.Contains(mousePos))
+            {
+                _sortButtonWasPressed = false;
+            }
         }
 
         protected override void OnDrawControl(GameTime gameTime)
@@ -110,26 +141,16 @@ namespace EndlessClient.HUD.Panels
             DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.PanelBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, 2);
 
-            // Draw grid lines for slots (directly on panel background, no separate box)
+            // Draw sort button at top of panel
+            DrawSortButton(pos);
+
+            // Draw grid lines for slots
             DrawInventoryGrid(pos);
 
             _spriteBatch.End();
 
-            // Let the base class draw child controls (items, buttons)
+            // Let the base class draw child controls (items)
             base.OnDrawControl(gameTime);
-
-            // Now draw our styled buttons ON TOP of the texture buttons
-            _spriteBatch.Begin();
-
-            // Draw button area on the right (covers the original buttons completely)
-            var buttonAreaRect = new Rectangle((int)pos.X + 448, (int)pos.Y + 2, 30, PanelHeight - 4);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, buttonAreaRect, new Color(40, 35, 30, 255));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonAreaRect, _styleProvider.PanelBorder, 1);
-
-            // Draw styled side buttons
-            DrawSideButtons(pos);
-
-            _spriteBatch.End();
         }
 
         public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
@@ -138,13 +159,18 @@ namespace EndlessClient.HUD.Panels
             // so the background must also be drawn there (in OnDrawControl) to avoid covering them.
         }
 
+        private void DrawSortButton(Vector2 pos)
+        {
+            var sortRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 4, PanelWidth - 8, 20);
+            DrawStyledButton(sortRect, "Sort", _styleProvider.ButtonNormal);
+        }
+
         private void DrawInventoryGrid(Vector2 pos)
         {
             var gridColor = new Color(80, 70, 60, 150);
 
-            // Grid lines extend from near the panel edge to align with bottom/right
-            var gridStartX = 4; // Close to panel border
-            var gridStartY = 4;
+            var gridStartX = 4;
+            var gridStartY = SlotsStartY;
             var gridEndX = SlotsStartX + InventoryRowSlots * SlotWidth;
             var gridEndY = SlotsStartY + InventoryRows * SlotHeight;
 
@@ -175,90 +201,7 @@ namespace EndlessClient.HUD.Panels
                 gridColor);
         }
 
-        private void DrawSideButtons(Vector2 pos)
-        {
-            // Original button positions within panel:
-            // _page1: (453, 7), size 23x26
-            // _page2: (453, 34), size 23x27
-            // _drop: (453, 60), size 23x26
-            // _junk: (453, 86), size 23x27
-            var buttonX = (int)pos.X + 451;
-            var buttonWidth = 25;
-            var buttonHeight = 26;
 
-            // Button 1: Page 1
-            var btn1Rect = new Rectangle(buttonX, (int)pos.Y + 5, buttonWidth, buttonHeight);
-            DrawStyledButton(btn1Rect, "1", _styleProvider.ButtonNormal);
-
-            // Button 2: Page 2
-            var btn2Rect = new Rectangle(buttonX, (int)pos.Y + 32, buttonWidth, 27);
-            DrawStyledButton(btn2Rect, "2", _styleProvider.ButtonNormal);
-
-            // Button 3: Drop (down arrow) - use "v" since arrow might not render
-            var btn3Rect = new Rectangle(buttonX, (int)pos.Y + 58, buttonWidth, buttonHeight);
-            DrawStyledButton(btn3Rect, "v", new Color(80, 140, 80));
-
-            // Button 4: Junk (X)
-            var btn4Rect = new Rectangle(buttonX, (int)pos.Y + 84, buttonWidth, 28);
-            DrawStyledButton(btn4Rect, "X", new Color(140, 60, 60));
-        }
-
-        private void DrawInventoryGridScaled(Vector2 pos, float scale)
-        {
-            var gridColor = new Color(80, 70, 60, 150);
-
-            var gridStartX = 4;
-            var gridStartY = 4;
-            var gridEndX = SlotsStartX + InventoryRowSlots * SlotWidth;
-            var gridEndY = SlotsStartY + InventoryRows * SlotHeight;
-
-            // Draw vertical grid lines
-            for (int col = 0; col <= InventoryRowSlots; col++)
-            {
-                var x = (int)(pos.X + (SlotsStartX + col * SlotWidth) * scale);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                    new Rectangle(x, (int)(pos.Y + gridStartY * scale), 1, (int)((gridEndY - gridStartY) * scale)),
-                    gridColor);
-            }
-
-            // Draw horizontal grid lines
-            for (int row = 0; row <= InventoryRows; row++)
-            {
-                var y = (int)(pos.Y + (SlotsStartY + row * SlotHeight) * scale);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                    new Rectangle((int)(pos.X + gridStartX * scale), y, (int)((gridEndX - gridStartX) * scale), 1),
-                    gridColor);
-            }
-
-            // Draw left edge line and top edge line to close the gap
-            DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle((int)(pos.X + gridStartX * scale), (int)(pos.Y + gridStartY * scale),
-                    1, (int)((gridEndY - gridStartY) * scale)),
-                gridColor);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle((int)(pos.X + gridStartX * scale), (int)(pos.Y + gridStartY * scale),
-                    (int)((gridEndX - gridStartX) * scale), 1),
-                gridColor);
-        }
-
-        private void DrawSideButtonsScaled(Vector2 pos, float scale)
-        {
-            var buttonX = (int)(pos.X + 451 * scale);
-            var buttonWidth = (int)(25 * scale);
-            var buttonHeight = (int)(26 * scale);
-
-            var btn1Rect = new Rectangle(buttonX, (int)(pos.Y + 5 * scale), buttonWidth, buttonHeight);
-            DrawStyledButton(btn1Rect, "1", _styleProvider.ButtonNormal);
-
-            var btn2Rect = new Rectangle(buttonX, (int)(pos.Y + 32 * scale), buttonWidth, (int)(27 * scale));
-            DrawStyledButton(btn2Rect, "2", _styleProvider.ButtonNormal);
-
-            var btn3Rect = new Rectangle(buttonX, (int)(pos.Y + 58 * scale), buttonWidth, buttonHeight);
-            DrawStyledButton(btn3Rect, "v", new Color(80, 140, 80));
-
-            var btn4Rect = new Rectangle(buttonX, (int)(pos.Y + 84 * scale), buttonWidth, (int)(28 * scale));
-            DrawStyledButton(btn4Rect, "X", new Color(140, 60, 60));
-        }
 
         private void DrawStyledButton(Rectangle rect, string label, Color bgColor)
         {
@@ -272,6 +215,41 @@ namespace EndlessClient.HUD.Panels
                 rect.X + (rect.Width - textSize.Width) / 2,
                 rect.Y + (rect.Height - textSize.Height) / 2);
             _spriteBatch.DrawString(_labelFont, label, textPos, Color.White);
+        }
+        private InventoryItemContextMenu _activeContextMenu;
+
+        protected override void HandleItemRightClick(object sender, EOLib.IO.Pub.EIFRecord itemData)
+        {
+            // Dismiss any existing context menu
+            if (_activeContextMenu != null)
+            {
+                Game.Components.Remove(_activeContextMenu);
+                _activeContextMenu.Dispose();
+                _activeContextMenu = null;
+            }
+
+            var mousePos = _userInputProvider.CurrentMouseState.Position;
+
+            var hasPortableLocker = _characterInventoryProvider.ItemInventory
+                .Any(i => i.ItemID == InventoryConstants.PortableLockerItemID);
+            var hasGlamorGem = _characterInventoryProvider.ItemInventory
+                .Any(i => i.ItemID == InventoryConstants.GlamorGemItemID);
+
+            var contextMenu = new InventoryItemContextMenu(
+                _styleProvider, _graphicsDeviceProvider, _contentProvider,
+                _userInputProvider, _sfxPlayer, itemData,
+                new Vector2(mousePos.X, mousePos.Y),
+                hasPortableLocker, hasGlamorGem);
+
+            contextMenu.UseEquipClicked += UseOrEquipItem;
+            contextMenu.DropClicked += DropItem;
+            contextMenu.JunkClicked += JunkItem;
+            contextMenu.StoreClicked += StoreItem;
+            contextMenu.GlamorClicked += GlamorItem;
+
+            contextMenu.Initialize();
+
+            _activeContextMenu = contextMenu;
         }
     }
 }

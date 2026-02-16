@@ -15,9 +15,11 @@ using EOLib.Domain.Chat;
 using EOLib.Domain.Interact;
 using EOLib.Domain.Interact.Bank;
 using EOLib.Domain.Item;
+using EndlessClient.HUD.Inventory;
 using EOLib.Domain.Map;
 using EOLib.Domain.Trade;
 using EOLib.IO;
+using EOLib.IO.Extensions;
 using EOLib.IO.Pub;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
@@ -51,6 +53,8 @@ namespace EndlessClient.Controllers
         private readonly IChatRepository _chatRepository;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly ILockerDataRepository _lockerDataRepository;
+        private readonly ICharacterInventoryProvider _characterInventoryProvider;
 
         private bool _goldWarningShown = false;
 
@@ -75,7 +79,9 @@ namespace EndlessClient.Controllers
                                    IEOMessageBoxFactory eoMessageBoxFactory,
                                    IChatRepository chatRepository,
                                    ILocalizedStringFinder localizedStringFinder,
-                                   ISfxPlayer sfxPlayer)
+                                   ISfxPlayer sfxPlayer,
+                                   ILockerDataRepository lockerDataRepository,
+                                   ICharacterInventoryProvider characterInventoryProvider)
         {
             _itemActions = itemActions;
             _inGameDialogActions = inGameDialogActions;
@@ -99,6 +105,8 @@ namespace EndlessClient.Controllers
             _chatRepository = chatRepository;
             _localizedStringFinder = localizedStringFinder;
             _sfxPlayer = sfxPlayer;
+            _lockerDataRepository = lockerDataRepository;
+            _characterInventoryProvider = characterInventoryProvider;
         }
 
         public void ShowPaperdollDialog()
@@ -196,7 +204,27 @@ namespace EndlessClient.Controllers
                 case ItemEquipResult.NotEquippable:
                     throw new ArgumentException("Item is not equippable", nameof(itemData));
                 case ItemEquipResult.AlreadyEquipped:
-                    _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION, EOResourceID.STATUS_LABEL_ITEM_EQUIP_TYPE_ALREADY_EQUIPPED);
+                    // Auto-swap: unequip the item in the slot, then equip the new one
+                    var equipLocation = itemData.GetEquipLocation();
+                    if (equipLocation != EquipLocation.PAPERDOLL_MAX)
+                    {
+                        var paperdoll = _paperdollProvider.VisibleCharacterPaperdolls[c.ID].Paperdoll;
+                        var slotToUnequip = equipLocation;
+
+                        // For dual-slot items, check both slots
+                        if (isAlternateEquipLocation)
+                            slotToUnequip = equipLocation + 1;
+
+                        if (paperdoll[slotToUnequip] != 0)
+                        {
+                            UnequipItem(slotToUnequip);
+                            _itemActions.EquipItem(itemData.ID, isAlternateEquipLocation);
+                        }
+                        else
+                        {
+                            _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION, EOResourceID.STATUS_LABEL_ITEM_EQUIP_TYPE_ALREADY_EQUIPPED);
+                        }
+                    }
                     break;
                 case ItemEquipResult.WrongGender:
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION, EOResourceID.STATUS_LABEL_ITEM_EQUIP_DOES_NOT_FIT_GENDER);
@@ -410,6 +438,42 @@ namespace EndlessClient.Controllers
                 dropAction(1);
             }
         }
+
+        public void StoreItem(EIFRecord itemData)
+        {
+            if (itemData.ID == 1)
+                return;
+
+            var inventoryItem = _characterInventoryProvider.ItemInventory.FirstOrDefault(x => x.ItemID == itemData.ID);
+            if (inventoryItem == null)
+                return;
+
+            var hasLocker = _characterInventoryProvider.ItemInventory.Any(x => x.ItemID == InventoryConstants.PortableLockerItemID);
+            if (!hasLocker)
+                return;
+
+            _lockerDataRepository.SuppressDialog = true;
+            _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
+            _lockerActions.AddItemToLocker(inventoryItem.WithAmount(1));
+        }
+
+        public void GlamorItem(EIFRecord itemData)
+        {
+            if (itemData.ID == 1)
+                return;
+
+            var inventoryItem = _characterInventoryProvider.ItemInventory.FirstOrDefault(x => x.ItemID == itemData.ID);
+            if (inventoryItem == null)
+                return;
+
+            var hasGem = _characterInventoryProvider.ItemInventory.Any(x => x.ItemID == InventoryConstants.GlamorGemItemID);
+            if (!hasGem)
+                return;
+
+            _lockerDataRepository.SuppressDialog = true;
+            _itemActions.UseItem(InventoryConstants.GlamorGemItemID);
+            _lockerActions.AddItemToLocker(inventoryItem.WithAmount(1));
+        }
     }
 
     public interface IInventoryController
@@ -435,5 +499,9 @@ namespace EndlessClient.Controllers
         void JunkItem(EIFRecord itemData, InventoryItem inventoryItem);
 
         void TradeItem(EIFRecord itemData, InventoryItem inventoryItem);
+
+        void StoreItem(EIFRecord itemData);
+
+        void GlamorItem(EIFRecord itemData);
     }
 }

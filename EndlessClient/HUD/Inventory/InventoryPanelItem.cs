@@ -65,8 +65,8 @@ namespace EndlessClient.HUD.Inventory
 
         // uses absolute coordinates
         protected override Rectangle GridArea => new Rectangle(
-            _parentContainer.DrawPositionWithParentOffset.ToPoint() + new Point(12, 8),
-            new Point(441, 102));
+            _parentContainer.DrawPositionWithParentOffset.ToPoint() + new Point(12, 27),
+            new Point(182, 260));
 
         public InventoryPanelItem(IItemNameColorService itemNameColorService,
                                   InventoryPanel inventoryPanel,
@@ -131,7 +131,7 @@ namespace EndlessClient.HUD.Inventory
             var transformedPos = _parentContainer.TransformMousePosition(mousePos);
 
             // Calculate slot from transformed position relative to the grid origin
-            var gridOrigin = _parentContainer.DrawPositionWithParentOffset + new Vector2(13, 9);
+            var gridOrigin = _parentContainer.DrawPositionWithParentOffset + new Vector2(13, 28);
             var relativeX = transformedPos.X - gridOrigin.X;
             var relativeY = transformedPos.Y - gridOrigin.Y;
 
@@ -287,7 +287,7 @@ namespace EndlessClient.HUD.Inventory
 
         private static Vector2 GetPosition(int slot)
         {
-            return new Vector2(13 + 26 * (slot % InventoryPanel.InventoryRowSlots), 9 + 26 * (slot / InventoryPanel.InventoryRowSlots));
+            return new Vector2(13 + 26 * (slot % InventoryPanel.InventoryRowSlots), 28 + 26 * (slot / InventoryPanel.InventoryRowSlots));
         }
     }
 }

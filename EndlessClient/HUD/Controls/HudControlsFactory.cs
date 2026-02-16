@@ -662,11 +662,20 @@ namespace EndlessClient.HUD.Controls
             {
                 if (initialPosition)
                 {
-                    // Non-chat panels spawn one panel height higher so they don't overlap with chat
-                    var yOffset = retPanel is CodeDrawnChatPanel ? 0 : (retPanel.DrawArea.Height + 4) * 2;
-                    retPanel.DrawArea = retPanel.DrawArea.WithPosition(new Vector2(
-                        (_clientWindowSizeRepository.Width - retPanel.DrawArea.Width) / 2,
-                        _clientWindowSizeRepository.Height - 45 - retPanel.DrawArea.Height - yOffset));
+                    if (retPanel is CodeDrawnChatPanel)
+                    {
+                        // Chat panel anchors near the bottom
+                        retPanel.DrawArea = retPanel.DrawArea.WithPosition(new Vector2(
+                            (_clientWindowSizeRepository.Width - retPanel.DrawArea.Width) / 2,
+                            _clientWindowSizeRepository.Height - 45 - retPanel.DrawArea.Height));
+                    }
+                    else
+                    {
+                        // Other panels center vertically in the window
+                        retPanel.DrawArea = retPanel.DrawArea.WithPosition(new Vector2(
+                            (_clientWindowSizeRepository.Width - retPanel.DrawArea.Width) / 2,
+                            (_clientWindowSizeRepository.Height - retPanel.DrawArea.Height) / 2));
+                    }
                 }
                 else
                 {

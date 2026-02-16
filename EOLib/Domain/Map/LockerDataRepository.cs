@@ -18,6 +18,8 @@ namespace EOLib.Domain.Map
         HashSet<InventoryItem> Items { get; set; }
 
         LockerContext Context { get; set; }
+
+        bool SuppressDialog { get; set; }
     }
 
     public interface ILockerDataProvider : IResettable
@@ -27,6 +29,8 @@ namespace EOLib.Domain.Map
         IReadOnlyCollection<InventoryItem> Items { get; }
 
         LockerContext Context { get; }
+
+        bool SuppressDialog { get; }
     }
 
     [AutoMappedType(IsSingleton = true)]
@@ -37,6 +41,8 @@ namespace EOLib.Domain.Map
         public HashSet<InventoryItem> Items { get; set; }
 
         public LockerContext Context { get; set; }
+
+        public bool SuppressDialog { get; set; }
 
         IReadOnlyCollection<InventoryItem> ILockerDataProvider.Items => Items;
 
@@ -50,6 +56,7 @@ namespace EOLib.Domain.Map
             Location = MapCoordinate.Zero;
             Items = new HashSet<InventoryItem>();
             Context = LockerContext.Default;
+            SuppressDialog = false;
         }
     }
 }

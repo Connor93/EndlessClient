@@ -53,11 +53,13 @@ namespace EndlessClient.GameExecution
 
             if (_gameStateRepository.CurrentState == GameStates.PlayingTheGame)
             {
-                _playerInfoRepository.PlayerIsInGame = false;
-                _clientWindowSizeRepository.IsInGame = false;
-
+                // Save panel layout before clearing IsInGame, since Resizable
+                // depends on IsInGame being true (StorePanelLayout early-exits if not Resizable)
                 StorePanelLayout(Game, new ExitingEventArgs());
                 Game.Exiting -= StorePanelLayout;
+
+                _playerInfoRepository.PlayerIsInGame = false;
+                _clientWindowSizeRepository.IsInGame = false;
             }
 
             var currentSet = _controlSetRepository.CurrentControlSet;

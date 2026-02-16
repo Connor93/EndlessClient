@@ -38,8 +38,8 @@ namespace EndlessClient.HUD.Panels
 {
     public class InventoryPanel : DraggableHudPanel, IHudPanel, IDraggableItemContainer
     {
-        public const int InventoryRows = 4;
-        public const int InventoryRowSlots = 17;
+        public const int InventoryRows = 10;
+        public const int InventoryRowSlots = 7;
 
         private readonly IInventoryController _inventoryController;
         private readonly IStatusLabelSetter _statusLabelSetter;
@@ -49,18 +49,17 @@ namespace EndlessClient.HUD.Panels
         private readonly IInventorySlotRepository _inventorySlotRepository;
         private readonly IPlayerInfoProvider _playerInfoProvider;
         private readonly ICharacterProvider _characterProvider;
-        private readonly ICharacterInventoryProvider _characterInventoryProvider;
+        protected readonly ICharacterInventoryProvider _characterInventoryProvider;
         private readonly IPubFileProvider _pubFileProvider; // todo: this can probably become EIFFileProvider
         private readonly IHudControlProvider _hudControlProvider;
         private readonly IActiveDialogProvider _activeDialogProvider;
-        private readonly ISfxPlayer _sfxPlayer;
+        protected readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
-        private readonly IUserInputProvider _userInputProvider;
+        protected readonly IUserInputProvider _userInputProvider;
         private readonly List<InventoryPanelItem> _childItems = new List<InventoryPanelItem>();
 
         //private readonly IXNALabel _weightLabel;
-        private readonly IXNAButton _drop, _junk, _page1, _page2;
         //private readonly ScrollBar _scrollBar;
 
         private Option<CharacterStats> _cachedStats;
@@ -114,28 +113,7 @@ namespace EndlessClient.HUD.Panels
                 AutoSize = false
             };*/
 
-            // Using Resource 23 as these contain the theme specific inventory buttons
-            var themeSheet = NativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 23, true);
 
-            // Button 1: Page 1 (Top)
-            _page1 = new XNAButton(themeSheet, new Vector2(453, 7), new Rectangle(0, 0, 23, 26), new Rectangle(23, 0, 23, 26));
-            _page1.OnMouseEnter += MouseOverButton;
-            _page1.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick); // Todo: Handle Page 1 click
-
-            // Button 2: Page 2
-            _page2 = new XNAButton(themeSheet, new Vector2(453, 34), new Rectangle(0, 26, 23, 27), new Rectangle(23, 26, 23, 27));
-            _page2.OnMouseEnter += MouseOverButton;
-            _page2.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.ButtonClick); // Todo: Handle Page 2 click
-
-            // Button 3: Drop
-            _drop = new XNAButton(themeSheet, new Vector2(453, 60), new Rectangle(0, 53, 23, 26), new Rectangle(23, 53, 23, 26));
-            _drop.OnMouseEnter += MouseOverButton;
-            _drop.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.InventoryPlace);
-
-            // Button 4: Junk (X)
-            _junk = new XNAButton(themeSheet, new Vector2(453, 86), new Rectangle(0, 79, 23, 27), new Rectangle(23, 79, 23, 27));
-            _junk.OnMouseEnter += MouseOverButton;
-            _junk.OnMouseDown += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.InventoryPlace);
 
             _cachedStats = Option.None<CharacterStats>();
             _cachedInventory = new HashSet<InventoryItem>();
@@ -148,22 +126,34 @@ namespace EndlessClient.HUD.Panels
 
         public bool NoItemsDragging() => _childItems.All(x => !x.IsDragging);
 
+        protected void SortInventory()
+        {
+            if (_childItems.Any(x => x.IsDragging))
+                return;
+
+            var itemData = _childItems.Select(x =>
+            {
+                var data = _pubFileProvider.EIFFile[x.InventoryItem.ItemID];
+                return (x.InventoryItem.ItemID, x.Slot, data.Size, data.Type);
+            });
+
+            var newSlots = _inventoryService.SortItems(_inventorySlotRepository.FilledSlots, itemData);
+
+            foreach (var childItem in _childItems)
+            {
+                if (newSlots.TryGetValue(childItem.InventoryItem.ItemID, out var newSlot))
+                {
+                    childItem.Slot = newSlot;
+                }
+            }
+        }
+
         public override void Initialize()
         {
             //_weightLabel.Initialize();
             //_weightLabel.SetParentControl(this);
 
-            _page1.Initialize();
-            _page1.SetParentControl(this);
 
-            _page2.Initialize();
-            _page2.SetParentControl(this);
-
-            _drop.Initialize();
-            _drop.SetParentControl(this);
-
-            _junk.Initialize();
-            _junk.SetParentControl(this);
 
             _inventorySlotRepository.SlotMap = GetItemSlotMap(_playerInfoProvider.LoggedInAccountName, _characterProvider.MainCharacter.Name, _configProvider.Host);
             OnUpdateControl(new GameTime());
@@ -255,7 +245,7 @@ namespace EndlessClient.HUD.Panels
 
                         newItem.OnMouseEnter += (_, _) => _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_ITEM, newItem.Text);
                         newItem.DoubleClick += HandleItemDoubleClick;
-                        newItem.RightClick += HandleItemDoubleClick;
+                        newItem.RightClick += HandleItemRightClick;
                         newItem.DraggingFinishing += HandleItemDoneDragging;
                         newItem.DraggingFinished += (_, _) => ResetSlotMap(_childItems.Where(x => !x.IsDragging));
 
@@ -282,10 +272,7 @@ namespace EndlessClient.HUD.Panels
         {
             if (disposing)
             {
-                _page1.OnMouseEnter -= MouseOverButton;
-                _page2.OnMouseEnter -= MouseOverButton;
-                _drop.OnMouseEnter -= MouseOverButton;
-                _junk.OnMouseEnter -= MouseOverButton;
+
                 Game.Exiting -= SaveInventoryFile;
 
                 // todo: IResettable should work but it doesn't
@@ -297,19 +284,7 @@ namespace EndlessClient.HUD.Panels
             base.Dispose(disposing);
         }
 
-        private void MouseOverButton(object sender, MouseStateExtended e)
-        {
-            var id = sender == _drop
-                ? EOResourceID.STATUS_LABEL_INVENTORY_DROP_BUTTON
-                : sender == _junk
-                    ? EOResourceID.STATUS_LABEL_INVENTORY_JUNK_BUTTON
-                    : EOResourceID.STATUS_LABEL_TYPE_BUTTON;
 
-            if (sender == _page1 || sender == _page2)
-                return;
-
-            _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_BUTTON, id);
-        }
 
         private static Dictionary<int, int> GetItemSlotMap(string accountName, string characterName, string host)
         {
@@ -393,6 +368,11 @@ namespace EndlessClient.HUD.Panels
 
         private void HandleItemDoubleClick(object sender, EIFRecord itemData)
         {
+            UseOrEquipItem(itemData);
+        }
+
+        protected void UseOrEquipItem(EIFRecord itemData)
+        {
             if (itemData.Type >= ItemType.Weapon && itemData.Type <= ItemType.Bracer)
             {
                 _inventoryController.EquipItem(itemData);
@@ -403,6 +383,42 @@ namespace EndlessClient.HUD.Panels
             }
 
             _sfxPlayer.PlaySfx(SoundEffectID.InventoryPlace);
+        }
+
+        protected void DropItem(EIFRecord itemData)
+        {
+            var inventoryItem = _characterInventoryProvider.ItemInventory.FirstOrDefault(x => x.ItemID == itemData.ID);
+            if (inventoryItem != null)
+            {
+                var rp = _characterProvider.MainCharacter.RenderProperties;
+                var coords = new EOLib.Domain.Map.MapCoordinate(rp.MapX, rp.MapY);
+                _inventoryController.DropItem(itemData, inventoryItem, coords);
+            }
+        }
+
+        protected void JunkItem(EIFRecord itemData)
+        {
+            var inventoryItem = _characterInventoryProvider.ItemInventory.FirstOrDefault(x => x.ItemID == itemData.ID);
+            if (inventoryItem != null)
+            {
+                _inventoryController.JunkItem(itemData, inventoryItem);
+            }
+        }
+
+        protected void StoreItem(EIFRecord itemData)
+        {
+            _inventoryController.StoreItem(itemData);
+        }
+
+        protected void GlamorItem(EIFRecord itemData)
+        {
+            _inventoryController.GlamorItem(itemData);
+        }
+
+        protected virtual void HandleItemRightClick(object sender, EIFRecord itemData)
+        {
+            // Base class: fallback to use/equip
+            UseOrEquipItem(itemData);
         }
 
         private void HandleItemDoneDragging(object sender, DragCompletedEventArgs<EIFRecord> e)
@@ -444,22 +460,7 @@ namespace EndlessClient.HUD.Panels
                 }
             }
 
-            if (_drop.MouseOver)
-            {
-                e.ContinueDrag = !fitsInOldSlot;
-                e.RestoreOriginalSlot = fitsInOldSlot;
 
-                _inventoryController.DropItem(item.Data, item.InventoryItem, MapCoordinate.Max);
-                return;
-            }
-            else if (_junk.MouseOver)
-            {
-                e.ContinueDrag = !fitsInOldSlot;
-                e.RestoreOriginalSlot = fitsInOldSlot;
-
-                _inventoryController.JunkItem(item.Data, item.InventoryItem);
-                return;
-            }
 
             var dialogDrop = false;
             foreach (var dlg in _activeDialogProvider.ActiveDialogs)

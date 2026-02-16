@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AutomaticTypeMapper;
 using EndlessClient.HUD.Panels;
 using EOLib.IO;
@@ -97,6 +98,57 @@ namespace EndlessClient.HUD.Inventory
                 }
             }
         }
+        private static int GetItemTypeCategory(ItemType type)
+        {
+            return type switch
+            {
+                ItemType.Weapon or ItemType.Shield or ItemType.Armor or ItemType.Hat or
+                ItemType.Boots or ItemType.Gloves or ItemType.Accessory or ItemType.Belt or
+                ItemType.Necklace or ItemType.Ring or ItemType.Armlet or ItemType.Bracer => 0,
+
+                ItemType.Heal or ItemType.Beer or ItemType.EffectPotion or
+                ItemType.HairDye or ItemType.CureCurse => 1,
+
+                ItemType.Teleport or ItemType.Spell or ItemType.Key or
+                ItemType.EXPReward or ItemType.StatReward or ItemType.SkillReward => 2,
+
+                _ => 3
+            };
+        }
+
+        private static int GetItemSizeArea(ItemSize size)
+        {
+            var (w, h) = size.GetDimensions();
+            return w * h;
+        }
+
+        public Dictionary<int, int> SortItems(bool[,] usedSlots, IEnumerable<(int ItemId, int Slot, ItemSize Size, ItemType Type)> items)
+        {
+            var sortedItems = items
+                .OrderBy(x => GetItemTypeCategory(x.Type))
+                .ThenByDescending(x => GetItemSizeArea(x.Size))
+                .ThenBy(x => x.ItemId)
+                .ToList();
+
+            // Clear all slots
+            for (int r = 0; r < usedSlots.GetLength(0); r++)
+                for (int c = 0; c < usedSlots.GetLength(1); c++)
+                    usedSlots[r, c] = false;
+
+            var result = new Dictionary<int, int>();
+
+            foreach (var item in sortedItems)
+            {
+                var slot = GetNextOpenSlot(usedSlots, item.Size, Option.None<int>());
+                slot.MatchSome(s =>
+                {
+                    SetSlots(usedSlots, s, item.Size);
+                    result[item.ItemId] = s;
+                });
+            }
+
+            return result;
+        }
     }
 
     public interface IInventoryService
@@ -109,5 +161,7 @@ namespace EndlessClient.HUD.Inventory
         bool FitsInSlot(bool[,] usedSlots, int oldSlot, int newSlot, ItemSize size);
 
         bool FitsInSlot(bool[,] usedSlots, int newSlot, ItemSize size);
+
+        Dictionary<int, int> SortItems(bool[,] usedSlots, IEnumerable<(int ItemId, int Slot, ItemSize Size, ItemType Type)> items);
     }
 }
