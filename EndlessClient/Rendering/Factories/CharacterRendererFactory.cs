@@ -1,5 +1,6 @@
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
+using EndlessClient.Content;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
@@ -34,6 +35,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IContentProvider _contentProvider;
 
         public CharacterRendererFactory(IEndlessGameProvider gameProvider,
                                         IRenderTargetFactory renderTargetFactory,
@@ -50,7 +52,8 @@ namespace EndlessClient.Rendering.Factories
                                         IMetadataProvider<WeaponMetadata> weaponMetadataProvider,
                                         ISfxPlayer sfxPlayer,
                                         IClientWindowSizeRepository clientWindowSizeRepository,
-                                        IConfigurationProvider configurationProvider)
+                                        IConfigurationProvider configurationProvider,
+                                        IContentProvider contentProvider)
         {
             _gameProvider = gameProvider;
             _renderTargetFactory = renderTargetFactory;
@@ -68,6 +71,7 @@ namespace EndlessClient.Rendering.Factories
             _sfxPlayer = sfxPlayer;
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _configurationProvider = configurationProvider;
+            _contentProvider = contentProvider;
         }
 
         public ICharacterRenderer CreateCharacterRenderer(EOLib.Domain.Character.Character character, bool isUiControl)
@@ -89,6 +93,7 @@ namespace EndlessClient.Rendering.Factories
                 _sfxPlayer,
                 _clientWindowSizeRepository,
                 _configurationProvider,
+                _contentProvider,
                 character,
                 isUiControl);
         }

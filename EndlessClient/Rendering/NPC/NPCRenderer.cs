@@ -1,4 +1,5 @@
 ﻿using System;
+using EndlessClient.Content;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Chat;
@@ -34,6 +35,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly IRenderTargetFactory _renderTargetFactory;
         private readonly IUserInputProvider _userInputProvider;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IContentProvider _contentProvider;
         private readonly IEffectRenderer _effectRenderer;
         private readonly IHealthBarRenderer _healthBarRenderer;
 
@@ -45,6 +47,7 @@ namespace EndlessClient.Rendering.NPC
         private bool _isDying, _isBlankSprite;
 
         private XNALabel _nameLabel;
+        private NPCNamePlate _namePlate;
         private IChatBubble _chatBubble;
 
         public int NameLabelY { get; private set; }
@@ -75,6 +78,7 @@ namespace EndlessClient.Rendering.NPC
                            IUserInputProvider userInputProvider,
                            IEffectRendererFactory effectRendererFactory,
                            IConfigurationProvider configurationProvider,
+                           IContentProvider contentProvider,
                            EOLib.Domain.NPC.NPC initialNPC)
             : base((Game)endlessGameProvider.Game)
         {
@@ -89,6 +93,7 @@ namespace EndlessClient.Rendering.NPC
             _renderTargetFactory = renderTargetFactory;
             _userInputProvider = userInputProvider;
             _configurationProvider = configurationProvider;
+            _contentProvider = contentProvider;
             _effectRenderer = effectRendererFactory.Create();
 
             DrawArea = GetStandingFrameRectangle();
@@ -123,6 +128,11 @@ namespace EndlessClient.Rendering.NPC
 
             _nameLabel.DrawPosition = GetNameLabelPosition();
 
+            _namePlate = new NPCNamePlate(Game, _contentProvider, _clientWindowSizeProvider);
+            _namePlate.UpdateNPCInfo(_enfFileProvider.ENFFile[NPC.ID]);
+            _namePlate.Initialize();
+            Game.Components.Add(_namePlate);
+
             lock (_rt_locker_)
                 _npcRenderTarget = _renderTargetFactory.CreateRenderTarget();
 
@@ -151,12 +161,19 @@ namespace EndlessClient.Rendering.NPC
             if (DrawArea.Contains(currentMousePosition))
             {
                 var chatBubbleIsVisible = _chatBubble != null && _chatBubble.Visible;
-                _nameLabel.Visible = !_healthBarRenderer.Visible && !chatBubbleIsVisible && !_isDying && IsClickablePixel(currentMousePosition);
-                _nameLabel.DrawPosition = GetNameLabelPosition();
+                var shouldShow = !_healthBarRenderer.Visible && !chatBubbleIsVisible && !_isDying && IsClickablePixel(currentMousePosition);
+
+                _nameLabel.Visible = false;
+                if (_namePlate != null)
+                {
+                    _namePlate.AnchorPosition = GetNamePlateAnchorPosition();
+                    _namePlate.IsHovered = shouldShow;
+                }
             }
             else
             {
                 _nameLabel.Visible = false;
+                if (_namePlate != null) _namePlate.IsHovered = false;
             }
 
             _effectRenderer.Update();
@@ -360,6 +377,21 @@ namespace EndlessClient.Rendering.NPC
                 (int)((mousePos.Y - centerY) / zoom + centerY));
         }
 
+        private Vector2 GetNamePlateAnchorPosition()
+        {
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f)
+            {
+                var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+                var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+                var zoomedX = (HorizontalCenter - centerX) * zoom + centerX;
+                var zoomedY = (NameLabelY - centerY) * zoom + centerY;
+                return new Vector2(zoomedX, zoomedY);
+            }
+
+            return new Vector2(HorizontalCenter, NameLabelY);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -368,6 +400,7 @@ namespace EndlessClient.Rendering.NPC
                 _healthBarRenderer?.Dispose();
 
                 _nameLabel?.Dispose();
+                _namePlate?.Dispose();
                 _chatBubble?.Dispose();
                 _spriteBatch?.Dispose();
 

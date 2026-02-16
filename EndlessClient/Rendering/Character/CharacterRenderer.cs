@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using EndlessClient.Audio;
+using EndlessClient.Content;
 using EndlessClient.Input;
 using EndlessClient.Rendering.CharacterProperties;
 using EndlessClient.Rendering.Chat;
@@ -42,6 +43,7 @@ namespace EndlessClient.Rendering.Character
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IEffectRenderer _effectRenderer;
+        private readonly IContentProvider _contentProvider;
 
         private readonly bool _isUiControl;
 
@@ -59,6 +61,7 @@ namespace EndlessClient.Rendering.Character
 
         private IHealthBarRenderer _healthBarRenderer;
         private Lazy<IChatBubble> _chatBubble;
+        private CharacterNamePlate _namePlate;
 
         private bool _lastIsDead;
 
@@ -114,6 +117,7 @@ namespace EndlessClient.Rendering.Character
                                  ISfxPlayer sfxPlayer,
                                  IClientWindowSizeRepository clientWindowSizeRepository,
                                  IConfigurationProvider configurationProvider,
+                                 IContentProvider contentProvider,
                                  EOLib.Domain.Character.Character character,
                                  bool isUiControl)
             : base(game)
@@ -133,6 +137,7 @@ namespace EndlessClient.Rendering.Character
             _sfxPlayer = sfxPlayer;
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _configurationProvider = configurationProvider;
+            _contentProvider = contentProvider;
             _character = character;
             _isUiControl = isUiControl;
 
@@ -171,6 +176,11 @@ namespace EndlessClient.Rendering.Character
 
                 _healthBarRenderer = _healthBarRendererFactory.CreateHealthBarRenderer(this);
                 Game.Components.Add(_healthBarRenderer);
+
+                _namePlate = new CharacterNamePlate(Game, _contentProvider, _clientWindowSizeRepository);
+                _namePlate.UpdateCharacterInfo(_character);
+                _namePlate.Initialize();
+                Game.Components.Add(_namePlate);
             }
 
             base.Initialize();
@@ -394,28 +404,37 @@ namespace EndlessClient.Rendering.Character
             if (!ShouldRenderForCurrentPlayer())
             {
                 _nameLabel.Visible = false;
+                if (_namePlate != null) _namePlate.IsHovered = false;
                 return;
             }
 
             if (_healthBarRenderer.Visible)
             {
                 _nameLabel.Visible = false;
+                if (_namePlate != null) _namePlate.IsHovered = false;
             }
             else if (DrawArea.Contains(GetZoomAdjustedMousePosition()) && _showName)
             {
-                _nameLabel.Visible = true;
-                _nameLabel.BlinkRate = null;
-                _nameLabel.Text = !string.IsNullOrWhiteSpace(_character.GuildTag) ? $"{_character.Name} {_character.GuildTag}" : _character.Name;
+                // Show nameplate on hover (replaces the old plain text label for hover)
+                _nameLabel.Visible = false;
+                if (_namePlate != null)
+                {
+                    _namePlate.UpdateCharacterInfo(_character);
+                    _namePlate.AnchorPosition = GetNamePlateAnchorPosition();
+                    _namePlate.IsHovered = true;
+                }
             }
             else if (_shoutName != string.Empty && _nameLabel.Text != _shoutName)
             {
                 _nameLabel.Visible = true;
                 _nameLabel.BlinkRate = 250;
                 _nameLabel.Text = _shoutName;
+                if (_namePlate != null) _namePlate.IsHovered = false;
             }
             else if (_shoutName == string.Empty)
             {
                 _nameLabel.Visible = false;
+                if (_namePlate != null) _namePlate.IsHovered = false;
             }
 
             if (_spellCastTime.HasValue && (DateTime.Now - _spellCastTime.Value).TotalMilliseconds >= 600)
@@ -443,6 +462,23 @@ namespace EndlessClient.Rendering.Character
             }
 
             return new Vector2(HorizontalCenter - (_nameLabel.ActualWidth / 2f), NameLabelY);
+        }
+
+        private Vector2 GetNamePlateAnchorPosition()
+        {
+            var anchorY = DrawArea.Y - 4 + ((int)Character.RenderProperties.SitState) * 10;
+
+            var zoom = _configurationProvider.MapZoom;
+            if (zoom != 1.0f && !_isUiControl)
+            {
+                var centerX = _clientWindowSizeRepository.GameWidth / 2f;
+                var centerY = _clientWindowSizeRepository.GameHeight / 2f;
+                var zoomedX = (HorizontalCenter - centerX) * zoom + centerX;
+                var zoomedY = (anchorY - centerY) * zoom + centerY;
+                return new Vector2(zoomedX, zoomedY);
+            }
+
+            return new Vector2(HorizontalCenter, anchorY);
         }
 
         private Point GetZoomAdjustedMousePosition()
@@ -658,9 +694,15 @@ namespace EndlessClient.Rendering.Character
                     {
                         Game.Components.Remove(_healthBarRenderer);
                     }
+
+                    if (Game.Components.Contains(_namePlate))
+                    {
+                        Game.Components.Remove(_namePlate);
+                    }
                 }
                 _nameLabel?.Dispose();
                 _healthBarRenderer?.Dispose();
+                _namePlate?.Dispose();
 
                 if (_chatBubble.IsValueCreated)
                     _chatBubble.Value?.Dispose();

@@ -1,4 +1,5 @@
 ﻿using AutomaticTypeMapper;
+using EndlessClient.Content;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Chat;
@@ -25,6 +26,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly IUserInputProvider _userInputProvider;
         private readonly IEffectRendererFactory _effectRendererFactory;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IContentProvider _contentProvider;
 
         public NPCRendererFactory(IEndlessGameProvider endlessGameProvider,
                                   IClientWindowSizeProvider clientWindowSizeProvider,
@@ -37,7 +39,8 @@ namespace EndlessClient.Rendering.NPC
                                   IRenderTargetFactory renderTargetFactory,
                                   IUserInputProvider userInputProvider,
                                   IEffectRendererFactory effectRendererFactory,
-                                  IConfigurationProvider configurationProvider)
+                                  IConfigurationProvider configurationProvider,
+                                  IContentProvider contentProvider)
         {
             _endlessGameProvider = endlessGameProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -51,6 +54,7 @@ namespace EndlessClient.Rendering.NPC
             _userInputProvider = userInputProvider;
             _effectRendererFactory = effectRendererFactory;
             _configurationProvider = configurationProvider;
+            _contentProvider = contentProvider;
         }
 
         public INPCRenderer CreateRendererFor(EOLib.Domain.NPC.NPC npc)
@@ -67,6 +71,7 @@ namespace EndlessClient.Rendering.NPC
                                    _userInputProvider,
                                    _effectRendererFactory,
                                    _configurationProvider,
+                                   _contentProvider,
                                    npc);
         }
     }
