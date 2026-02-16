@@ -47,7 +47,7 @@ namespace EndlessClient.Dialogs
 
         Option<LawDialog> LawDialog { get; }
 
-        Option<BarberDialog> BarberDialog { get; }
+        Option<CodeDrawnBarberDialog> BarberDialog { get; }
 
         Option<ScrollingListDialog> HelpDialog { get; }
 
@@ -102,7 +102,7 @@ namespace EndlessClient.Dialogs
 
         Option<LawDialog> LawDialog { get; set; }
 
-        Option<BarberDialog> BarberDialog { get; set; }
+        Option<CodeDrawnBarberDialog> BarberDialog { get; set; }
 
         Option<GuildDialog> GuildDialog { get; set; }
 
@@ -160,7 +160,7 @@ namespace EndlessClient.Dialogs
 
         public Option<LawDialog> LawDialog { get; set; }
 
-        public Option<BarberDialog> BarberDialog { get; set; }
+        public Option<CodeDrawnBarberDialog> BarberDialog { get; set; }
 
         public Option<GuildDialog> GuildDialog { get; set; }
 
@@ -243,7 +243,7 @@ namespace EndlessClient.Dialogs
             JukeboxDialog = Option.None<JukeboxDialog>();
             InnkeeperDialog = Option.None<InnkeeperDialog>();
             LawDialog = Option.None<LawDialog>();
-            BarberDialog = Option.None<BarberDialog>();
+            BarberDialog = Option.None<CodeDrawnBarberDialog>();
             GuildDialog = Option.None<GuildDialog>();
             HelpDialog = Option.None<ScrollingListDialog>();
             ItemInfoDialog = Option.None<IXNADialog>();

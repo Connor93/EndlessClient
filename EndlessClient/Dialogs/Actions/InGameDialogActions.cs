@@ -484,7 +484,7 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _barberDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.BarberDialog = Option.None<BarberDialog>();
+                    _activeDialogRepository.BarberDialog = Option.None<CodeDrawnBarberDialog>();
                 };
                 _activeDialogRepository.BarberDialog = Option.Some(dlg);
 

@@ -155,6 +155,7 @@ namespace EndlessClient.Dialogs
                 DrawArea = new Rectangle(DialogWidth / 2 - 36, DialogHeight - 36, 72, 26)
             };
             _okButton.OnClick += (_, _) => Close(XNADialogResult.OK);
+            _okButton.SuppressPostScaleDraw = true;
             _okButton.SetParentControl(this);
         }
 

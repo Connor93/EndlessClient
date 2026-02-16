@@ -12,6 +12,12 @@ namespace EndlessClient.UIControls
     {
         private Vector2 _lastPosition;
 
+        /// <summary>
+        /// Maximum hairstyle ID for cycling. Character creation uses 20 (default),
+        /// while the barber NPC can set this higher to expose all available styles.
+        /// </summary>
+        public int MaxHairStyle { get; set; } = 20;
+
 
         public event EventHandler Clicked;
 
@@ -66,12 +72,23 @@ namespace EndlessClient.UIControls
 
         public void NextHairStyle()
         {
-            RenderProperties = RenderProperties.WithHairStyle((RenderProperties.HairStyle + 1) % 21);
+            RenderProperties = RenderProperties.WithHairStyle((RenderProperties.HairStyle + 1) % (MaxHairStyle + 1));
         }
 
         public void NextHairColor()
         {
             RenderProperties = RenderProperties.WithHairColor((RenderProperties.HairColor + 1) % 10);
+        }
+
+        public void PrevHairStyle()
+        {
+            var max = MaxHairStyle + 1;
+            RenderProperties = RenderProperties.WithHairStyle((RenderProperties.HairStyle - 1 + max) % max);
+        }
+
+        public void PrevHairColor()
+        {
+            RenderProperties = RenderProperties.WithHairColor((RenderProperties.HairColor - 1 + 10) % 10);
         }
 
         private static CharacterRenderProperties GetDefaultProperties()

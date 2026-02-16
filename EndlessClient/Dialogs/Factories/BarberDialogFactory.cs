@@ -1,14 +1,12 @@
-using System.Collections.Generic;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
 using EndlessClient.Content;
-using EndlessClient.Controllers;
-using EndlessClient.Dialogs.Services;
-using EndlessClient.Rendering.Character;
+using EndlessClient.GameExecution;
+using EndlessClient.Rendering;
 using EndlessClient.Rendering.Factories;
+using EndlessClient.UI.Styles;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Barber;
-using EOLib.Domain.Notifiers;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
@@ -18,61 +16,69 @@ namespace EndlessClient.Dialogs.Factories
     [AutoMappedType]
     public class BarberDialogFactory : IBarberDialogFactory
     {
-        private readonly INativeGraphicsManager _nativeGraphicsManager;
+        private readonly IUIStyleProvider _styleProvider;
+        private readonly IGameStateProvider _gameStateProvider;
         private readonly ICharacterRendererFactory _characterRendererFactory;
-        private readonly IEODialogButtonService _dialogButtonService;
+        private readonly IContentProvider _contentProvider;
+        private readonly IEOMessageBoxFactory _messageBoxFactory;
         private readonly ICharacterRepository _characterRepository;
-        private readonly IEODialogIconService _dialogIconService;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly IBarberActions _barberActions;
         private readonly ICharacterInventoryProvider _characterInventoryProvider;
-        private readonly IEOMessageBoxFactory _messageBoxFactory;
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
 
-        public BarberDialogFactory(INativeGraphicsManager nativeGraphicsManager,
+        public BarberDialogFactory(IUIStyleProvider styleProvider,
+                                   IGameStateProvider gameStateProvider,
                                    ICharacterRendererFactory characterRendererFactory,
-                                   IEODialogButtonService dialogButtonService,
+                                   IContentProvider contentProvider,
+                                   IEOMessageBoxFactory messageBoxFactory,
                                    ICharacterRepository characterRepository,
-                                   IEODialogIconService dialogIconService,
                                    ILocalizedStringFinder localizedStringFinder,
                                    IBarberActions barberActions,
                                    ICharacterInventoryProvider characterInventoryProvider,
-                                   IEOMessageBoxFactory messageBoxFactory,
                                    IEIFFileProvider eifFileProvider,
-                                   ISfxPlayer sfxPlayer)
+                                   ISfxPlayer sfxPlayer,
+                                   IClientWindowSizeProvider clientWindowSizeProvider,
+                                   IGraphicsDeviceProvider graphicsDeviceProvider)
         {
-            _nativeGraphicsManager = nativeGraphicsManager;
+            _styleProvider = styleProvider;
+            _gameStateProvider = gameStateProvider;
             _characterRendererFactory = characterRendererFactory;
-            _dialogButtonService = dialogButtonService;
+            _contentProvider = contentProvider;
+            _messageBoxFactory = messageBoxFactory;
             _characterRepository = characterRepository;
-            _dialogIconService = dialogIconService;
             _localizedStringFinder = localizedStringFinder;
             _barberActions = barberActions;
             _characterInventoryProvider = characterInventoryProvider;
-            _messageBoxFactory = messageBoxFactory;
             _eifFileProvider = eifFileProvider;
             _sfxPlayer = sfxPlayer;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
         }
 
-        public BarberDialog Create()
+        public CodeDrawnBarberDialog Create()
         {
-            return new BarberDialog(_nativeGraphicsManager,
-                                    _characterRendererFactory,
-                                    _dialogButtonService,
-                                    _characterRepository,
-                                    _dialogIconService,
-                                    _localizedStringFinder,
-                                    _barberActions,
-                                    _characterInventoryProvider,
-                                    _messageBoxFactory,
-                                    _eifFileProvider,
-                                    _sfxPlayer);
+            return new CodeDrawnBarberDialog(_styleProvider,
+                                             _gameStateProvider,
+                                             _characterRendererFactory,
+                                             _contentProvider,
+                                             _messageBoxFactory,
+                                             _characterRepository,
+                                             _localizedStringFinder,
+                                             _barberActions,
+                                             _characterInventoryProvider,
+                                             _eifFileProvider,
+                                             _sfxPlayer,
+                                             _clientWindowSizeProvider,
+                                             _graphicsDeviceProvider);
         }
     }
 
     public interface IBarberDialogFactory
     {
-        BarberDialog Create();
+        CodeDrawnBarberDialog Create();
     }
 }
