@@ -1,6 +1,7 @@
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
 using EndlessClient.Content;
+using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Character;
@@ -36,6 +37,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly IClientWindowSizeRepository _clientWindowSizeRepository;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IActiveDialogProvider _activeDialogProvider;
 
         public CharacterRendererFactory(IEndlessGameProvider gameProvider,
                                         IRenderTargetFactory renderTargetFactory,
@@ -53,7 +55,8 @@ namespace EndlessClient.Rendering.Factories
                                         ISfxPlayer sfxPlayer,
                                         IClientWindowSizeRepository clientWindowSizeRepository,
                                         IConfigurationProvider configurationProvider,
-                                        IContentProvider contentProvider)
+                                        IContentProvider contentProvider,
+                                        IActiveDialogProvider activeDialogProvider)
         {
             _gameProvider = gameProvider;
             _renderTargetFactory = renderTargetFactory;
@@ -72,6 +75,7 @@ namespace EndlessClient.Rendering.Factories
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _configurationProvider = configurationProvider;
             _contentProvider = contentProvider;
+            _activeDialogProvider = activeDialogProvider;
         }
 
         public ICharacterRenderer CreateCharacterRenderer(EOLib.Domain.Character.Character character, bool isUiControl)
@@ -94,6 +98,7 @@ namespace EndlessClient.Rendering.Factories
                 _clientWindowSizeRepository,
                 _configurationProvider,
                 _contentProvider,
+                _activeDialogProvider,
                 character,
                 isUiControl);
         }

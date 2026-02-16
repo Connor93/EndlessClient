@@ -2,6 +2,7 @@
 using System.Linq;
 using EndlessClient.Audio;
 using EndlessClient.Content;
+using EndlessClient.Dialogs;
 using EndlessClient.Input;
 using EndlessClient.Rendering.CharacterProperties;
 using EndlessClient.Rendering.Chat;
@@ -44,6 +45,7 @@ namespace EndlessClient.Rendering.Character
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IEffectRenderer _effectRenderer;
         private readonly IContentProvider _contentProvider;
+        private readonly IActiveDialogProvider _activeDialogProvider;
 
         private readonly bool _isUiControl;
 
@@ -118,6 +120,7 @@ namespace EndlessClient.Rendering.Character
                                  IClientWindowSizeRepository clientWindowSizeRepository,
                                  IConfigurationProvider configurationProvider,
                                  IContentProvider contentProvider,
+                                 IActiveDialogProvider activeDialogProvider,
                                  EOLib.Domain.Character.Character character,
                                  bool isUiControl)
             : base(game)
@@ -138,6 +141,7 @@ namespace EndlessClient.Rendering.Character
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _configurationProvider = configurationProvider;
             _contentProvider = contentProvider;
+            _activeDialogProvider = activeDialogProvider;
             _character = character;
             _isUiControl = isUiControl;
 
@@ -415,13 +419,19 @@ namespace EndlessClient.Rendering.Character
             }
             else if (DrawArea.Contains(GetZoomAdjustedMousePosition()) && _showName)
             {
+                var anyDialogOpen = _activeDialogProvider.ActiveDialogs.Any(d => d.HasValue);
+
                 // Show nameplate on hover (replaces the old plain text label for hover)
                 _nameLabel.Visible = false;
-                if (_namePlate != null)
+                if (_namePlate != null && !anyDialogOpen)
                 {
                     _namePlate.UpdateCharacterInfo(_character);
                     _namePlate.AnchorPosition = GetNamePlateAnchorPosition();
                     _namePlate.IsHovered = true;
+                }
+                else if (_namePlate != null)
+                {
+                    _namePlate.IsHovered = false;
                 }
             }
             else if (_shoutName != string.Empty && _nameLabel.Text != _shoutName)

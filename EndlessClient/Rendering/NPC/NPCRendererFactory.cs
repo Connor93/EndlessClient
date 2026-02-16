@@ -1,5 +1,6 @@
 ﻿using AutomaticTypeMapper;
 using EndlessClient.Content;
+using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Chat;
@@ -27,6 +28,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly IEffectRendererFactory _effectRendererFactory;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IActiveDialogProvider _activeDialogProvider;
 
         public NPCRendererFactory(IEndlessGameProvider endlessGameProvider,
                                   IClientWindowSizeProvider clientWindowSizeProvider,
@@ -40,7 +42,8 @@ namespace EndlessClient.Rendering.NPC
                                   IUserInputProvider userInputProvider,
                                   IEffectRendererFactory effectRendererFactory,
                                   IConfigurationProvider configurationProvider,
-                                  IContentProvider contentProvider)
+                                  IContentProvider contentProvider,
+                                  IActiveDialogProvider activeDialogProvider)
         {
             _endlessGameProvider = endlessGameProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -55,6 +58,7 @@ namespace EndlessClient.Rendering.NPC
             _effectRendererFactory = effectRendererFactory;
             _configurationProvider = configurationProvider;
             _contentProvider = contentProvider;
+            _activeDialogProvider = activeDialogProvider;
         }
 
         public INPCRenderer CreateRendererFor(EOLib.Domain.NPC.NPC npc)
@@ -72,6 +76,7 @@ namespace EndlessClient.Rendering.NPC
                                    _effectRendererFactory,
                                    _configurationProvider,
                                    _contentProvider,
+                                   _activeDialogProvider,
                                    npc);
         }
     }

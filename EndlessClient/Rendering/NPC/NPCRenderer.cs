@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using EndlessClient.Content;
+using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering.Chat;
@@ -36,6 +38,7 @@ namespace EndlessClient.Rendering.NPC
         private readonly IUserInputProvider _userInputProvider;
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IActiveDialogProvider _activeDialogProvider;
         private readonly IEffectRenderer _effectRenderer;
         private readonly IHealthBarRenderer _healthBarRenderer;
 
@@ -79,6 +82,7 @@ namespace EndlessClient.Rendering.NPC
                            IEffectRendererFactory effectRendererFactory,
                            IConfigurationProvider configurationProvider,
                            IContentProvider contentProvider,
+                           IActiveDialogProvider activeDialogProvider,
                            EOLib.Domain.NPC.NPC initialNPC)
             : base((Game)endlessGameProvider.Game)
         {
@@ -94,6 +98,7 @@ namespace EndlessClient.Rendering.NPC
             _userInputProvider = userInputProvider;
             _configurationProvider = configurationProvider;
             _contentProvider = contentProvider;
+            _activeDialogProvider = activeDialogProvider;
             _effectRenderer = effectRendererFactory.Create();
 
             DrawArea = GetStandingFrameRectangle();
@@ -161,7 +166,8 @@ namespace EndlessClient.Rendering.NPC
             if (DrawArea.Contains(currentMousePosition))
             {
                 var chatBubbleIsVisible = _chatBubble != null && _chatBubble.Visible;
-                var shouldShow = !_healthBarRenderer.Visible && !chatBubbleIsVisible && !_isDying && IsClickablePixel(currentMousePosition);
+                var anyDialogOpen = _activeDialogProvider.ActiveDialogs.Any(d => d.HasValue);
+                var shouldShow = !_healthBarRenderer.Visible && !chatBubbleIsVisible && !_isDying && !anyDialogOpen && IsClickablePixel(currentMousePosition);
 
                 _nameLabel.Visible = false;
                 if (_namePlate != null)

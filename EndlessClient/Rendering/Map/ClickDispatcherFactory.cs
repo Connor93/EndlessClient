@@ -7,6 +7,7 @@ using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.NPC;
 using EOLib.Config;
 using EOLib.Domain.Character;
+using EOLib.Domain.Interact;
 using EOLib.Domain.Map;
 
 namespace EndlessClient.Rendering.Map
@@ -29,6 +30,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IMapInteractionController _mapInteractionController;
         private readonly INPCInteractionController _npcInteractionController;
+        private readonly INpcInfoDialogActions _npcInfoDialogActions;
         private readonly IUserInputProvider _userInputProvider;
         private readonly IConfigurationProvider _configurationProvider;
 
@@ -46,6 +48,7 @@ namespace EndlessClient.Rendering.Map
                                       IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                       IMapInteractionController mapInteractionController,
                                       INPCInteractionController npcInteractionController,
+                                      INpcInfoDialogActions npcInfoDialogActions,
                                       IUserInputProvider userInputProvider,
                                       IConfigurationProvider configurationProvider)
         {
@@ -63,6 +66,7 @@ namespace EndlessClient.Rendering.Map
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _mapInteractionController = mapInteractionController;
             _npcInteractionController = npcInteractionController;
+            _npcInfoDialogActions = npcInfoDialogActions;
             _userInputProvider = userInputProvider;
             _configurationProvider = configurationProvider;
         }
@@ -83,6 +87,7 @@ namespace EndlessClient.Rendering.Map
                 _gridDrawCoordinateCalculator,
                 _mapInteractionController,
                 _npcInteractionController,
+                _npcInfoDialogActions,
                 _userInputProvider,
                 _configurationProvider);
         }

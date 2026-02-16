@@ -41,6 +41,7 @@ namespace EndlessClient.Rendering.Map
         private readonly IGridDrawCoordinateCalculator _gridDrawCoordinateCalculator;
         private readonly IMapInteractionController _mapInteractionController;
         private readonly INPCInteractionController _npcInteractionController;
+        private readonly INpcInfoDialogActions _npcInfoDialogActions;
         private readonly IUserInputProvider _userInputProvider;
         private readonly IConfigurationProvider _configurationProvider;
 
@@ -62,6 +63,7 @@ namespace EndlessClient.Rendering.Map
 
                                IMapInteractionController mapInteractionController,
                                INPCInteractionController npcInteractionController,
+                               INpcInfoDialogActions npcInfoDialogActions,
                                IUserInputProvider userInputProvider,
                                IConfigurationProvider configurationProvider)
         {
@@ -80,6 +82,7 @@ namespace EndlessClient.Rendering.Map
 
             _mapInteractionController = mapInteractionController;
             _npcInteractionController = npcInteractionController;
+            _npcInfoDialogActions = npcInfoDialogActions;
             _userInputProvider = userInputProvider;
             _configurationProvider = configurationProvider;
         }
@@ -176,7 +179,7 @@ namespace EndlessClient.Rendering.Map
             return entity switch
             {
                 DomainCharacter c => HandleCharacterClick(c, eventArgs.Button),
-                DomainNPC n => eventArgs.Button == MouseButton.Left && HandleNPCClick(n, transformedMousePosition),
+                DomainNPC n => HandleNPCDispatch(n, eventArgs, transformedMousePosition),
                 SignMapEntity s => eventArgs.Button == MouseButton.Left && HandleSignClick(s),
                 TileSpecMapEntity ts => eventArgs.Button == MouseButton.Left && HandleTileSpecClick(ts),
                 _ => throw new ArgumentException()
@@ -235,6 +238,16 @@ namespace EndlessClient.Rendering.Map
             return true;
         }
 
+        private bool HandleNPCDispatch(DomainNPC n, MouseEventArgs eventArgs, Point transformedMousePosition)
+        {
+            return eventArgs.Button switch
+            {
+                MouseButton.Left => HandleNPCClick(n, transformedMousePosition),
+                MouseButton.Right => HandleNPCRightClick(n, transformedMousePosition),
+                _ => false
+            };
+        }
+
         private bool HandleNPCClick(DomainNPC n, Point currentMousePosition)
         {
             var renderer = _npcRendererProvider.NPCRenderers[n.Index];
@@ -248,6 +261,19 @@ namespace EndlessClient.Rendering.Map
                 DispatcherGameComponent.Invoke(() => _npcInteractionController.ShowNPCDialog(n));
             }
 
+            return true;
+        }
+
+        private bool HandleNPCRightClick(DomainNPC n, Point currentMousePosition)
+        {
+            if (!_npcRendererProvider.NPCRenderers.ContainsKey(n.Index))
+                return false;
+
+            var renderer = _npcRendererProvider.NPCRenderers[n.Index];
+            if (!renderer.IsClickablePixel(currentMousePosition))
+                return false;
+
+            DispatcherGameComponent.Invoke(() => _npcInfoDialogActions.ShowNpcInfo(n.ID));
             return true;
         }
 
