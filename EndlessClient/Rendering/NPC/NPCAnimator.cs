@@ -43,10 +43,23 @@ namespace EndlessClient.Rendering.NPC
             {
                 value.SetReplay();
                 _queuedWalk[npcIndex] = (coords, direction);
+
+                // Update the NPC's position in the domain model immediately so that
+                // ClearOutOfRangeActors uses the latest server-reported position
+                if (_currentMapStateRepository.NPCs.TryGetValue(npcIndex, out var npc))
+                {
+                    _currentMapStateRepository.NPCs.Update(npc, npc.WithX(coords.X).WithY(coords.Y));
+                }
             }
             else if (_npcStartAttackingTimes.ContainsKey(npcIndex))
             {
                 _queuedWalk[npcIndex] = (coords, direction);
+
+                // Update NPC position immediately for same reason as above
+                if (_currentMapStateRepository.NPCs.TryGetValue(npcIndex, out var npc))
+                {
+                    _currentMapStateRepository.NPCs.Update(npc, npc.WithX(coords.X).WithY(coords.Y));
+                }
             }
             else
             {

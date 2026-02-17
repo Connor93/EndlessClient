@@ -254,7 +254,10 @@ namespace EndlessClient.Rendering.Map
 
             if (_spellSlotDataProvider.SpellIsPrepared)
             {
-                _mapInteractionController.LeftClick(n);
+                // Return the result: false means the spell can't target this NPC
+                // (e.g., heal spell), so the click should pass through to the
+                // next entity behind it (e.g., a player character)
+                return _mapInteractionController.LeftClick(n);
             }
             else if (renderer.IsClickablePixel(currentMousePosition))
             {

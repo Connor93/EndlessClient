@@ -16,8 +16,10 @@ namespace EndlessClient.Network
 {
     public class UnknownEntitiesRequester : GameComponent
     {
-        private const int UPPER_SEE_DISTANCE = 12;
-        private const int LOWER_SEE_DISTANCE = 15;
+        // Server SeeDistance is 11. Add buffer of +3/+2 to account for
+        // position lag during walking animations and packet timing.
+        private const int UPPER_SEE_DISTANCE = 14;
+        private const int LOWER_SEE_DISTANCE = 17;
 
         private const int REQUEST_INTERVAL_MS = 1000;
 

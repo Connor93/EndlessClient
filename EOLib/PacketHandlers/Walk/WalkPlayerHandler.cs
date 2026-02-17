@@ -38,14 +38,14 @@ namespace EOLib.PacketHandlers.Walk
 
             if (_currentMapStateRepository.Characters.TryGetValue(packet.PlayerId, out var character))
             {
-
-                // if character is walking, that means animator is handling position of character
-                // if character is not walking (this is true in EOBot), update the domain model here
-                if (!character.RenderProperties.IsActing(CharacterActionState.Walking))
-                {
-                    var renderProperties = EnsureCorrectXAndY(character.RenderProperties.WithDirection((EODirection)packet.Direction), packet.Coords.X, packet.Coords.Y);
-                    _currentMapStateRepository.Characters.Update(character, character.WithRenderProperties(renderProperties));
-                }
+                // Always update the domain model with the server-reported position.
+                // The animator handles the visual walk transition independently.
+                // This ensures ClearOutOfRangeActors uses the correct server position
+                // and prevents position desync if the animation is interrupted.
+                var renderProperties = character.RenderProperties.IsActing(CharacterActionState.Walking)
+                    ? character.RenderProperties.WithMapX(packet.Coords.X).WithMapY(packet.Coords.Y)
+                    : EnsureCorrectXAndY(character.RenderProperties.WithDirection((EODirection)packet.Direction), packet.Coords.X, packet.Coords.Y);
+                _currentMapStateRepository.Characters.Update(character, character.WithRenderProperties(renderProperties));
 
                 foreach (var notifier in _otherCharacterAnimationNotifiers)
                     notifier.StartOtherCharacterWalkAnimation(packet.PlayerId, new MapCoordinate(packet.Coords.X, packet.Coords.Y), (EODirection)packet.Direction);

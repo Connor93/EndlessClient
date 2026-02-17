@@ -226,10 +226,16 @@ namespace EndlessClient.Controllers
             if (spellId > 0)
             {
                 var result = _spellCastValidationActions.ValidateSpellCast(spellId, target);
+
+                // Wrong target type: don't consume the click so it can pass through
+                // to the next entity (e.g., heal spell clicking an NPC should pass
+                // through to the player behind the NPC)
+                if (result == SpellCastValidationResult.WrongTargetType ||
+                    result == SpellCastValidationResult.CannotAttackNPC)
+                    return false;
+
                 if (result == SpellCastValidationResult.Ok && _characterAnimationActions.PrepareMainCharacterSpell(spellId, target))
                     _characterActions.PrepareCastSpell(spellId);
-                else if (result == SpellCastValidationResult.CannotAttackNPC)
-                    _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.YOU_CANNOT_ATTACK_THIS_NPC);
                 else if (result == SpellCastValidationResult.ExhaustedNoTp)
                     _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.ATTACK_YOU_ARE_EXHAUSTED_TP);
                 else if (result == SpellCastValidationResult.ExhaustedNoSp)
