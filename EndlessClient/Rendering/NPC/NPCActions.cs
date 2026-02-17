@@ -27,8 +27,10 @@ namespace EndlessClient.Rendering.NPC
         private readonly IChatRepository _chatRepository;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly IEIFFileProvider _eifFileProvider;
+        private readonly IENFFileProvider _enfFileProvider;
         private readonly IESFFileProvider _esfFileProvider;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IBossHealthBarRepository _bossHealthBarRepository;
 
         public NPCActions(IHudControlProvider hudControlProvider,
                           IToastNotifier toastNotifier,
@@ -39,8 +41,10 @@ namespace EndlessClient.Rendering.NPC
                           IChatRepository chatRepository,
                           ILocalizedStringFinder localizedStringFinder,
                           IEIFFileProvider eifFileProvider,
+                          IENFFileProvider enfFileProvider,
                           IESFFileProvider esfFileProvider,
-                          ISfxPlayer sfxPlayer)
+                          ISfxPlayer sfxPlayer,
+                          IBossHealthBarRepository bossHealthBarRepository)
         {
             _hudControlProvider = hudControlProvider;
             _toastNotifier = toastNotifier;
@@ -51,8 +55,10 @@ namespace EndlessClient.Rendering.NPC
             _chatRepository = chatRepository;
             _localizedStringFinder = localizedStringFinder;
             _eifFileProvider = eifFileProvider;
+            _enfFileProvider = enfFileProvider;
             _esfFileProvider = esfFileProvider;
             _sfxPlayer = sfxPlayer;
+            _bossHealthBarRepository = bossHealthBarRepository;
         }
 
         public void StartNPCWalkAnimation(int npcIndex, MapCoordinate coords, EODirection direction)
@@ -99,6 +105,9 @@ namespace EndlessClient.Rendering.NPC
 
                     damage.MatchSome(d => renderer.ShowDamageCounter(d, 0, isHeal: false));
                 }
+
+                // Remove from boss health bar HUD
+                _bossHealthBarRepository.ActiveBosses.Remove(npcIndex);
             }
 
             spellId.MatchSome(spell =>
@@ -123,7 +132,23 @@ namespace EndlessClient.Rendering.NPC
             var hasRenderer = _npcRendererRepository.NPCRenderers.ContainsKey(npcIndex);
 
             if (hasRenderer)
-                _npcRendererRepository.NPCRenderers[npcIndex].ShowDamageCounter(damageToNpc, npcPctHealth, isHeal: false);
+            {
+                var renderer = _npcRendererRepository.NPCRenderers[npcIndex];
+                renderer.ShowDamageCounter(damageToNpc, npcPctHealth, isHeal: false);
+
+                // Track boss health in HUD
+                var npcData = _enfFileProvider.ENFFile[renderer.NPC.ID];
+                if (npcData.Boss > 0)
+                {
+                    _bossHealthBarRepository.ActiveBosses[npcIndex] = new BossBarState
+                    {
+                        NpcIndex = npcIndex,
+                        NpcId = renderer.NPC.ID,
+                        Name = npcData.Name,
+                        PercentHealth = npcPctHealth
+                    };
+                }
+            }
 
             spellId.MatchSome(spell =>
             {

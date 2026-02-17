@@ -1,60 +1,74 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using EndlessClient.Content;
 using EndlessClient.GameExecution;
+using EOLib.Shared;
 using EOLib.Config;
-using EOLib.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.BitmapFonts;
 using Optional;
 
 namespace EndlessClient.Rendering
 {
     public class HealthBarRenderer : DrawableGameComponent, IHealthBarRenderer
     {
-        private const int DigitWidth = 9;
+        // Bar dimensions (unzoomed pixels)
+        private const int BarWidth = 64;
+        private const int BarHeight = 12;
+        private const int PlatePadding = 3;
+        private const int PlateWidth = BarWidth + PlatePadding * 2;
+        private const int PlateHeight = BarHeight + PlatePadding * 2;
+
+        // Timing
+        private const float DamageTextDuration = 12f;       // frame-offset units for floating text
+        private const double BarVisibilitySeconds = 5.0;    // health bar stays visible for 5s
+
+        // Colors
+        private static readonly Color BarFillColor = new Color(200, 35, 35);
+        private static readonly Color PlateColor = new Color(0, 0, 0, 160);
+        private static readonly Color DamageTextColor = new Color(255, 220, 80);   // warm yellow-orange
+        private static readonly Color HealTextColor = new Color(100, 220, 100);     // green
+        private static readonly Color MissTextColor = new Color(200, 200, 200);     // soft grey
+        private static readonly Color HpTextColor = Color.White;
 
         private readonly IMapActor _parentReference;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly IContentProvider _contentProvider;
 
         private readonly SpriteBatch _spriteBatch;
-        private readonly Texture2D _sourceTexture;
         private Texture2D _pixelTexture;
-
-        private static readonly Point _numberSpritesOffset, _healthBarSpritesOffset;
-        private static readonly Rectangle _healthBarBackgroundSource;
 
         private Action _doneCallback;
         private bool _isMiss;
-        private List<Rectangle> _numberSourceRectangles;
-        private Rectangle _healthBarSourceRectangle;
-
+        private bool _isHeal;
+        private int _percentHealth;
+        private string _damageText;
         private float _frameOffset;
-        private Vector2 _damageCounterPosition, _healthBarPosition;
+        private bool _damageTextVisible;
 
-        static HealthBarRenderer()
-        {
-            _numberSpritesOffset = new Point(40, 28);
-            _healthBarSpritesOffset = new Point(0, 28);
-            _healthBarBackgroundSource = new Rectangle(0, 28, 40, 7);
-        }
+        // Time-based bar visibility
+        private DateTime _lastDamageTime;
+        private bool _barVisible;
+
+        private Vector2 _healthBarPosition;
+        private Vector2 _damageCounterPosition;
 
         public HealthBarRenderer(IEndlessGameProvider endlessGameProvider,
-                                 INativeGraphicsManager nativeGraphicsManager,
                                  IClientWindowSizeProvider clientWindowSizeProvider,
                                  IConfigurationProvider configurationProvider,
+                                 IContentProvider contentProvider,
                                  IMapActor parentReference)
             : base((Game)endlessGameProvider.Game)
         {
             _parentReference = parentReference;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _configurationProvider = configurationProvider;
+            _contentProvider = contentProvider;
 
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
-            _sourceTexture = nativeGraphicsManager.TextureFromResource(GFXTypes.PostLoginUI, 58, true);
 
-            _numberSourceRectangles = [];
+            _damageText = string.Empty;
             UpdateOrder = DrawOrder = 99;
             Enabled = Visible = false;
         }
@@ -70,121 +84,160 @@ namespace EndlessClient.Rendering
         public void SetDamage(Option<int> value, int percentHealth, Action doneCallback = null)
         {
             Enabled = Visible = true;
-            _isMiss = !value.HasValue;
             _doneCallback = doneCallback;
             _frameOffset = 0;
-
-            _numberSourceRectangles.Clear();
+            _percentHealth = percentHealth;
+            _isHeal = false;
+            _damageTextVisible = true;
+            _barVisible = true;
+            _lastDamageTime = DateTime.Now;
 
             value.Match(
-                some: v => _numberSourceRectangles.AddRange(
-                    GetNumberSourceRectangles(v, isHeal: false)
-                        .Select(x => new Rectangle(_numberSpritesOffset + x.Location, x.Size))),
-                none: () => _numberSourceRectangles.Add(new Rectangle(_numberSpritesOffset + new Point(92, 0), new Point(30, 11))));
-
-            _healthBarSourceRectangle = GetHealthBarSourceRectangle(percentHealth);
-            _healthBarSourceRectangle = new Rectangle(_healthBarSpritesOffset + _healthBarSourceRectangle.Location, _healthBarSourceRectangle.Size);
+                some: v =>
+                {
+                    _isMiss = false;
+                    _damageText = v.ToString();
+                },
+                none: () =>
+                {
+                    _isMiss = true;
+                    _damageText = "MISS";
+                });
         }
 
         public void SetHealth(int value, int percentHealth, Action doneCallback = null)
         {
             Enabled = Visible = true;
-            _isMiss = false;
             _doneCallback = doneCallback;
             _frameOffset = 0;
-
-            _numberSourceRectangles.Clear();
-            _numberSourceRectangles.AddRange(
-                GetNumberSourceRectangles(value, isHeal: true)
-                    .Select(x => new Rectangle(_numberSpritesOffset + x.Location, x.Size)));
-
-            _healthBarSourceRectangle = GetHealthBarSourceRectangle(percentHealth);
-            _healthBarSourceRectangle = new Rectangle(_healthBarSpritesOffset + _healthBarSourceRectangle.Location, _healthBarSourceRectangle.Size);
+            _percentHealth = percentHealth;
+            _isHeal = true;
+            _isMiss = false;
+            _damageText = value.ToString();
+            _damageTextVisible = true;
+            _barVisible = true;
+            _lastDamageTime = DateTime.Now;
         }
 
         public override void Update(GameTime gameTime)
         {
+            // Damage text floats and fades independently
             _frameOffset += .1f;
-            if (_frameOffset > 4)
+            if (_frameOffset > DamageTextDuration)
+                _damageTextVisible = false;
+
+            // Health bar stays visible for BarVisibilitySeconds, but hides immediately if actor is dead
+            var elapsed = (DateTime.Now - _lastDamageTime).TotalSeconds;
+            if (!_parentReference.IsAlive || elapsed > BarVisibilitySeconds)
+            {
+                _barVisible = false;
+            }
+
+            // When both text and bar are done, hide the component entirely
+            if (!_damageTextVisible && !_barVisible)
             {
                 Enabled = Visible = false;
                 _doneCallback?.Invoke();
             }
 
-            // Calculate base positions from parent
-            var baseHealthBarX = _parentReference.HorizontalCenter - _healthBarBackgroundSource.Width / 2f;
-            var baseHealthBarY = _parentReference.NameLabelY;
-
-            float baseDamageX, baseDamageY;
-            if (_isMiss)
-            {
-                baseDamageX = _parentReference.HorizontalCenter - (_numberSourceRectangles[0].Width / 2f);
-                baseDamageY = _parentReference.NameLabelY - _frameOffset - _healthBarBackgroundSource.Height * 2f;
-            }
-            else
-            {
-                var digitCount = _numberSourceRectangles.Count;
-                baseDamageX = _parentReference.HorizontalCenter - (digitCount * DigitWidth / 2f);
-                baseDamageY = _parentReference.NameLabelY - _frameOffset - _healthBarBackgroundSource.Height * 2f;
-            }
-
-            // Apply zoom transformation if zoomed (same pattern as CharacterRenderer.GetNameLabelPosition)
+            // Calculate positions by zooming the CENTER POINT first, then offsetting
             var zoom = _configurationProvider.MapZoom;
+            var centerX = _clientWindowSizeProvider.GameWidth / 2f;
+            var centerY = _clientWindowSizeProvider.GameHeight / 2f;
+
+            float zoomedHCenter, zoomedNameY;
             if (zoom != 1.0f)
             {
-                var centerX = _clientWindowSizeProvider.GameWidth / 2f;
-                var centerY = _clientWindowSizeProvider.GameHeight / 2f;
-
-                _healthBarPosition = new Vector2(
-                    (baseHealthBarX - centerX) * zoom + centerX,
-                    (baseHealthBarY - centerY) * zoom + centerY);
-
-                _damageCounterPosition = new Vector2(
-                    (baseDamageX - centerX) * zoom + centerX,
-                    (baseDamageY - centerY) * zoom + centerY);
+                zoomedHCenter = (_parentReference.HorizontalCenter - centerX) * zoom + centerX;
+                zoomedNameY = (_parentReference.NameLabelY - centerY) * zoom + centerY;
             }
             else
             {
-                _healthBarPosition = new Vector2(baseHealthBarX, baseHealthBarY);
-                _damageCounterPosition = new Vector2(baseDamageX, baseDamageY);
+                zoomedHCenter = _parentReference.HorizontalCenter;
+                zoomedNameY = _parentReference.NameLabelY;
+            }
+
+            // Health bar: centered on the zoomed center point
+            _healthBarPosition = new Vector2(zoomedHCenter - PlateWidth / 2f, zoomedNameY);
+
+            // Damage text: centered on the zoomed center point, floating upward
+            if (_damageTextVisible)
+            {
+                var font = GetDamageFont();
+                var textSize = font.MeasureString(_damageText);
+                _damageCounterPosition = new Vector2(
+                    zoomedHCenter - textSize.Width / 2f,
+                    zoomedNameY - _frameOffset * 2 - PlateHeight - 4);
             }
         }
 
         public override void Draw(GameTime gameTime)
         {
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-            // Draw a dark semi-transparent backdrop behind the health bar for visibility against any background
-            var backdropPadding = 2;
-            var healthBarBackdrop = new Rectangle(
-                (int)_healthBarPosition.X - backdropPadding,
-                (int)_healthBarPosition.Y - backdropPadding,
-                _healthBarBackgroundSource.Width + backdropPadding * 2,
-                _healthBarBackgroundSource.Height + backdropPadding * 2);
-            _spriteBatch.Draw(_pixelTexture, healthBarBackdrop, new Color(0, 0, 0, 140));
-
-            // Draw backdrop behind damage/heal numbers
-            if (_numberSourceRectangles.Count > 0)
+            // --- Health Bar (visible for 3 seconds) ---
+            if (_barVisible)
             {
-                var numberWidth = _isMiss ? _numberSourceRectangles[0].Width : _numberSourceRectangles.Count * DigitWidth;
-                var numberHeight = _numberSourceRectangles[0].Height;
-                var numberBackdrop = new Rectangle(
-                    (int)_damageCounterPosition.X - backdropPadding,
-                    (int)_damageCounterPosition.Y - backdropPadding,
-                    numberWidth + backdropPadding * 2,
-                    numberHeight + backdropPadding * 2);
-                _spriteBatch.Draw(_pixelTexture, numberBackdrop, new Color(0, 0, 0, 140));
+                // Background Plate
+                var plateRect = new Rectangle(
+                    (int)_healthBarPosition.X,
+                    (int)_healthBarPosition.Y,
+                    PlateWidth,
+                    PlateHeight);
+                _spriteBatch.Draw(_pixelTexture, plateRect, PlateColor);
+
+                // Health Bar Fill
+                var fillWidth = (int)Math.Round(_percentHealth / 100.0 * BarWidth);
+                if (fillWidth > 0)
+                {
+                    var fillRect = new Rectangle(
+                        (int)_healthBarPosition.X + PlatePadding,
+                        (int)_healthBarPosition.Y + PlatePadding,
+                        fillWidth,
+                        BarHeight);
+                    _spriteBatch.Draw(_pixelTexture, fillRect, BarFillColor);
+                }
+
+                // HP Text inside bar (e.g. "%73 HP") with 1px black outline for crispness
+                var hpFont = GetHpFont();
+                var hpText = $"%{_percentHealth} HP";
+                var hpTextSize = hpFont.MeasureString(hpText);
+                var hpTextPos = new Vector2(
+                    (float)Math.Round(_healthBarPosition.X + (PlateWidth - hpTextSize.Width) / 2f),
+                    (float)Math.Round(_healthBarPosition.Y + (PlateHeight - hpTextSize.Height) / 2f));
+                DrawOutlinedString(_spriteBatch, hpFont, hpText, hpTextPos, HpTextColor, Color.Black);
             }
 
-            var numberNdx = 0;
-            foreach (var numberSource in _numberSourceRectangles)
+            // --- Floating Damage/Heal Number ---
+            if (_damageTextVisible && !string.IsNullOrEmpty(_damageText))
             {
-                _spriteBatch.Draw(_sourceTexture, _damageCounterPosition + new Vector2(numberNdx * DigitWidth, 0), numberSource, Color.White);
-                numberNdx++;
-            }
+                var font = GetDamageFont();
+                var baseTextColor = _isMiss ? MissTextColor : (_isHeal ? HealTextColor : DamageTextColor);
 
-            _spriteBatch.Draw(_sourceTexture, _healthBarPosition, _healthBarBackgroundSource, Color.White);
-            _spriteBatch.Draw(_sourceTexture, _healthBarPosition, _healthBarSourceRectangle, Color.White);
+                // Fade out over the last 40% of the animation
+                var fadeStart = DamageTextDuration * 0.6f;
+                var opacity = _frameOffset > fadeStart
+                    ? 1f - (_frameOffset - fadeStart) / (DamageTextDuration - fadeStart)
+                    : 1f;
+                opacity = MathHelper.Clamp(opacity, 0f, 1f);
+
+                var textColor = baseTextColor * opacity;
+
+                // Semi-transparent backdrop behind damage text (fades with text)
+                var textSize = font.MeasureString(_damageText);
+                var textBackdrop = new Rectangle(
+                    (int)_damageCounterPosition.X - 3,
+                    (int)_damageCounterPosition.Y - 2,
+                    (int)textSize.Width + 6,
+                    (int)textSize.Height + 4);
+                _spriteBatch.Draw(_pixelTexture, textBackdrop, new Color(0, 0, 0, (int)(120 * opacity)));
+
+                // Text with 1px outline for readability (pixel-rounded position)
+                var roundedDmgPos = new Vector2(
+                    (float)Math.Round(_damageCounterPosition.X),
+                    (float)Math.Round(_damageCounterPosition.Y));
+                DrawOutlinedString(_spriteBatch, font, _damageText, roundedDmgPos, textColor, Color.Black * opacity);
+            }
 
             _spriteBatch.End();
         }
@@ -200,30 +253,25 @@ namespace EndlessClient.Rendering
             base.Dispose(disposing);
         }
 
-        private static IEnumerable<Rectangle> GetNumberSourceRectangles(int value, bool isHeal)
+        private BitmapFont GetDamageFont()
         {
-            var yCoord = isHeal ? 11 : 0;
-
-            var digits = value.ToString();
-            for (int i = 0; i < digits.Length; ++i)
-            {
-                int next = int.Parse($"{digits[i]}");
-                yield return new Rectangle(next * DigitWidth, yCoord, 8, 11);
-            }
+            return _contentProvider.Fonts[Constants.FontSize09];
         }
 
-        private static Rectangle GetHealthBarSourceRectangle(int percentHealth)
+        private BitmapFont GetHpFont()
         {
-            // width of health bar is 40
-            // percent -> pixels: (percentHealth / 100) * 40
-            const double HealthBarFactor = .4;
+            return _contentProvider.Fonts[Constants.FontSize08];
+        }
 
-            if (percentHealth >= 50)
-                return new Rectangle(0, 7, (int)Math.Round(percentHealth * HealthBarFactor), 7);
-            else if (percentHealth >= 25)
-                return new Rectangle(0, 14, (int)Math.Round(percentHealth * HealthBarFactor), 7);
-            else
-                return new Rectangle(0, 21, (int)Math.Round(percentHealth * HealthBarFactor), 7);
+        private static void DrawOutlinedString(SpriteBatch sb, BitmapFont font, string text, Vector2 pos, Color color, Color outlineColor)
+        {
+            // 1px outline in 4 cardinal directions
+            sb.DrawString(font, text, pos + new Vector2(-1, 0), outlineColor);
+            sb.DrawString(font, text, pos + new Vector2(1, 0), outlineColor);
+            sb.DrawString(font, text, pos + new Vector2(0, -1), outlineColor);
+            sb.DrawString(font, text, pos + new Vector2(0, 1), outlineColor);
+            // Main text on top
+            sb.DrawString(font, text, pos, color);
         }
     }
 

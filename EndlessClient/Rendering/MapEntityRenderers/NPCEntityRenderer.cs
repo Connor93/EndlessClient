@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
 using EndlessClient.Rendering.Map;
 using EndlessClient.Rendering.NPC;
 using EOLib.Domain.Character;
@@ -37,13 +37,19 @@ namespace EndlessClient.Rendering.MapEntityRenderers
         public override void RenderElementAt(SpriteBatch spriteBatch, int row, int col, int alpha, Vector2 additionalOffset = default)
         {
             var coordinate = new MapCoordinate(col, row);
-            var indicesToRender = _npcRendererProvider.DyingNPCs.ContainsKey(coordinate)
-                ? _currentMapStateProvider.NPCs.ContainsKey(coordinate)
-                    ? Enumerable.Repeat(_npcRendererProvider.DyingNPCs[coordinate], 1).Concat(_currentMapStateProvider.NPCs[coordinate].Select(n => n.Index))
-                    : Enumerable.Repeat(_npcRendererProvider.DyingNPCs[coordinate], 1)
-                : _currentMapStateProvider.NPCs[coordinate].Select(n => n.Index);
 
-            foreach (var index in indicesToRender)
+            var indices = new List<int>();
+
+            if (_npcRendererProvider.DyingNPCs.TryGetValue(coordinate, out var dyingIndex))
+                indices.Add(dyingIndex);
+
+            if (_currentMapStateProvider.NPCs.TryGetValues(coordinate, out var npcs))
+            {
+                foreach (var npc in npcs)
+                    indices.Add(npc.Index);
+            }
+
+            foreach (var index in indices)
             {
                 if (!_npcRendererProvider.NPCRenderers.ContainsKey(index) ||
                     _npcRendererProvider.NPCRenderers[index] == null)

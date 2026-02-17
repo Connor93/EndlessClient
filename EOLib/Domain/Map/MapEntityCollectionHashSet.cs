@@ -39,7 +39,7 @@ namespace EOLib.Domain.Map
 
         public TValue this[int key1] => _valueSet[_uniqueIdToHash[key1]];
 
-        public HashSet<TValue> this[MapCoordinate key2] => new HashSet<TValue>(_mapCoordinateToHashList[key2].Select(x => _valueSet[x]));
+        public HashSet<TValue> this[MapCoordinate key2] => new HashSet<TValue>(_mapCoordinateToHashList[key2].Where(x => _valueSet.ContainsKey(x)).Select(x => _valueSet[x]));
 
         public void Add(TValue value)
         {

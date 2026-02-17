@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using EOLib.IO.Repositories;
 using System.Linq;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
@@ -95,6 +96,8 @@ namespace EndlessClient.HUD.Controls
         private readonly ITextInputDialogFactory _textInputDialogFactory;
         private readonly ITextMultiInputDialogFactory _textMultiInputDialogFactory;
         private readonly ILockerDataRepository _lockerDataRepository;
+        private readonly IBossHealthBarProvider _bossHealthBarProvider;
+        private readonly IENFFileProvider _enfFileProvider;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -144,6 +147,8 @@ namespace EndlessClient.HUD.Controls
                                   ITextInputDialogFactory textInputDialogFactory,
                                   ITextMultiInputDialogFactory textMultiInputDialogFactory,
                                   ILockerDataRepository lockerDataRepository,
+                                  IBossHealthBarProvider bossHealthBarProvider,
+                                  IENFFileProvider enfFileProvider,
                                   ICharacterSessionRepository characterSessionRepository,
                                   ICharacterInventoryProvider characterInventoryProvider)
         {
@@ -193,6 +198,8 @@ namespace EndlessClient.HUD.Controls
             _textInputDialogFactory = textInputDialogFactory;
             _textMultiInputDialogFactory = textMultiInputDialogFactory;
             _lockerDataRepository = lockerDataRepository;
+            _bossHealthBarProvider = bossHealthBarProvider;
+            _enfFileProvider = enfFileProvider;
             _characterSessionRepository = characterSessionRepository;
             _characterInventoryProvider = characterInventoryProvider;
         }
@@ -266,6 +273,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
                 {HudControlIdentifier.SPStatusBar, CreateSPStatusBar()},
                 {HudControlIdentifier.TNLStatusBar, CreateTNLStatusBar()},
+                {HudControlIdentifier.BossHealthBarHUD, CreateBossHealthBarHUD()},
 
                 {HudControlIdentifier.ChatModePictureBox, CreateChatModePictureBox()},
                 {HudControlIdentifier.ChatTextBox, CreateChatTextBox()},
@@ -1111,6 +1119,20 @@ namespace EndlessClient.HUD.Controls
         private PreviousUserInputTracker CreatePreviousUserInputTracker()
         {
             return new PreviousUserInputTracker(_endlessGameProvider, _userInputRepository);
+        }
+
+        private BossHealthBarHUD CreateBossHealthBarHUD()
+        {
+            return new BossHealthBarHUD(
+                _endlessGameProvider,
+                _bossHealthBarProvider,
+                _npcRendererProvider,
+                _enfFileProvider,
+                _clientWindowSizeRepository,
+                _contentProvider)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 50
+            };
         }
     }
 }
