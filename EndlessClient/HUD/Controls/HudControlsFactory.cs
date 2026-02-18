@@ -27,6 +27,7 @@ using EndlessClient.UI.Styles;
 using EndlessClient.UIControls;
 using EOLib;
 using EOLib.Config;
+using EOLib.Domain.Achievement;
 using EOLib.Domain.Character;
 using EOLib.Domain.Chat;
 using EOLib.Domain.Interact.Quest;
@@ -98,6 +99,9 @@ namespace EndlessClient.HUD.Controls
         private readonly ILockerDataRepository _lockerDataRepository;
         private readonly IBossHealthBarProvider _bossHealthBarProvider;
         private readonly IENFFileProvider _enfFileProvider;
+        private readonly IAchievementProvider _achievementProvider;
+        private readonly IAchievementActions _achievementActions;
+        private readonly IEIFFileProvider _eifFileProvider;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -150,7 +154,10 @@ namespace EndlessClient.HUD.Controls
                                   IBossHealthBarProvider bossHealthBarProvider,
                                   IENFFileProvider enfFileProvider,
                                   ICharacterSessionRepository characterSessionRepository,
-                                  ICharacterInventoryProvider characterInventoryProvider)
+                                  ICharacterInventoryProvider characterInventoryProvider,
+                                  IAchievementProvider achievementProvider,
+                                  IAchievementActions achievementActions,
+                                  IEIFFileProvider eifFileProvider)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -202,6 +209,9 @@ namespace EndlessClient.HUD.Controls
             _enfFileProvider = enfFileProvider;
             _characterSessionRepository = characterSessionRepository;
             _characterInventoryProvider = characterInventoryProvider;
+            _achievementProvider = achievementProvider;
+            _achievementActions = achievementActions;
+            _eifFileProvider = eifFileProvider;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -271,6 +281,8 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.GuildInfoWindow, CreateGuildInfoWindow()},
                 {HudControlIdentifier.GuildPanelButton, CreateGuildPanelButton()},
                 {HudControlIdentifier.GuildPanel, CreateGuildPanel()},
+                {HudControlIdentifier.AchievementButton, CreateAchievementButton()},
+                {HudControlIdentifier.AchievementWindow, CreateAchievementWindow()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
@@ -431,7 +443,7 @@ namespace EndlessClient.HUD.Controls
 
         private Point GetLeftStackPosition(int stackIndex)
         {
-            const int LeftStackCount = 5;
+            const int LeftStackCount = 6;
             var totalHeight = LeftStackCount * ICON_BUTTON_SIZE + (LeftStackCount - 1) * ICON_BUTTON_GAP;
             var yStart = (_clientWindowSizeRepository.Height - totalHeight) / 2;
             var yPos = yStart + stackIndex * (ICON_BUTTON_SIZE + ICON_BUTTON_GAP);
@@ -940,6 +952,52 @@ namespace EndlessClient.HUD.Controls
             window.Activated += () => _windowZOrderManager.BringToFront(window);
 
             return window;
+        }
+
+        private IGameComponent CreateAchievementButton()
+        {
+            var pos = GetLeftStackPosition(5);
+            var btn = new UI.Controls.CodeDrawnIconButton(
+                _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconAchievements],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _clientWindowSizeRepository)
+            {
+                TooltipText = "Achievements",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = _configurationProvider.UIMode == UIMode.Code
+            };
+            btn.OnClick += (_, _) => _hudButtonController.ClickAchievements();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(5);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
+            return btn;
+        }
+
+        private IGameComponent CreateAchievementWindow()
+        {
+            var achWindow = new Windows.CodeDrawnAchievementWindow(
+                _styleProvider,
+                _graphicsDeviceProvider,
+                _contentProvider,
+                _clientWindowSizeRepository,
+                _achievementProvider,
+                _achievementActions,
+                _eifFileProvider)
+            {
+                DrawOrder = HUD_CONTROL_LAYER + 30
+            };
+
+            _windowZOrderManager.Register(achWindow);
+            achWindow.Activated += () => _windowZOrderManager.BringToFront(achWindow);
+
+            return achWindow;
         }
 
         private IGameComponent CreateQuestWindow()

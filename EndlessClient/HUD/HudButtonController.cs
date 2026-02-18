@@ -192,6 +192,15 @@ namespace EndlessClient.HUD
         {
             _inGameDialogActions.ShowPaperdollDialog(_characterProvider.MainCharacter, isMainCharacter: true);
         }
+
+        public void ClickAchievements()
+        {
+            if (_hudControlProvider.IsInGame)
+            {
+                var window = _hudControlProvider.GetComponent<Windows.CodeDrawnAchievementWindow>(Controls.HudControlIdentifier.AchievementWindow);
+                window.Toggle();
+            }
+        }
     }
 }
 

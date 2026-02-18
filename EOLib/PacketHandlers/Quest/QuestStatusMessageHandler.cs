@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using AutomaticTypeMapper;
+using EOLib.Domain.Achievement;
 using EOLib.Domain.Chat;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Login;
@@ -15,6 +17,7 @@ namespace EOLib.PacketHandlers.Quest
         private readonly IChatRepository _chatRepository;
         private readonly IEnumerable<IStatusLabelNotifier> _statusLabelNotifiers;
         private readonly IBountyDataRepository _bountyDataRepository;
+        private readonly IAchievementRepository _achievementRepository;
 
         public override PacketFamily Family => PacketFamily.Message;
 
@@ -23,12 +26,14 @@ namespace EOLib.PacketHandlers.Quest
         public QuestStatusMessageHandler(IPlayerInfoProvider playerInfoProvider,
                                          IChatRepository chatRepository,
                                          IEnumerable<IStatusLabelNotifier> statusLabelNotifiers,
-                                         IBountyDataRepository bountyDataRepository)
+                                         IBountyDataRepository bountyDataRepository,
+                                         IAchievementRepository achievementRepository)
             : base(playerInfoProvider)
         {
             _chatRepository = chatRepository;
             _statusLabelNotifiers = statusLabelNotifiers;
             _bountyDataRepository = bountyDataRepository;
+            _achievementRepository = achievementRepository;
         }
 
         public override bool HandlePacket(MessageOpenServerPacket packet)
@@ -149,13 +154,6 @@ namespace EOLib.PacketHandlers.Quest
                     foreach (var entry in entries)
                     {
                         var fields = entry.Split(',');
-                        // name,display,unlocked,active,stats(key:val pairs),upkeepPts,upkeepGold
-                        // Stats field contains colons so we need at least 7+ fields
-                        // but stats like "str:3, int:3" contains commas too
-                        // The stats field uses colon-separated key:val pairs joined by ", "
-                        // Format: name,display,unlocked,active,stat1:v1, stat2:v2, ...,upkeepPts,upkeepGold
-                        // We know the last 2 fields are integers, and fields 2,3 are 0/1
-                        // Parse from the ends
                         if (fields.Length >= 7)
                         {
                             var name = fields[0];
@@ -165,7 +163,6 @@ namespace EOLib.PacketHandlers.Quest
                             var upkeepGold = int.TryParse(fields[fields.Length - 1], out var ug) ? ug : 0;
                             var upkeepPts = int.TryParse(fields[fields.Length - 2], out var up) ? up : 0;
 
-                            // Everything between index 4 and Length-3 is the stats description
                             var statParts = new List<string>();
                             for (int i = 4; i <= fields.Length - 3; i++)
                                 statParts.Add(fields[i].Trim());
@@ -214,6 +211,92 @@ namespace EOLib.PacketHandlers.Quest
                 }
 
                 _bountyDataRepository.GuildMemberList = members;
+                return true;
+            }
+
+            const string achievementsPrefix = "[ACHIEVEMENTS]";
+            if (packet.Message.StartsWith(achievementsPrefix))
+            {
+                var payload = packet.Message.Substring(achievementsPrefix.Length);
+                var achievements = new List<AchievementDefinition>();
+
+                if (!string.IsNullOrEmpty(payload))
+                {
+                    var entries = payload.Split(';');
+                    foreach (var entry in entries)
+                    {
+                        var fields = entry.Split(',');
+                        // Format: id,name,type,target,tier_count,
+                        //   t1_thresh:t1_exp:t1_itemid:t1_itemamt, ...,
+                        //   current_progress,current_tier,unique_count,
+                        //   players_t1,players_t2,...
+                        if (fields.Length < 5) continue;
+
+                        int.TryParse(fields[0], out var achId);
+                        var achName = fields[1];
+                        var achType = fields[2];
+                        int.TryParse(fields[3], out var achTarget);
+                        int.TryParse(fields[4], out var tierCount);
+
+                        var tiers = new List<AchievementTierData>();
+                        int fi = 5;
+                        for (int t = 0; t < tierCount && fi < fields.Length; t++, fi++)
+                        {
+                            var tierParts = fields[fi].Split(':');
+                            int threshold = 0, expReward = 0, itemId = 0, itemAmount = 0;
+                            if (tierParts.Length >= 1) int.TryParse(tierParts[0], out threshold);
+                            if (tierParts.Length >= 2) int.TryParse(tierParts[1], out expReward);
+                            if (tierParts.Length >= 3) int.TryParse(tierParts[2], out itemId);
+                            if (tierParts.Length >= 4) int.TryParse(tierParts[3], out itemAmount);
+                            tiers.Add(new AchievementTierData(threshold, expReward, itemId, itemAmount, 0));
+                        }
+
+                        int currentProgress = 0, currentTier = 0, uniqueCount = 0;
+                        if (fi < fields.Length) int.TryParse(fields[fi++], out currentProgress);
+                        if (fi < fields.Length) int.TryParse(fields[fi++], out currentTier);
+                        if (fi < fields.Length) int.TryParse(fields[fi++], out uniqueCount);
+
+                        for (int t = 0; t < tiers.Count && fi < fields.Length; t++, fi++)
+                        {
+                            int.TryParse(fields[fi], out var playersCompleted);
+                            var old = tiers[t];
+                            tiers[t] = new AchievementTierData(old.Threshold, old.ExpReward, old.ItemId, old.ItemAmount, playersCompleted);
+                        }
+
+                        achievements.Add(new AchievementDefinition(
+                            achId, achName, achType, achTarget,
+                            tiers.ToArray(), currentProgress, currentTier, uniqueCount));
+                    }
+                }
+
+                _achievementRepository.Achievements = achievements;
+                return true;
+            }
+
+            const string achLeaderboardPrefix = "[ACHLEADERBOARD]";
+            if (packet.Message.StartsWith(achLeaderboardPrefix))
+            {
+                var payload = packet.Message.Substring(achLeaderboardPrefix.Length);
+                var entries = new List<LeaderboardEntry>();
+                var parts = payload.Split(',');
+
+                int achId = 0;
+                if (parts.Length >= 1) int.TryParse(parts[0], out achId);
+
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(parts[i])) continue;
+                    var sub = parts[i].Split(':');
+                    var name = sub.Length >= 1 ? sub[0] : "";
+                    int tier = 0, progress = 0;
+                    if (sub.Length >= 2) int.TryParse(sub[1], out tier);
+                    if (sub.Length >= 3) int.TryParse(sub[2], out progress);
+                    if (!string.IsNullOrEmpty(name))
+                        entries.Add(new LeaderboardEntry(name, tier, progress));
+                }
+
+                _achievementRepository.LeaderboardAchievementId = achId;
+                _achievementRepository.LeaderboardEntries = entries;
                 return true;
             }
 

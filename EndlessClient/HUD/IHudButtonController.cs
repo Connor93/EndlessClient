@@ -45,5 +45,7 @@
         void ClickGuildPanel();
 
         void ClickPaperdoll();
+
+        void ClickAchievements();
     }
 }

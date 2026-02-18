@@ -76,6 +76,7 @@ namespace EndlessClient.Content
         public const string IconBounties = @"HudIcons/icon_bounties";
         public const string IconGuildInfo = @"HudIcons/icon_guild_info";
         public const string IconGuildPanel = @"HudIcons/icon_guild_panel";
+        public const string IconAchievements = @"HudIcons/icon_achievements";
 
         public IReadOnlyDictionary<string, Texture2D> Textures => _textures;
 
@@ -152,6 +153,7 @@ namespace EndlessClient.Content
             _textures[IconBounties] = _content.Load<Texture2D>(IconBounties);
             _textures[IconGuildInfo] = _content.Load<Texture2D>(IconGuildInfo);
             _textures[IconGuildPanel] = _content.Load<Texture2D>(IconGuildPanel);
+            _textures[IconAchievements] = _content.Load<Texture2D>(IconAchievements);
         }
 
         private void RefreshFonts()
