@@ -349,26 +349,40 @@ namespace EndlessClient.Controllers
 
         public void JunkItem(EIFRecord itemData, InventoryItem inventoryItem)
         {
-            if (inventoryItem.Amount > 1)
+            var confirmBox = _eoMessageBoxFactory.CreateMessageBox(
+                $"Are you sure you want to junk {itemData.Name}?",
+                "Junk Item",
+                EODialogButtons.OkCancel,
+                EOMessageBoxStyle.SmallDialogSmallHeader);
+
+            confirmBox.DialogClosing += (_, confirmArgs) =>
             {
-                var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(
-                    itemData.Name,
-                    CodeDrawnItemTransferDialog.TransferType.JunkItems,
-                    inventoryItem.Amount,
-                    EOResourceID.DIALOG_TRANSFER_JUNK);
-                transferDialog.DialogClosing += (sender, e) =>
+                if (confirmArgs.Result != XNADialogResult.OK)
+                    return;
+
+                if (inventoryItem.Amount > 1)
                 {
-                    if (e.Result == XNADialogResult.OK)
+                    var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(
+                        itemData.Name,
+                        CodeDrawnItemTransferDialog.TransferType.JunkItems,
+                        inventoryItem.Amount,
+                        EOResourceID.DIALOG_TRANSFER_JUNK);
+                    transferDialog.DialogClosing += (sender, e) =>
                     {
-                        _itemActions.JunkItem(inventoryItem.ItemID, transferDialog.SelectedAmount);
-                    }
-                };
-                transferDialog.ShowDialog();
-            }
-            else
-            {
-                _itemActions.JunkItem(inventoryItem.ItemID, 1);
-            }
+                        if (e.Result == XNADialogResult.OK)
+                        {
+                            _itemActions.JunkItem(inventoryItem.ItemID, transferDialog.SelectedAmount);
+                        }
+                    };
+                    transferDialog.ShowDialog();
+                }
+                else
+                {
+                    _itemActions.JunkItem(inventoryItem.ItemID, 1);
+                }
+            };
+
+            confirmBox.ShowDialog();
         }
 
         public void TradeItem(EIFRecord itemData, InventoryItem inventoryItem)

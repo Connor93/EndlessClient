@@ -217,7 +217,6 @@ namespace EndlessClient.HUD.Panels
                         }
                         catch (ArgumentOutOfRangeException)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[InventoryPanel] EIF lookup failed for removed item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
                             Console.WriteLine($"[InventoryPanel] EIF lookup failed for removed item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
                         }
                     });
@@ -232,7 +231,6 @@ namespace EndlessClient.HUD.Panels
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[InventoryPanel] EIF lookup failed for updated item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
                         Console.WriteLine($"[InventoryPanel] EIF lookup failed for updated item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
                         continue;
                     }
@@ -254,7 +252,6 @@ namespace EndlessClient.HUD.Panels
                     }
                     catch (ArgumentOutOfRangeException)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[InventoryPanel] EIF lookup failed for added item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
                         Console.WriteLine($"[InventoryPanel] EIF lookup failed for added item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
                         continue;
                     }
@@ -594,7 +591,7 @@ namespace EndlessClient.HUD.Panels
             // under these conditions, check if there are any items that don't have a matching childItem and remove them from the cached list
             // the next update loop will detect these items as 'added' and attempt to show them in the empty space
 
-            var notDisplayedItems = _cachedInventory.Where(x => _childItems.All(ci => x != ci.InventoryItem));
+            var notDisplayedItems = _cachedInventory.Where(x => _childItems.All(ci => !x.Equals(ci.InventoryItem))).ToList();
             _cachedInventory.RemoveWhere(notDisplayedItems.Contains);
         }
 

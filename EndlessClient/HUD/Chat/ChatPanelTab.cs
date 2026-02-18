@@ -40,6 +40,8 @@ namespace EndlessClient.HUD.Chat
 
         public string Text { get => _label.Text; set => _label.Text = value; }
 
+        public int RenderableCount => _renderables.Count;
+
         public bool Active
         {
             get => _active;

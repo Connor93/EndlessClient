@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Content;
+using EndlessClient.ControlSets;
+using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering.Factories;
 using EOLib;
@@ -65,6 +67,8 @@ namespace EndlessClient.Rendering.Map
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IContentProvider _contentProvider;
         private readonly IRenderTargetFactory _renderTargetFactory;
+        private readonly IActiveDialogProvider _activeDialogProvider;
+        private readonly IHudControlProvider _hudControlProvider;
 
         private SpriteBatch _spriteBatch;
         private Texture2D _pixel;
@@ -87,7 +91,9 @@ namespace EndlessClient.Rendering.Map
                                     IENFFileProvider enfFileProvider,
                                     IClientWindowSizeProvider clientWindowSizeProvider,
                                     IContentProvider contentProvider,
-                                    IRenderTargetFactory renderTargetFactory)
+                                    IRenderTargetFactory renderTargetFactory,
+                                    IActiveDialogProvider activeDialogProvider,
+                                    IHudControlProvider hudControlProvider)
             : base((Game)endlessGameProvider.Game)
         {
             _currentMapProvider = currentMapProvider;
@@ -97,6 +103,8 @@ namespace EndlessClient.Rendering.Map
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _contentProvider = contentProvider;
             _renderTargetFactory = renderTargetFactory;
+            _activeDialogProvider = activeDialogProvider;
+            _hudControlProvider = hudControlProvider;
 
             DrawOrder = 105; // Above BossHealthBarHUD (100)
         }
@@ -162,7 +170,8 @@ namespace EndlessClient.Rendering.Map
             if (leftPressed)
             {
                 // Only start a new drag if the button was just pressed while inside the panel
-                if (!_isDragging && leftJustPressed && mouseInPanel)
+                // and no dialog is under the mouse (prevents drag-through)
+                if (!_isDragging && leftJustPressed && mouseInPanel && !IsUIElementUnderMouse(mouseX, mouseY))
                 {
                     _isDragging = true;
                     _dragOffsetX = mouseX - _panelX;
@@ -484,6 +493,34 @@ namespace EndlessClient.Rendering.Map
         private void DrawCenteredText(string text, int x, int y, Color color)
         {
             _spriteBatch.DrawString(_font, text, new Vector2(x, y), color);
+        }
+
+        private bool IsUIElementUnderMouse(int mouseX, int mouseY)
+        {
+            // Check if any active dialog's DrawArea contains the mouse position
+            foreach (var optionDialog in _activeDialogProvider.ActiveDialogs)
+            {
+                var blocked = false;
+                optionDialog.MatchSome(dialog =>
+                {
+                    if (dialog.DrawArea.Contains(mouseX, mouseY))
+                        blocked = true;
+                });
+                if (blocked) return true;
+            }
+
+            // Check if any visible HUD panel's DrawArea contains the mouse position
+            if (_hudControlProvider.IsInGame)
+            {
+                foreach (var panel in _hudControlProvider.HudPanels)
+                {
+                    if (panel is XNAControl control && control.Visible
+                        && control.DrawArea.Contains(mouseX, mouseY))
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         #endregion

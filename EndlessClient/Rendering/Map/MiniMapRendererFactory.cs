@@ -1,5 +1,7 @@
 ﻿using AutomaticTypeMapper;
 using EndlessClient.Content;
+using EndlessClient.ControlSets;
+using EndlessClient.Dialogs;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering.Factories;
 using EOLib.Domain.Character;
@@ -19,6 +21,8 @@ namespace EndlessClient.Rendering.Map
         private readonly IENFFileProvider _enfFileProvider;
         private readonly IRenderTargetFactory _renderTargetFactory;
         private readonly IContentProvider _contentProvider;
+        private readonly IActiveDialogProvider _activeDialogProvider;
+        private readonly IHudControlProvider _hudControlProvider;
 
         public MiniMapRendererFactory(IEndlessGameProvider endlessGameProvider,
                                       IRenderTargetFactory renderTargetFactory,
@@ -27,7 +31,9 @@ namespace EndlessClient.Rendering.Map
                                       ICurrentMapStateRepository currentMapStateProvider,
                                       ICharacterProvider characterProvider,
                                       IENFFileProvider enfFileProvider,
-                                      IContentProvider contentProvider)
+                                      IContentProvider contentProvider,
+                                      IActiveDialogProvider activeDialogProvider,
+                                      IHudControlProvider hudControlProvider)
         {
             _endlessGameProvider = endlessGameProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
@@ -37,6 +43,8 @@ namespace EndlessClient.Rendering.Map
             _enfFileProvider = enfFileProvider;
             _renderTargetFactory = renderTargetFactory;
             _contentProvider = contentProvider;
+            _activeDialogProvider = activeDialogProvider;
+            _hudControlProvider = hudControlProvider;
         }
 
         public RadarMiniMapRenderer Create()
@@ -48,7 +56,9 @@ namespace EndlessClient.Rendering.Map
                                             _enfFileProvider,
                                             _clientWindowSizeProvider,
                                             _contentProvider,
-                                            _renderTargetFactory);
+                                            _renderTargetFactory,
+                                            _activeDialogProvider,
+                                            _hudControlProvider);
         }
     }
 

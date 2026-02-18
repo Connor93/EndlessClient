@@ -1032,7 +1032,7 @@ namespace EndlessClient.HUD.Panels
             newInfo.HasUnread = false;
             _scrollOffset = newInfo.CachedScrollOffset;
 
-            _totalLines = _chatProvider.AllChat[clickedTab].Count;
+            _totalLines = newInfo.Renderables.Count;
         }
 
         public void ClosePMTab(ChatTab whichTab)

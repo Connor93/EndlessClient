@@ -130,6 +130,18 @@ namespace EndlessClient.UIControls
         public void SetScrollOffset(int offset)
         {
             ScrollOffset = offset;
+
+            if (_totalHeight <= LinesToRender)
+            {
+                _scrollButton.DrawPosition = new Vector2(_scrollButton.DrawArea.X, _upButton.DrawArea.Height);
+            }
+            else
+            {
+                var pixelsPerLine = (float)(scrollArea.Height - _scrollButton.DrawArea.Height * 2) / (_totalHeight - LinesToRender);
+                _scrollButton.DrawPosition = new Vector2(_scrollButton.DrawPosition.X, _scrollButton.DrawArea.Height + pixelsPerLine * ScrollOffset);
+                if (_scrollButton.DrawPosition.Y > scrollArea.Height - _scrollButton.DrawArea.Height)
+                    _scrollButton.DrawPosition = new Vector2(_scrollButton.DrawPosition.X, scrollArea.Height - _scrollButton.DrawArea.Height);
+            }
         }
 
         public void SetDownArrowFlashSpeed(int milliseconds)

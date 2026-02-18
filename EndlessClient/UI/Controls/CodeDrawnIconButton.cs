@@ -96,13 +96,12 @@ namespace EndlessClient.UI.Controls
         }
 
         // IPostScaleDrawable
-        public int PostScaleDrawOrder => _state == ButtonState.Hover ? 10000 : 50;
+        public int PostScaleDrawOrder => _state == ButtonState.Hover ? 10000 : 96;
         public bool SkipRenderTargetDraw => true;
 
         protected override void OnDrawControl(GameTime gameTime)
         {
-            // Draw fill at game resolution (pre-scale)
-            DrawFill();
+            // Fill is now drawn post-scale to fix z-ordering with windows
             base.OnDrawControl(gameTime);
         }
 
@@ -115,13 +114,15 @@ namespace EndlessClient.UI.Controls
                 gamePos.X * scaleFactor + renderOffset.X,
                 gamePos.Y * scaleFactor + renderOffset.Y);
 
+            // Draw fill post-scale (was previously in OnDrawControl at game resolution)
+            DrawFillPostScale(spriteBatch, scaledPos, scaleFactor);
             DrawIconAndBorder(spriteBatch, scaledPos, scaleFactor);
 
             if (_state == ButtonState.Hover && !string.IsNullOrEmpty(_tooltipText))
                 DrawTooltip(spriteBatch, scaledPos, scaleFactor);
         }
 
-        private void DrawFill()
+        private void DrawFillPostScale(SpriteBatch spriteBatch, Vector2 scaledPos, float scale)
         {
             var backgroundColor = _state switch
             {
@@ -130,13 +131,13 @@ namespace EndlessClient.UI.Controls
                 _ => _styleProvider.ButtonNormal
             };
 
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
+            var scaledWidth = (int)(ICON_SIZE * scale);
+            var scaledHeight = (int)(ICON_SIZE * scale);
+            var scaledBounds = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, scaledWidth, scaledHeight);
 
-            _spriteBatch.Begin(transformMatrix: transform);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bounds, backgroundColor);
-            _spriteBatch.End();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            DrawingPrimitives.DrawFilledRect(spriteBatch, scaledBounds, backgroundColor);
+            spriteBatch.End();
         }
 
         private void DrawIconAndBorder(SpriteBatch spriteBatch, Vector2 scaledPos, float scale)

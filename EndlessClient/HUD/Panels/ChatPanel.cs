@@ -127,7 +127,7 @@ namespace EndlessClient.HUD.Panels
             _tabs[clickedTab].Visible = true;
             _tabs[clickedTab].Active = true;
 
-            _scrollBar.UpdateDimensions(_chatProvider.AllChat[clickedTab].Count);
+            _scrollBar.UpdateDimensions(_tabs[clickedTab].RenderableCount);
         }
 
         public void ClosePMTab(ChatTab whichTab)

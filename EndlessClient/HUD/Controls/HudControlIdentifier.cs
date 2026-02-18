@@ -13,6 +13,8 @@ namespace EndlessClient.HUD.Controls
         ClickDispatcher,
 
         HudBackground,
+        LeftButtonGroupBackground,
+        RightButtonGroupBackground,
 
         //buttons and panels
         InventoryButton,

@@ -230,6 +230,9 @@ namespace EndlessClient.HUD.Controls
 
                 {HudControlIdentifier.HudBackground, CreateHudBackground()},
 
+                {HudControlIdentifier.LeftButtonGroupBackground, CreateButtonGroupBackground(UI.Controls.CodeDrawnButtonGroupBackground.Side.Left)},
+                {HudControlIdentifier.RightButtonGroupBackground, CreateButtonGroupBackground(UI.Controls.CodeDrawnButtonGroupBackground.Side.Right)},
+
                 {HudControlIdentifier.InventoryButton, CreateStateChangeButton(InGameStates.Inventory)},
                 {HudControlIdentifier.ViewMapButton, CreateStateChangeButton(InGameStates.ViewMapToggle)},
                 {HudControlIdentifier.ActiveSpellsButton, CreateStateChangeButton(InGameStates.ActiveSpells)},
@@ -314,6 +317,15 @@ namespace EndlessClient.HUD.Controls
             {
                 DrawOrder = HUD_BASE_LAYER,
                 Visible = !_clientWindowSizeRepository.Resizable,
+            };
+        }
+
+        private IGameComponent CreateButtonGroupBackground(UI.Controls.CodeDrawnButtonGroupBackground.Side side)
+        {
+            return new UI.Controls.CodeDrawnButtonGroupBackground(_styleProvider, _clientWindowSizeRepository, side)
+            {
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = _configurationProvider.UIMode == UIMode.Code
             };
         }
 
