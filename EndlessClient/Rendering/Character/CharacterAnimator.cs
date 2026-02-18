@@ -206,6 +206,26 @@ namespace EndlessClient.Rendering.Character
 
         public void StartOtherCharacterAttackAnimation(int characterID, Action sfxCallback)
         {
+            // If the character is mid-walk, finalize the walk immediately
+            // (snap to destination) so the attack doesn't cause visual jitter
+            if (_otherPlayerStartWalkingTimes.ContainsKey(characterID))
+            {
+                _otherPlayerStartWalkingTimes.Remove(characterID);
+                _queuedDirections.Remove(characterID);
+                _queuedPositions.Remove(characterID);
+
+                GetCurrentCharacterFromRepository(
+                    new RenderFrameActionTime(characterID, 0)).MatchSome(character =>
+                {
+                    var rp = character.RenderProperties;
+                    var finalizedProps = rp
+                        .WithMapX(rp.GetDestinationX())
+                        .WithMapY(rp.GetDestinationY())
+                        .ResetAnimationFrames();
+                    UpdateCharacterInRepository(character, character.WithRenderProperties(finalizedProps));
+                });
+            }
+
             if (_otherPlayerStartAttackingTimes.ContainsKey(characterID))
             {
                 _otherPlayerStartAttackingTimes[characterID].SetReplay(sfxCallback);

@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Xna.Framework;
 using MonoGame.Extended.Input.InputListeners;
 using Optional;
 using XNAControls;
@@ -52,6 +53,7 @@ namespace EndlessClient.HUD.Panels
                     _dragging = Option.Some(this);
                     var scale = XNADialog.GameViewportProvider?.ScaleFactor ?? 1f;
                     DrawPosition += eventArgs.DistanceMoved / scale;
+                    ClampToViewport();
                 });
 
             return true;
@@ -63,9 +65,28 @@ namespace EndlessClient.HUD.Panels
                 return false;
 
             _dragging = Option.None<DraggableHudPanel>();
+            ClampToViewport();
             DragCompleted?.Invoke();
 
             return true;
+        }
+
+        protected override void OnUpdateControl(GameTime gameTime)
+        {
+            ClampToViewport();
+            base.OnUpdateControl(gameTime);
+        }
+
+        private void ClampToViewport()
+        {
+            var provider = XNADialog.GameViewportProvider;
+            if (provider == null) return;
+
+            var x = MathHelper.Clamp(DrawPosition.X, 0,
+                Math.Max(0, provider.GameWidth - DrawArea.Width));
+            var y = MathHelper.Clamp(DrawPosition.Y, 0,
+                Math.Max(0, provider.GameHeight - DrawArea.Height));
+            DrawPosition = new Vector2(x, y);
         }
     }
 }
