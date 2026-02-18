@@ -367,13 +367,13 @@ namespace EndlessClient.Dialogs
                     new Rectangle(scaledX + (int)(8 * scaleFactor), scaledY + equipAreaTop, equipAreaWidth, equipAreaHeight),
                     _styleProvider.PanelBorder, 1);
 
-                // Title text
-                var titlePos = scaledPos + new Vector2(16 * scaleFactor, 8 * scaleFactor);
+                // Title text — round to integer pixels to prevent subpixel blur
+                var titlePos = new Vector2((float)Math.Round(scaledPos.X + 16 * scaleFactor), (float)Math.Round(scaledPos.Y + 8 * scaleFactor));
                 spriteBatch.DrawString(font, "Paperdoll", titlePos, _styleProvider.TitleBarText);
 
                 // Field labels and values
-                var labelX = scaledPos.X + 240 * scaleFactor;
-                var valueX = scaledPos.X + 300 * scaleFactor;
+                var labelX = (float)Math.Round(scaledPos.X + 240 * scaleFactor);
+                var valueX = (float)Math.Round(scaledPos.X + 300 * scaleFactor);
                 var maxValueWidth = (scaledPos.X + (DialogWidth - 8) * scaleFactor) - valueX;
 
                 var fieldLabels = new[]
@@ -389,8 +389,8 @@ namespace EndlessClient.Dialogs
 
                 foreach (var (y, label, value) in fieldLabels)
                 {
-                    var labelPos = new Vector2(labelX, scaledPos.Y + y * scaleFactor);
-                    var valuePos = new Vector2(valueX, scaledPos.Y + y * scaleFactor);
+                    var labelPos = new Vector2(labelX, (float)Math.Round(scaledPos.Y + y * scaleFactor));
+                    var valuePos = new Vector2(valueX, (float)Math.Round(scaledPos.Y + y * scaleFactor));
                     spriteBatch.DrawString(font, label, labelPos, _styleProvider.TextSecondary);
 
                     // Truncate value text if it overflows the dialog bounds
@@ -428,8 +428,8 @@ namespace EndlessClient.Dialogs
 
                     // Button text
                     var textSize = font.MeasureString("OK");
-                    var textX = buttonX + (buttonWidth - textSize.Width) / 2;
-                    var textY = buttonY + (buttonHeight - textSize.Height) / 2;
+                    var textX = (int)Math.Round(buttonX + (buttonWidth - textSize.Width) / 2);
+                    var textY = (int)Math.Round(buttonY + (buttonHeight - textSize.Height) / 2);
                     spriteBatch.DrawString(font, "OK", new Vector2(textX, textY), _styleProvider.ButtonText);
                 }
 

@@ -21,12 +21,18 @@ namespace EOLib.Domain.Character
     }
 
     [AutoMappedType(IsSingleton = true)]
-    public class CharacterRepository : ICharacterRepository, ICharacterProvider
+    public class CharacterRepository : ICharacterRepository, ICharacterProvider, IResettable
     {
         public bool HasAvatar { get; set; } = true;
 
         public bool HasActivePet { get; set; }
 
         public Character MainCharacter { get; set; }
+
+        public void ResetState()
+        {
+            HasAvatar = true;
+            HasActivePet = false;
+        }
     }
 }

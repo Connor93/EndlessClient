@@ -165,16 +165,25 @@ namespace EndlessClient.Dialogs.Actions
 
         public void ShowPaperdollDialog(Character character, bool isMainCharacter)
         {
-            _activeDialogRepository.PaperdollDialog.MatchNone(() =>
-            {
-                var dlg = _paperdollDialogFactory.Create(character, isMainCharacter);
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<IXNADialog>();
-                _activeDialogRepository.PaperdollDialog = Option.Some(dlg);
+            _activeDialogRepository.PaperdollDialog.Match(
+                some: dlg =>
+                {
+                    // Toggle: close existing paperdoll if it's for the main character
+                    if (isMainCharacter)
+                    {
+                        (dlg as CodeDrawnPaperdollDialog)?.Close();
+                    }
+                },
+                none: () =>
+                {
+                    var dlg = _paperdollDialogFactory.Create(character, isMainCharacter);
+                    dlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<IXNADialog>();
+                    _activeDialogRepository.PaperdollDialog = Option.Some(dlg);
 
-                UseDefaultDialogSounds(dlg);
+                    UseDefaultDialogSounds(dlg);
 
-                dlg.Show();
-            });
+                    dlg.Show();
+                });
         }
 
         public void ShowBookDialog(Character character, bool isMainCharacter)

@@ -197,7 +197,7 @@ namespace EndlessClient.Dialogs
             var inputW = (int)((DialogWidth - 40) * scaleFactor);
             var inputH = (int)(22 * scaleFactor);
             var inputBounds = new Rectangle(inputX, inputY, inputW, inputH);
-            DrawingPrimitives.DrawFilledRect(spriteBatch, inputBounds, new Color(20, 20, 20));
+            DrawingPrimitives.DrawFilledRect(spriteBatch, inputBounds, _styleProvider.InputBackground);
             DrawingPrimitives.DrawRectBorder(spriteBatch, inputBounds, _styleProvider.PanelBorder, 1);
 
             // Draw the text from the input box
