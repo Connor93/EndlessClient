@@ -26,6 +26,7 @@ namespace EndlessClient.Rendering.Factories
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly ICurrentMapStateProvider _currentMapStateProvider;
 
         public MouseCursorRendererFactory(IGridDrawCoordinateCalculator gridDrawCoordinateCalculator,
                                           IMapCellStateProvider mapCellStateProvider,
@@ -38,7 +39,8 @@ namespace EndlessClient.Rendering.Factories
                                           IContextMenuProvider contextMenuProvider,
                                           IConfigurationProvider configurationProvider,
                                           IClientWindowSizeProvider clientWindowSizeProvider,
-                                          IGraphicsDeviceProvider graphicsDeviceProvider)
+                                          IGraphicsDeviceProvider graphicsDeviceProvider,
+                                          ICurrentMapStateProvider currentMapStateProvider)
         {
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _mapCellStateProvider = mapCellStateProvider;
@@ -52,6 +54,7 @@ namespace EndlessClient.Rendering.Factories
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _currentMapStateProvider = currentMapStateProvider;
         }
 
         public IMouseCursorRenderer Create()
@@ -67,7 +70,8 @@ namespace EndlessClient.Rendering.Factories
                                            _contextMenuProvider,
                                            _configurationProvider,
                                            _clientWindowSizeProvider,
-                                           _graphicsDeviceProvider);
+                                           _graphicsDeviceProvider,
+                                           _currentMapStateProvider);
         }
     }
 

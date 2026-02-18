@@ -39,6 +39,8 @@ namespace EOLib.Config
 
         bool WASDMovement { get; set; }
 
+        bool AutoLoot { get; set; }
+
 
         UIMode UIMode { get; set; }
         UIStyle UIStyle { get; set; }
@@ -84,6 +86,8 @@ namespace EOLib.Config
         bool NPCGhosting { get; }
 
         bool WASDMovement { get; }
+
+        bool AutoLoot { get; }
 
 
         UIMode UIMode { get; }
@@ -131,6 +135,8 @@ namespace EOLib.Config
         public bool NPCGhosting { get; set; }
 
         public bool WASDMovement { get; set; }
+
+        public bool AutoLoot { get; set; } = true;
 
 
         public UIMode UIMode { get; set; }

@@ -29,9 +29,11 @@ namespace EOLib.Domain.Map
 
         public void RequestRefresh() => _packetSendService.SendPacket(new RefreshRequestClientPacket());
 
-        public ItemPickupResult PickUpItem(MapItem item)
+        public ItemPickupResult PickUpItem(MapItem item, bool skipDistanceCheck = false)
         {
-            var pickupResult = _itemPickupValidator.ValidateItemPickup(_characterProvider.MainCharacter, item);
+            var pickupResult = skipDistanceCheck
+                ? ItemPickupResult.Ok
+                : _itemPickupValidator.ValidateItemPickup(_characterProvider.MainCharacter, item);
             if (pickupResult == ItemPickupResult.Ok)
             {
                 var packet = new ItemGetClientPacket { ItemIndex = item.UniqueID };
@@ -80,7 +82,7 @@ namespace EOLib.Domain.Map
     {
         void RequestRefresh();
 
-        ItemPickupResult PickUpItem(MapItem item);
+        ItemPickupResult PickUpItem(MapItem item, bool skipDistanceCheck = false);
 
         void OpenDoor(Warp warp);
 

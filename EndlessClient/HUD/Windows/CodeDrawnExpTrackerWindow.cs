@@ -160,9 +160,16 @@ namespace EndlessClient.HUD.Windows
         protected override bool HandleClick(IXNAControl control, MouseEventArgs eventArgs)
         {
             var clickPos = eventArgs.Position;
+
+            // Convert screen-space click to game-space coordinates
+            var scale = _clientWindowSizeProvider.ScaleFactor;
+            var offset = _clientWindowSizeProvider.RenderOffset;
+            var gameClickX = (int)((clickPos.X - offset.X) / scale);
+            var gameClickY = (int)((clickPos.Y - offset.Y) / scale);
+
             var panelPos = DrawPositionWithParentOffset;
-            var localX = clickPos.X - (int)panelPos.X;
-            var localY = clickPos.Y - (int)panelPos.Y;
+            var localX = gameClickX - (int)panelPos.X;
+            var localY = gameClickY - (int)panelPos.Y;
             var localPoint = new Point(localX, localY);
 
             if (_startBtnArea.Contains(localPoint))

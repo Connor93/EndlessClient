@@ -43,6 +43,7 @@ namespace EndlessClient.Rendering
         private readonly IConfigurationProvider _configurationProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly ICurrentMapStateProvider _currentMapStateProvider;
 
         private readonly XNALabel _mapItemText;
 
@@ -74,7 +75,8 @@ namespace EndlessClient.Rendering
                                    IContextMenuProvider contextMenuProvider,
                                    IConfigurationProvider configurationProvider,
                                    IClientWindowSizeProvider clientWindowSizeProvider,
-                                   IGraphicsDeviceProvider graphicsDeviceProvider)
+                                   IGraphicsDeviceProvider graphicsDeviceProvider,
+                                   ICurrentMapStateProvider currentMapStateProvider)
         {
             _gridDrawCoordinateCalculator = gridDrawCoordinateCalculator;
             _mapCellStateProvider = mapCellStateProvider;
@@ -88,6 +90,7 @@ namespace EndlessClient.Rendering
             _configurationProvider = configurationProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _currentMapStateProvider = currentMapStateProvider;
 
             DrawArea = new Rectangle(0, 0, TileWidth, TileHeight);
 
@@ -116,7 +119,8 @@ namespace EndlessClient.Rendering
         public override void Update(GameTime gameTime)
         {
             if (!ShouldUpdate() || _activeDialogProvider.ActiveDialogs.Any(x => x.HasValue) ||
-                _contextMenuProvider.ContextMenu.HasValue)
+                _contextMenuProvider.ContextMenu.HasValue ||
+                _currentMapStateProvider.MouseOverMiniMap)
                 return;
 
             var mousePos = _userInputProvider.CurrentMouseState.Position.ToVector2();

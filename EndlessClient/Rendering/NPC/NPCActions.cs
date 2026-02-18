@@ -12,6 +12,8 @@ using EOLib.Domain.Notifiers;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
 using Optional;
+using EOLib.Domain.Character;
+using EOLib.Config;
 
 namespace EndlessClient.Rendering.NPC
 {
@@ -31,6 +33,9 @@ namespace EndlessClient.Rendering.NPC
         private readonly IESFFileProvider _esfFileProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IBossHealthBarRepository _bossHealthBarRepository;
+        private readonly IMapActions _mapActions;
+        private readonly ICharacterProvider _characterProvider;
+        private readonly IConfigurationProvider _configProvider;
 
         public NPCActions(IHudControlProvider hudControlProvider,
                           IToastNotifier toastNotifier,
@@ -44,7 +49,10 @@ namespace EndlessClient.Rendering.NPC
                           IENFFileProvider enfFileProvider,
                           IESFFileProvider esfFileProvider,
                           ISfxPlayer sfxPlayer,
-                          IBossHealthBarRepository bossHealthBarRepository)
+                          IBossHealthBarRepository bossHealthBarRepository,
+                          IMapActions mapActions,
+                          ICharacterProvider characterProvider,
+                          IConfigurationProvider configProvider)
         {
             _hudControlProvider = hudControlProvider;
             _toastNotifier = toastNotifier;
@@ -59,6 +67,9 @@ namespace EndlessClient.Rendering.NPC
             _esfFileProvider = esfFileProvider;
             _sfxPlayer = sfxPlayer;
             _bossHealthBarRepository = bossHealthBarRepository;
+            _mapActions = mapActions;
+            _characterProvider = characterProvider;
+            _configProvider = configProvider;
         }
 
         public void StartNPCWalkAnimation(int npcIndex, MapCoordinate coords, EODirection direction)
@@ -190,6 +201,19 @@ namespace EndlessClient.Rendering.NPC
             });
 
             _toastNotifier.NotifyNPCDrop(playerName, itemName, item.Amount);
+
+            // Autoloot: if enabled and the dropped item belongs to the main character, automatically pick it up
+            // Skip distance check since the item may drop far from the player (server validates range)
+            if (_configProvider.AutoLoot && _characterProvider.HasActivePet)
+            {
+                item.OwningPlayerID.MatchSome(playerId =>
+                {
+                    if (playerId == _characterProvider.MainCharacter.ID)
+                    {
+                        _mapActions.PickUpItem(item, skipDistanceCheck: true);
+                    }
+                });
+            }
         }
 
         private void ShoutSpellCast(int playerId)

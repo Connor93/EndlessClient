@@ -43,6 +43,8 @@ namespace EOLib.Config
 
         public const string WASDMovement = nameof(WASDMovement);
 
+        public const string AutoLoot = nameof(AutoLoot);
+
 
 
         public const string UIMode = nameof(UIMode);

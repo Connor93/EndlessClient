@@ -210,14 +210,32 @@ namespace EndlessClient.HUD.Panels
                         childItem.Dispose();
                         _childItems.Remove(childItem);
 
-                        var itemData = _pubFileProvider.EIFFile[item.ItemID];
-                        _inventoryService.ClearSlots(_inventorySlotRepository.FilledSlots, childItem.Slot, itemData.Size);
+                        try
+                        {
+                            var itemData = _pubFileProvider.EIFFile[item.ItemID];
+                            _inventoryService.ClearSlots(_inventorySlotRepository.FilledSlots, childItem.Slot, itemData.Size);
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[InventoryPanel] EIF lookup failed for removed item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
+                            Console.WriteLine($"[InventoryPanel] EIF lookup failed for removed item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
+                        }
                     });
                 }
 
                 foreach (var item in updated)
                 {
-                    var itemData = _pubFileProvider.EIFFile[item.ItemID];
+                    EIFRecord itemData;
+                    try
+                    {
+                        itemData = _pubFileProvider.EIFFile[item.ItemID];
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[InventoryPanel] EIF lookup failed for updated item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
+                        Console.WriteLine($"[InventoryPanel] EIF lookup failed for updated item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
+                        continue;
+                    }
 
                     var matchedItem = _childItems.SingleOrNone(x => x.InventoryItem.ItemID == item.ItemID);
                     matchedItem.MatchSome(childItem =>
@@ -229,7 +247,17 @@ namespace EndlessClient.HUD.Panels
 
                 foreach (var item in added)
                 {
-                    var itemData = _pubFileProvider.EIFFile[item.ItemID];
+                    EIFRecord itemData;
+                    try
+                    {
+                        itemData = _pubFileProvider.EIFFile[item.ItemID];
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[InventoryPanel] EIF lookup failed for added item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
+                        Console.WriteLine($"[InventoryPanel] EIF lookup failed for added item ID {item.ItemID} (EIF length: {_pubFileProvider.EIFFile.Length})");
+                        continue;
+                    }
 
                     var preferredSlot = _inventorySlotRepository.SlotMap.SingleOrNone(x => x.Value == item.ItemID).Map(x => x.Key);
                     var actualSlot = _inventoryService.GetNextOpenSlot(_inventorySlotRepository.FilledSlots, itemData.Size, preferredSlot);

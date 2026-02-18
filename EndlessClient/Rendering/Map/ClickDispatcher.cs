@@ -89,6 +89,10 @@ namespace EndlessClient.Rendering.Map
 
         protected override bool HandleMouseDown(IXNAControl control, MouseEventArgs eventArgs)
         {
+            // Minimap consumes clicks when the mouse is over it (e.g. for dragging)
+            if (_currentMapStateProvider.MouseOverMiniMap)
+                return true;
+
             _contextMenuRepository.ContextMenu.MatchSome(contextMenu =>
             {
                 _contextMenuRepository.ContextMenu = Option.None<IContextMenuRenderer>();

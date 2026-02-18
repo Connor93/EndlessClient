@@ -11,6 +11,8 @@ namespace EOLib.Domain.Map
 
         bool ShowMiniMap { get; set; }
 
+        bool MouseOverMiniMap { get; set; }
+
         int JailMapID { get; set; }
 
         bool IsJail { get; }
@@ -47,6 +49,8 @@ namespace EOLib.Domain.Map
         int CurrentMapID { get; }
 
         bool ShowMiniMap { get; }
+
+        bool MouseOverMiniMap { get; }
 
         int JailMapID { get; }
 
@@ -85,6 +89,8 @@ namespace EOLib.Domain.Map
         public int CurrentMapID { get; set; }
 
         public bool ShowMiniMap { get; set; }
+
+        public bool MouseOverMiniMap { get; set; }
 
         public int JailMapID { get; set; }
 

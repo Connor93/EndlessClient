@@ -157,6 +157,19 @@ namespace EOLib.Net.PacketProcessing
                 }
             }
 
+            // Handle Effect family with action 20 (pet state notification)
+            if (family == PacketFamily.Effect && action == 20)
+            {
+                int payloadStart = 2;
+                var payloadData = new byte[data.Length - payloadStart];
+                Array.Copy(data, payloadStart, payloadData, 0, data.Length - payloadStart);
+
+                var reader = new EoReader(payloadData);
+                var packet = new EOLib.PacketHandlers.Effects.PetStatePacket();
+                packet.Deserialize(reader);
+                return Option.Some<IPacket>(packet);
+            }
+
             return Option.None<IPacket>();
         }
 
