@@ -168,11 +168,24 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.PaperdollDialog.Match(
                 some: dlg =>
                 {
-                    // Toggle: close existing paperdoll if it's for the main character
+                    // Close the existing paperdoll dialog
+                    if (dlg is CodeDrawnPaperdollDialog codeDrawn)
+                        codeDrawn.Close();
+                    else
+                        dlg.Dispose();
+
+                    // If toggling for main character, just close and don't reopen
                     if (isMainCharacter)
-                    {
-                        (dlg as CodeDrawnPaperdollDialog)?.Close();
-                    }
+                        return;
+
+                    // For other players, close the old one and open a new one
+                    var newDlg = _paperdollDialogFactory.Create(character, isMainCharacter);
+                    newDlg.DialogClosed += (_, _) => _activeDialogRepository.PaperdollDialog = Option.None<IXNADialog>();
+                    _activeDialogRepository.PaperdollDialog = Option.Some(newDlg);
+
+                    UseDefaultDialogSounds(newDlg);
+
+                    newDlg.Show();
                 },
                 none: () =>
                 {
