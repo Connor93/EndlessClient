@@ -17,7 +17,7 @@ namespace EndlessClient.UI.Controls
         private const int ICON_SIZE = 32;
         private const int ICON_GAP = 2;
         private const int PADDING = 4;
-        private const int LEFT_BUTTON_COUNT = 6;
+        private const int LEFT_BUTTON_COUNT = 7;
         private const int RIGHT_BUTTON_COUNT = 10;
         private const int ROWS_PER_COLUMN = 5;
 

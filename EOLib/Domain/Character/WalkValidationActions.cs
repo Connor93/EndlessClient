@@ -80,27 +80,35 @@ namespace EOLib.Domain.Character
 
             var mc = _characterProvider.MainCharacter;
 
-            var cellChar = cellState.Character.FlatMap(c => c.SomeWhen(cc => cc != mc));
+            // Get all other characters on this tile (excluding main character)
+            var otherChars = cellState.Characters.Where(cc => cc != mc).ToList();
 
-            return cellChar.Match(
-                some: c =>
-                {
-                    if (mc.NoWall)
-                        return WalkValidationResult.Walkable;
+            if (otherChars.Count > 0)
+            {
+                if (mc.NoWall)
+                    return WalkValidationResult.Walkable;
 
-                    if (!CanGhostPlayer(c))
-                        return WalkValidationResult.BlockedByCharacter;
+                // Pick a stable ghost target: prefer the existing ghost target if it's still on this tile,
+                // otherwise use the first character. This prevents the timer from resetting when multiple
+                // characters occupy the same tile and the enumeration order changes.
+                var ghostChar = _ghostingRepository.GhostTarget
+                    .Match(gt => otherChars.FirstOrDefault(cc => cc == gt), () => (Character)null)
+                    ?? otherChars[0];
 
-                    if (IsTileSpecWalkable(cellState.TileSpec) && _ghostingRepository.GhostedRecently)
-                        return WalkValidationResult.GhostComplete;
+                if (!CanGhostPlayer(ghostChar))
+                    return WalkValidationResult.BlockedByCharacter;
 
-                    return BoolToWalkResult(IsTileSpecWalkable(cellState.TileSpec));
-                },
-                none: () => cellState.NPC.Match(
-                    some: _ => BoolToWalkResult((mc.NoWall || _configurationProvider.NPCGhosting) && IsTileSpecWalkable(cellState.TileSpec)),
-                    none: () => cellState.Warp.Match(
-                        some: w => BoolToWalkResult(mc.NoWall || IsWarpWalkable(w, cellState.TileSpec)),
-                        none: () => BoolToWalkResult(mc.NoWall || IsTileSpecWalkable(cellState.TileSpec)))));
+                if (IsTileSpecWalkable(cellState.TileSpec) && _ghostingRepository.GhostedRecently)
+                    return WalkValidationResult.GhostComplete;
+
+                return BoolToWalkResult(IsTileSpecWalkable(cellState.TileSpec));
+            }
+
+            return cellState.NPC.Match(
+                some: _ => BoolToWalkResult((mc.NoWall || _configurationProvider.NPCGhosting) && IsTileSpecWalkable(cellState.TileSpec)),
+                none: () => cellState.Warp.Match(
+                    some: w => BoolToWalkResult(mc.NoWall || IsWarpWalkable(w, cellState.TileSpec)),
+                    none: () => BoolToWalkResult(mc.NoWall || IsTileSpecWalkable(cellState.TileSpec))));
         }
 
         private bool IsWarpWalkable(Warp warp, TileSpec tile)

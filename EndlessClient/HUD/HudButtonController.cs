@@ -2,6 +2,7 @@
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Actions;
 using EndlessClient.HUD.Windows;
+using EOLib.Domain.Achievement;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Online;
@@ -21,6 +22,7 @@ namespace EndlessClient.HUD
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly ICharacterProvider _characterProvider;
         private readonly IHudControlProvider _hudControlProvider;
+        private readonly IAchievementActions _achievementActions;
 
         public HudButtonController(IHudStateActions hudStateActions,
                                    IOnlinePlayerActions onlinePlayerActions,
@@ -29,7 +31,8 @@ namespace EndlessClient.HUD
                                    IStatusLabelSetter statusLabelSetter,
                                    ILocalizedStringFinder localizedStringFinder,
                                    ICharacterProvider characterProvider,
-                                   IHudControlProvider hudControlProvider)
+                                   IHudControlProvider hudControlProvider,
+                                   IAchievementActions achievementActions)
         {
             _hudStateActions = hudStateActions;
             _onlinePlayerActions = onlinePlayerActions;
@@ -39,6 +42,7 @@ namespace EndlessClient.HUD
             _localizedStringFinder = localizedStringFinder;
             _characterProvider = characterProvider;
             _hudControlProvider = hudControlProvider;
+            _achievementActions = achievementActions;
         }
 
         public void ShowNews()
@@ -201,6 +205,10 @@ namespace EndlessClient.HUD
                 window.Toggle();
             }
         }
+
+        public void ClickInbox()
+        {
+            _achievementActions.RequestOpenInbox();
+        }
     }
 }
-

@@ -3,6 +3,7 @@ using EOLib.Domain.Extensions;
 using EOLib.Domain.Spells;
 using Moffat.EndlessOnline.SDK.Protocol;
 using Moffat.EndlessOnline.SDK.Protocol.Net.Server;
+using System;
 
 namespace EOLib.Domain.Character
 {
@@ -12,7 +13,8 @@ namespace EOLib.Domain.Character
         private static readonly Character _default = new Builder
         {
             Stats = new CharacterStats(),
-            RenderProperties = new CharacterRenderProperties.Builder().ToImmutable()
+            RenderProperties = new CharacterRenderProperties.Builder().ToImmutable(),
+            BadgeNames = Array.Empty<string>()
         }.ToImmutable();
 
         public static Character Default => _default;
@@ -56,6 +58,8 @@ namespace EOLib.Domain.Character
         public bool NoWall { get; }
 
         public bool Frozen { get; }
+
+        public string[] BadgeNames { get; }
 
         public static Character FromCharacterSelectionListEntry(CharacterSelectionListEntry selectionListEntry)
         {

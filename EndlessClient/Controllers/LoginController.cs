@@ -12,6 +12,7 @@ using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Map;
 using EOLib.Config;
+using EOLib.Domain.Achievement;
 using EOLib.Domain.Character;
 using EOLib.Domain.Chat;
 using EOLib.Domain.Login;
@@ -49,6 +50,7 @@ namespace EndlessClient.Controllers
         private readonly ICurrentMapStateProvider _currentMapStateProvider;
         private readonly IFirstTimePlayerActions _firstTimePlayerActions;
         private readonly IMapChangedActions _mapChangedActions;
+        private readonly IAchievementActions _achievementActions;
 
         public LoginController(ILoginActions loginActions,
                                IMapFileLoadActions mapFileLoadActions,
@@ -68,7 +70,8 @@ namespace EndlessClient.Controllers
                                IUserInputTimeRepository userInputTimeRepository,
                                IClientWindowSizeRepository clientWindowSizeRepository,
                                IConfigurationProvider configurationProvider,
-                               IPlayerInfoRepository playerInfoRepository)
+                               IPlayerInfoRepository playerInfoRepository,
+                               IAchievementActions achievementActions)
         {
             _loginActions = loginActions;
             _mapFileLoadActions = mapFileLoadActions;
@@ -89,6 +92,7 @@ namespace EndlessClient.Controllers
             _clientWindowSizeRepository = clientWindowSizeRepository;
             _configurationProvider = configurationProvider;
             _playerInfoRepository = playerInfoRepository;
+            _achievementActions = achievementActions;
         }
 
         public async Task LoginToAccount(ILoginParameters loginParameters)
@@ -253,6 +257,7 @@ namespace EndlessClient.Controllers
                                                   EOResourceID.LOADING_GAME_HINT_FIRST);
                 _firstTimePlayerActions.WarnFirstTimePlayers();
                 _mapChangedActions.ActiveCharacterEnterMapForLogin();
+                _achievementActions.RequestBadgeData();
             });
         }
 

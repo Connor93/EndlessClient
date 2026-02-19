@@ -47,5 +47,7 @@
         void ClickPaperdoll();
 
         void ClickAchievements();
+
+        void ClickInbox();
     }
 }

@@ -283,6 +283,7 @@ namespace EndlessClient.HUD.Controls
                 {HudControlIdentifier.GuildPanel, CreateGuildPanel()},
                 {HudControlIdentifier.AchievementButton, CreateAchievementButton()},
                 {HudControlIdentifier.AchievementWindow, CreateAchievementWindow()},
+                {HudControlIdentifier.InboxButton, CreateInboxButton()},
 
                 {HudControlIdentifier.HPStatusBar, CreateHPStatusBar()},
                 {HudControlIdentifier.TPStatusBar, CreateTPStatusBar()},
@@ -443,7 +444,7 @@ namespace EndlessClient.HUD.Controls
 
         private Point GetLeftStackPosition(int stackIndex)
         {
-            const int LeftStackCount = 6;
+            const int LeftStackCount = 7;
             var totalHeight = LeftStackCount * ICON_BUTTON_SIZE + (LeftStackCount - 1) * ICON_BUTTON_GAP;
             var yStart = (_clientWindowSizeRepository.Height - totalHeight) / 2;
             var yPos = yStart + stackIndex * (ICON_BUTTON_SIZE + ICON_BUTTON_GAP);
@@ -998,6 +999,32 @@ namespace EndlessClient.HUD.Controls
             achWindow.Activated += () => _windowZOrderManager.BringToFront(achWindow);
 
             return achWindow;
+        }
+
+        private IGameComponent CreateInboxButton()
+        {
+            var pos = GetLeftStackPosition(6);
+            var btn = new UI.Controls.CodeDrawnIconButton(
+                _styleProvider,
+                _contentProvider.Textures[ContentProvider.IconInbox],
+                _contentProvider.Fonts[EOLib.Shared.Constants.FontSize08pt5],
+                _clientWindowSizeRepository)
+            {
+                TooltipText = "Inbox",
+                DrawArea = new Rectangle(pos.X, pos.Y, ICON_BUTTON_SIZE, ICON_BUTTON_SIZE),
+                DrawOrder = HUD_CONTROL_LAYER,
+                Visible = _configurationProvider.UIMode == UIMode.Code
+            };
+            btn.OnClick += (_, _) => _hudButtonController.ClickInbox();
+            btn.OnClick += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.HudStatusBarClick);
+
+            _clientWindowSizeRepository.GameWindowSizeChanged += (_, _) =>
+            {
+                var newPos = GetLeftStackPosition(6);
+                btn.DrawPosition = new Vector2(newPos.X, newPos.Y);
+            };
+
+            return btn;
         }
 
         private IGameComponent CreateQuestWindow()

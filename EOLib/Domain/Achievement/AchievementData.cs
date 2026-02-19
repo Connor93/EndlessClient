@@ -17,6 +17,7 @@ namespace EOLib.Domain.Achievement
     {
         public int Id { get; }
         public string Name { get; }
+        public string Description { get; }
         public string Type { get; }
         public int Target { get; }
         public AchievementTierData[] Tiers { get; }

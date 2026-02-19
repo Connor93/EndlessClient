@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using EndlessClient.Content;
 using EndlessClient.UI.Controls;
 using EOLib.Domain.Character;
@@ -20,6 +21,7 @@ namespace EndlessClient.Rendering.Character
 
         private SpriteBatch _spriteBatch;
         private Texture2D _pixel;
+        private Texture2D _badgeSheet;
         private BitmapFont _nameFont;
         private BitmapFont _detailFont;
 
@@ -29,6 +31,29 @@ namespace EndlessClient.Rendering.Character
         private int _level;
         private AdminLevel _adminLevel;
         private bool _isHovered;
+        private string[] _badgeNames = System.Array.Empty<string>();
+
+        private const int BadgeIconSize = 12;
+        private const int BadgeContainerSize = 16; // icon + 2px padding each side
+        private const int BadgeGap = 3;
+
+        // Map achievement names to spritesheet icon indices (0-based)
+        public static readonly Dictionary<string, int> BadgeIconIndex = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ["Final Boss"] = 0,
+            ["Questmaster"] = 1,
+            ["Master Crafter"] = 2,
+            ["Pet Collector"] = 3,
+            ["Arms Dealer"] = 4,
+            ["Fashionista"] = 5,
+            ["Guardian"] = 6,
+            ["Hat Trick"] = 7,
+            ["Sole Survivor"] = 8,
+            ["Explorer"] = 9,
+            ["BAAA"] = 10,
+            ["Dragon Warrior"] = 11,
+            ["Conqueror Of Hell"] = 12,
+        };
 
         private const int PaddingH = 8;
         private const int PaddingV = 5;
@@ -45,6 +70,8 @@ namespace EndlessClient.Rendering.Character
         private static readonly Color LevelColor = new Color(200, 200, 180);
         private static readonly Color AdminColor = new Color(255, 215, 100);
         private static readonly Color GmColor = new Color(255, 100, 100);
+        private static readonly Color BadgeContainerColor = new Color(40, 40, 60, 200);
+        private static readonly Color BadgeBorderColor = new Color(180, 160, 100, 180);
 
         /// <summary>
         /// Position to draw the nameplate (top-center anchor point).
@@ -80,6 +107,7 @@ namespace EndlessClient.Rendering.Character
             _guildName = character.GuildName ?? string.Empty;
             _level = character.Stats[CharacterStat.Level];
             _adminLevel = character.AdminLevel;
+            _badgeNames = character.BadgeNames ?? System.Array.Empty<string>();
         }
 
         public override void Initialize()
@@ -87,6 +115,9 @@ namespace EndlessClient.Rendering.Character
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
             _pixel = new Texture2D(Game.GraphicsDevice, 1, 1);
             _pixel.SetData(new[] { Color.White });
+
+            if (_contentProvider.Textures.ContainsKey(ContentProvider.IconBadges))
+                _badgeSheet = _contentProvider.Textures[ContentProvider.IconBadges];
 
             _nameFont = _contentProvider.Fonts[Constants.FontSize09];
             _detailFont = _contentProvider.Fonts[Constants.FontSize08];
@@ -130,6 +161,11 @@ namespace EndlessClient.Rendering.Character
             if (!string.IsNullOrEmpty(levelText))
                 contentWidth = System.Math.Max(contentWidth, (int)levelWidth);
             contentWidth = System.Math.Max(contentWidth, MinWidth);
+            if (_badgeNames.Length > 0)
+            {
+                var badgeWidth = _badgeNames.Length * BadgeContainerSize + (_badgeNames.Length - 1) * BadgeGap;
+                contentWidth = System.Math.Max(contentWidth, badgeWidth);
+            }
 
             var panelWidth = contentWidth + PaddingH * 2;
             var panelHeight = PaddingV + (int)nameSize.Height;
@@ -137,6 +173,11 @@ namespace EndlessClient.Rendering.Character
                 panelHeight += LineSpacing + (int)guildHeight;
             if (!string.IsNullOrEmpty(levelText))
                 panelHeight += SectionSpacing + (int)levelHeight;
+
+            // Badge icons height
+            if (_badgeNames.Length > 0)
+                panelHeight += SectionSpacing + BadgeContainerSize;
+
             panelHeight += PaddingV;
 
             // Position: centered above anchor, with a small gap
@@ -192,6 +233,39 @@ namespace EndlessClient.Rendering.Character
             {
                 var levelX = (int)(panelX + (panelWidth - (int)levelWidth) / 2f);
                 _spriteBatch.DrawString(_detailFont, levelText, new Vector2(levelX, textY), LevelColor);
+                textY += (int)levelHeight + LineSpacing;
+            }
+
+            // Badge icons
+            if (_badgeNames.Length > 0)
+            {
+                textY += SectionSpacing;
+                var totalWidth = _badgeNames.Length * BadgeContainerSize + (_badgeNames.Length - 1) * BadgeGap;
+                var startX = panelX + (panelWidth - totalWidth) / 2;
+
+                for (int i = 0; i < _badgeNames.Length; i++)
+                {
+                    var bx = startX + i * (BadgeContainerSize + BadgeGap);
+
+                    // Draw container background + border
+                    var containerRect = new Rectangle(bx, textY, BadgeContainerSize, BadgeContainerSize);
+                    DrawingPrimitives.DrawRoundedRect(_spriteBatch, containerRect, BadgeContainerColor, 3);
+                    DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, containerRect, BadgeBorderColor, 3, 1);
+
+                    // Draw icon from spritesheet
+                    if (_badgeSheet != null && BadgeIconIndex.TryGetValue(_badgeNames[i], out var iconIdx))
+                    {
+                        var srcRect = new Rectangle(iconIdx * BadgeIconSize, 0, BadgeIconSize, BadgeIconSize);
+                        var dstRect = new Rectangle(bx + 2, textY + 2, BadgeIconSize, BadgeIconSize);
+                        _spriteBatch.Draw(_badgeSheet, dstRect, srcRect, Color.White);
+                    }
+                    else
+                    {
+                        // Fallback: draw badge name text if icon not found
+                        var abbr = _badgeNames[i].Length > 3 ? _badgeNames[i].Substring(0, 3) : _badgeNames[i];
+                        _spriteBatch.DrawString(_detailFont, abbr, new Vector2(bx + 1, textY + 2), Color.Yellow);
+                    }
+                }
             }
 
             _spriteBatch.End();

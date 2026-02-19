@@ -4,6 +4,7 @@ using System.Linq;
 using EndlessClient.Content;
 using EndlessClient.HUD.Panels;
 using EndlessClient.Rendering;
+using EndlessClient.Rendering.Character;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Achievement;
@@ -24,7 +25,7 @@ namespace EndlessClient.HUD.Windows
     /// </summary>
     public class CodeDrawnAchievementWindow : DraggableHudPanel, IZOrderedWindow
     {
-        private enum AchievementTab { All, NpcKills, Quests, Maps, Equipment, Crafting, Pets }
+        private enum AchievementTab { All, NpcKills, Quests, Maps, Equipment, Crafting, Pets, Badges }
 
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
@@ -35,20 +36,24 @@ namespace EndlessClient.HUD.Windows
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
+        private Texture2D _badgeSheet;
+
+        private const int BadgeIconSize = 12;
 
         private const int PanelWidth = 340;
         private const int PanelHeight = 460;
         private const int HeaderHeight = 24;
-        private const int SearchBarHeight = 24;
+
         private const int TabBarHeight = 22;
         private const int Padding = 8;
-        private const int CardHeight = 56;
+        private const int CardHeight = 70;
         private const int CardGap = 4;
         private const int ScrollBarWidth = 6;
-        private const int ContentAreaHeight = PanelHeight - HeaderHeight - SearchBarHeight - TabBarHeight;
+        private const int BadgeFooterHeight = 40;
+        private const int ContentAreaHeight = PanelHeight - HeaderHeight - TabBarHeight;
 
         private AchievementTab _activeTab = AchievementTab.All;
-        private string _searchText = "";
+
         private int _selectedAchievementId = -1;
         private int _leaderboardAchievementId = -1;
         private IReadOnlyList<LeaderboardEntry> _leaderboardEntries = Array.Empty<LeaderboardEntry>();
@@ -61,6 +66,10 @@ namespace EndlessClient.HUD.Windows
         // Filtered/cached list
         private IReadOnlyList<AchievementDefinition> _filteredAchievements = Array.Empty<AchievementDefinition>();
         private IReadOnlyList<AchievementDefinition> _lastAchievements = Array.Empty<AchievementDefinition>();
+
+        // Badge selection state
+        private readonly HashSet<int> _selectedBadgeIds = new HashSet<int>();
+        private bool _badgesDirty;
 
         // Theme colors
         private Color HeaderColor => new Color(_styleProvider.TitleBarBackground, 0.95f);
@@ -121,6 +130,10 @@ namespace EndlessClient.HUD.Windows
         public override void Initialize()
         {
             DrawingPrimitives.Initialize(_graphicsDeviceProvider.GraphicsDevice);
+
+            if (_contentProvider.Textures.ContainsKey(ContentProvider.IconBadges))
+                _badgeSheet = _contentProvider.Textures[ContentProvider.IconBadges];
+
             base.Initialize();
         }
 
@@ -153,7 +166,7 @@ namespace EndlessClient.HUD.Windows
             var localY = logicalY - area.Y;
 
             // Tab bar click
-            var tabTop = HeaderHeight + SearchBarHeight;
+            var tabTop = HeaderHeight;
             if (localY >= tabTop && localY < tabTop + TabBarHeight)
             {
                 var tabNames = Enum.GetValues(typeof(AchievementTab));
@@ -164,13 +177,39 @@ namespace EndlessClient.HUD.Windows
                     _activeTab = (AchievementTab)tabIndex;
                     _scrollOffset = 0;
                     _selectedAchievementId = -1;
+
+                    // When switching to Badges tab, populate selection from server data
+                    if (_activeTab == AchievementTab.Badges)
+                    {
+                        _selectedBadgeIds.Clear();
+                        foreach (var id in _achievementProvider.SelectedBadgeIds)
+                            _selectedBadgeIds.Add(id);
+                        _badgesDirty = false;
+                    }
+
                     RebuildFilteredList();
                     return true;
                 }
             }
 
+            // Save button click — must be BEFORE row click handler (badges tab)
+            if (_activeTab == AchievementTab.Badges)
+            {
+                var footerTop = PanelHeight - BadgeFooterHeight;
+                var saveW = 80;
+                var saveH = 22;
+                var saveX = PanelWidth - saveW - Padding;
+                var saveY = footerTop + (BadgeFooterHeight - saveH) / 2;
+                if (localX >= saveX && localX <= saveX + saveW && localY >= saveY && localY <= saveY + saveH)
+                {
+                    _achievementActions.SendBadgeSelection(_selectedBadgeIds.ToArray());
+                    _badgesDirty = false;
+                    return true;
+                }
+            }
+
             // Achievement row click
-            var contentTop = HeaderHeight + SearchBarHeight + TabBarHeight;
+            var contentTop = HeaderHeight + TabBarHeight;
             var rowStride = CardHeight + CardGap;
             if (localY >= contentTop && localY < PanelHeight)
             {
@@ -178,6 +217,22 @@ namespace EndlessClient.HUD.Windows
                 if (rowIndex >= 0 && rowIndex < _filteredAchievements.Count)
                 {
                     var ach = _filteredAchievements[rowIndex];
+
+                    if (_activeTab == AchievementTab.Badges)
+                    {
+                        // Toggle badge selection
+                        if (_selectedBadgeIds.Contains(ach.Id))
+                        {
+                            _selectedBadgeIds.Remove(ach.Id);
+                            _badgesDirty = true;
+                        }
+                        else if (_selectedBadgeIds.Count < 3)
+                        {
+                            _selectedBadgeIds.Add(ach.Id);
+                            _badgesDirty = true;
+                        }
+                        return true;
+                    }
 
                     if (_selectedAchievementId == ach.Id)
                     {
@@ -253,7 +308,7 @@ namespace EndlessClient.HUD.Windows
             IEnumerable<AchievementDefinition> filtered = all;
 
             // Filter by tab
-            if (_activeTab != AchievementTab.All)
+            if (_activeTab != AchievementTab.All && _activeTab != AchievementTab.Badges)
             {
                 filtered = _activeTab switch
                 {
@@ -270,14 +325,18 @@ namespace EndlessClient.HUD.Windows
                 };
             }
 
-            // Filter by search text
-            if (!string.IsNullOrEmpty(_searchText))
+            // Badges tab: only show maxed achievements
+            if (_activeTab == AchievementTab.Badges)
             {
-                filtered = filtered.Where(a =>
-                    a.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+                var maxedIds = _achievementProvider.MaxedAchievementIds;
+                filtered = filtered.Where(a => maxedIds.Contains(a.Id));
             }
 
-            _filteredAchievements = filtered.ToList();
+            // Sort by progress: highest tier first, then by current progress descending
+            _filteredAchievements = filtered
+                .OrderByDescending(a => a.CurrentTier)
+                .ThenByDescending(a => a.CurrentProgress)
+                .ToList();
         }
 
         private int _prevScrollValue;
@@ -306,7 +365,8 @@ namespace EndlessClient.HUD.Windows
             var scrollChange = -delta / 4f;
             _scrollOffset = Math.Max(0, _scrollOffset + scrollChange);
 
-            var maxScroll = Math.Max(0, _filteredAchievements.Count * (CardHeight + CardGap) - ContentAreaHeight);
+            var effectiveContentH = _activeTab == AchievementTab.Badges ? ContentAreaHeight - BadgeFooterHeight : ContentAreaHeight;
+            var maxScroll = Math.Max(0, _filteredAchievements.Count * (CardHeight + CardGap) - effectiveContentH);
             _scrollOffset = Math.Min(_scrollOffset, maxScroll);
         }
 
@@ -322,7 +382,7 @@ namespace EndlessClient.HUD.Windows
             var localY = mouseY - area.Y;
 
             // Tab hover
-            var tabTop = HeaderHeight + SearchBarHeight;
+            var tabTop = HeaderHeight;
             var tabNames = Enum.GetValues(typeof(AchievementTab));
             var tabWidth = PanelWidth / tabNames.Length;
             if (localY >= tabTop && localY < tabTop + TabBarHeight && localX >= 0 && localX < PanelWidth)
@@ -331,7 +391,7 @@ namespace EndlessClient.HUD.Windows
                 _hoveredTabIndex = -1;
 
             // Row hover
-            var contentTop = HeaderHeight + SearchBarHeight + TabBarHeight;
+            var contentTop = HeaderHeight + TabBarHeight;
             if (localY >= contentTop && localY < PanelHeight && localX >= 0 && localX < PanelWidth)
                 _hoveredRowIndex = (int)((localY - contentTop + _scrollOffset) / (CardHeight + CardGap));
             else
@@ -400,15 +460,7 @@ namespace EndlessClient.HUD.Windows
             DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, HeaderColor);
             _spriteBatch.DrawString(font, "Achievements", new Vector2(pos.X + Padding * scale, pos.Y + 4 * scale), HeaderText);
 
-            // Search bar
-            var searchY = pos.Y + HeaderHeight * scale;
-            var searchRect = new Rectangle((int)(pos.X + Padding * scale), (int)(searchY + 3 * scale),
-                (int)((PanelWidth - Padding * 2) * scale), (int)(18 * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, searchRect, new Color(30, 30, 40, 180));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, searchRect, new Color(60, 60, 70, 120), 1);
-            var searchDisplay = string.IsNullOrEmpty(_searchText) ? "Search..." : _searchText;
-            var searchColor = string.IsNullOrEmpty(_searchText) ? new Color(150, 150, 160) : Color.White;
-            _spriteBatch.DrawString(font, searchDisplay, new Vector2(searchRect.X + 4 * scale, searchRect.Y + 2 * scale), searchColor);
+
 
             // Tab bar
             DrawTabBar(pos, scale, font);
@@ -416,8 +468,9 @@ namespace EndlessClient.HUD.Windows
             _spriteBatch.End();
 
             // Achievement cards — clipped to content area
-            var contentTop = (int)(pos.Y + (HeaderHeight + SearchBarHeight + TabBarHeight) * scale);
-            var contentBottom = (int)(pos.Y + scaledH);
+            var contentTop = (int)(pos.Y + (HeaderHeight + TabBarHeight) * scale);
+            var footerH = _activeTab == AchievementTab.Badges ? (int)(BadgeFooterHeight * scale) : 0;
+            var contentBottom = (int)(pos.Y + scaledH) - footerH;
             var clipRect = new Rectangle((int)pos.X, contentTop, scaledW, contentBottom - contentTop);
 
             var gd = _graphicsDeviceProvider.GraphicsDevice;
@@ -442,6 +495,40 @@ namespace EndlessClient.HUD.Windows
             if (_leaderboardAchievementId > 0)
                 DrawLeaderboardOverlay(pos, scale, font);
 
+            // Badge footer bar with save button and count
+            if (_activeTab == AchievementTab.Badges)
+            {
+                var footerTop = (int)(pos.Y + (PanelHeight - BadgeFooterHeight) * scale);
+                var footerRect = new Rectangle((int)pos.X + 1, footerTop, scaledW - 2, (int)(BadgeFooterHeight * scale));
+
+                // Footer background + separator line
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, footerRect, new Color(30, 30, 35));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)pos.X + 1, footerTop, scaledW - 2, 1), new Color(100, 90, 60));
+
+                // Selection count on the left
+                var countText = $"{_selectedBadgeIds.Count}/3 selected";
+                var countSize = font.MeasureString(countText);
+                var countY = footerTop + ((int)(BadgeFooterHeight * scale) - (int)countSize.Height) / 2;
+                _spriteBatch.DrawString(font, countText,
+                    new Vector2(pos.X + Padding * scale, countY),
+                    new Color(200, 200, 200));
+
+                // Save button on the right
+                var saveW = (int)(80 * scale);
+                var saveH = (int)(22 * scale);
+                var saveX = (int)(pos.X + scaledW - saveW - Padding * scale);
+                var saveY = footerTop + ((int)(BadgeFooterHeight * scale) - saveH) / 2;
+                var saveRect = new Rectangle(saveX, saveY, saveW, saveH);
+                var btnColor = _badgesDirty ? new Color(76, 175, 80) : new Color(60, 60, 60);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, saveRect, btnColor);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, saveRect, new Color(100, 100, 100), 1);
+                var saveText = _badgesDirty ? "Save" : "Saved";
+                var saveTextSize = font.MeasureString(saveText);
+                _spriteBatch.DrawString(font, saveText,
+                    new Vector2(saveX + (saveW - saveTextSize.Width) / 2, saveY + 4 * scale),
+                    Color.White);
+            }
+
             // Panel border (drawn last)
             DrawingPrimitives.DrawRectBorder(_spriteBatch, bgRect, _styleProvider.PanelBorder, Math.Max(1, (int)(2 * scale)));
 
@@ -450,8 +537,8 @@ namespace EndlessClient.HUD.Windows
 
         private void DrawTabBar(Vector2 pos, float scale, BitmapFont font)
         {
-            var tabNames = new[] { "All", "Kills", "Quest", "Maps", "Equip", "Craft", "Pets" };
-            var tabTop = pos.Y + (HeaderHeight + SearchBarHeight) * scale;
+            var tabNames = new[] { "All", "Kills", "Quest", "Maps", "Equip", "Craft", "Pets", "Badge" };
+            var tabTop = pos.Y + HeaderHeight * scale;
             var tabBarH = (int)(TabBarHeight * scale);
             var tabWidth = (int)(PanelWidth * scale / tabNames.Length);
 
@@ -488,7 +575,7 @@ namespace EndlessClient.HUD.Windows
 
         private void DrawAchievementList(Vector2 pos, float scale, BitmapFont font)
         {
-            var contentTop = pos.Y + (HeaderHeight + SearchBarHeight + TabBarHeight) * scale;
+            var contentTop = pos.Y + (HeaderHeight + TabBarHeight) * scale;
             var contentHeight = ContentAreaHeight * scale;
             var rowStride = (CardHeight + CardGap) * scale;
 
@@ -527,13 +614,24 @@ namespace EndlessClient.HUD.Windows
             var cardRect = new Rectangle(cardX, (int)cardY, cardW, cardH);
 
             // Card background + border
-            var bg = isSelected ? CardSelectedBg : CardBg;
-            var border = isSelected ? CardSelectedBorder : CardBorder;
-            if (isHovered && !isSelected)
+            var isBadgeSelected = _activeTab == AchievementTab.Badges && _selectedBadgeIds.Contains(ach.Id);
+            var bg = (isSelected || isBadgeSelected) ? CardSelectedBg : CardBg;
+            var border = (isSelected || isBadgeSelected) ? CardSelectedBorder : CardBorder;
+            if (isHovered && !isSelected && !isBadgeSelected)
                 bg = new Color(45, 45, 55, 220);
 
             DrawingPrimitives.DrawFilledRect(_spriteBatch, cardRect, bg);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, cardRect, border, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, cardRect, border, Math.Max(1, (int)(isBadgeSelected ? 2 * scale : 1)));
+
+            // Badge tab: draw SELECTED label
+            if (_activeTab == AchievementTab.Badges && isBadgeSelected)
+            {
+                var labelText = "SELECTED";
+                var labelSize = font.MeasureString(labelText);
+                var labelX = cardX + cardW - (int)labelSize.Width - (int)(6 * scale);
+                var labelY = (int)cardY + (int)(4 * scale);
+                _spriteBatch.DrawString(font, labelText, new Vector2(labelX, labelY), new Color(255, 215, 0));
+            }
 
             var innerX = cardX + (int)(6 * scale);
             var innerW = cardW - (int)(12 * scale);
@@ -544,9 +642,29 @@ namespace EndlessClient.HUD.Windows
 
             var typeLabel = GetTypeLabel(ach.Type);
             var typeLabelSize = font.MeasureString(typeLabel);
+            var typeLabelX = cardX + cardW - (int)(6 * scale) - (int)typeLabelSize.Width;
+
+            // Badge icon (to the left of the type label)
+            if (_badgeSheet != null && CharacterNamePlate.BadgeIconIndex.TryGetValue(ach.Name, out var iconIdx))
+            {
+                var iconSize = (int)(BadgeIconSize * scale);
+                var iconX = typeLabelX - iconSize - (int)(4 * scale);
+                var iconY = (int)(y + 1 * scale);
+                var srcRect = new Rectangle(iconIdx * BadgeIconSize, 0, BadgeIconSize, BadgeIconSize);
+                var dstRect = new Rectangle(iconX, iconY, iconSize, iconSize);
+                _spriteBatch.Draw(_badgeSheet, dstRect, srcRect, Color.White);
+            }
+
             _spriteBatch.DrawString(font, typeLabel,
-                new Vector2(cardX + cardW - (int)(6 * scale) - typeLabelSize.Width, y),
+                new Vector2(typeLabelX, y),
                 new Color(160, 155, 140));
+
+            // Row 1.5: Description (subtle grey, below name)
+            if (!string.IsNullOrEmpty(ach.Description))
+            {
+                y += 14 * scale;
+                _spriteBatch.DrawString(font, ach.Description, new Vector2(innerX, y), new Color(120, 115, 105));
+            }
 
             // Row 2: Progress bar (full width within card)
             y += 16 * scale;
@@ -648,7 +766,7 @@ namespace EndlessClient.HUD.Windows
             }
             if (selectedIndex < 0 || selectedAch == null) return;
 
-            var contentTop = panelPos.Y + (HeaderHeight + SearchBarHeight + TabBarHeight) * scale;
+            var contentTop = panelPos.Y + (HeaderHeight + TabBarHeight) * scale;
             var rowY = contentTop + (selectedIndex * (CardHeight + CardGap) - _scrollOffset) * scale;
 
             // === Build overlay sections ===

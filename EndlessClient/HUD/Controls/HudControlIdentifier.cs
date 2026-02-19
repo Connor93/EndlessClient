@@ -66,6 +66,7 @@ namespace EndlessClient.HUD.Controls
         GuildPanel,
         AchievementButton,
         AchievementWindow,
+        InboxButton,
 
         HPStatusBar,
         TPStatusBar,

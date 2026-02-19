@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AutomaticTypeMapper;
 using EOLib.Domain.Achievement;
+using EOLib.Domain.Character;
 using EOLib.Domain.Chat;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Login;
+using EOLib.Domain.Map;
 using EOLib.Net.Handlers;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
 using Moffat.EndlessOnline.SDK.Protocol.Net.Server;
@@ -18,6 +21,8 @@ namespace EOLib.PacketHandlers.Quest
         private readonly IEnumerable<IStatusLabelNotifier> _statusLabelNotifiers;
         private readonly IBountyDataRepository _bountyDataRepository;
         private readonly IAchievementRepository _achievementRepository;
+        private readonly ICurrentMapStateRepository _currentMapStateRepository;
+        private readonly ICharacterRepository _characterRepository;
 
         public override PacketFamily Family => PacketFamily.Message;
 
@@ -27,13 +32,17 @@ namespace EOLib.PacketHandlers.Quest
                                          IChatRepository chatRepository,
                                          IEnumerable<IStatusLabelNotifier> statusLabelNotifiers,
                                          IBountyDataRepository bountyDataRepository,
-                                         IAchievementRepository achievementRepository)
+                                         IAchievementRepository achievementRepository,
+                                         ICurrentMapStateRepository currentMapStateRepository,
+                                         ICharacterRepository characterRepository)
             : base(playerInfoProvider)
         {
             _chatRepository = chatRepository;
             _statusLabelNotifiers = statusLabelNotifiers;
             _bountyDataRepository = bountyDataRepository;
             _achievementRepository = achievementRepository;
+            _currentMapStateRepository = currentMapStateRepository;
+            _characterRepository = characterRepository;
         }
 
         public override bool HandlePacket(MessageOpenServerPacket packet)
@@ -226,20 +235,21 @@ namespace EOLib.PacketHandlers.Quest
                     foreach (var entry in entries)
                     {
                         var fields = entry.Split(',');
-                        // Format: id,name,type,target,tier_count,
+                        // Format: id,name,description,type,target,tier_count,
                         //   t1_thresh:t1_exp:t1_itemid:t1_itemamt, ...,
                         //   current_progress,current_tier,unique_count,
                         //   players_t1,players_t2,...
-                        if (fields.Length < 5) continue;
+                        if (fields.Length < 6) continue;
 
                         int.TryParse(fields[0], out var achId);
                         var achName = fields[1];
-                        var achType = fields[2];
-                        int.TryParse(fields[3], out var achTarget);
-                        int.TryParse(fields[4], out var tierCount);
+                        var achDesc = fields[2].Replace('~', ',');
+                        var achType = fields[3];
+                        int.TryParse(fields[4], out var achTarget);
+                        int.TryParse(fields[5], out var tierCount);
 
                         var tiers = new List<AchievementTierData>();
-                        int fi = 5;
+                        int fi = 6;
                         for (int t = 0; t < tierCount && fi < fields.Length; t++, fi++)
                         {
                             var tierParts = fields[fi].Split(':');
@@ -264,7 +274,7 @@ namespace EOLib.PacketHandlers.Quest
                         }
 
                         achievements.Add(new AchievementDefinition(
-                            achId, achName, achType, achTarget,
+                            achId, achName, achDesc, achType, achTarget,
                             tiers.ToArray(), currentProgress, currentTier, uniqueCount));
                     }
                 }
@@ -297,6 +307,81 @@ namespace EOLib.PacketHandlers.Quest
 
                 _achievementRepository.LeaderboardAchievementId = achId;
                 _achievementRepository.LeaderboardEntries = entries;
+                return true;
+            }
+
+            // [ACHBADGE]playerid,name1,name2,name3 — badge data for a character
+            const string achBadgePrefix = "[ACHBADGE]";
+            if (packet.Message.StartsWith(achBadgePrefix))
+            {
+                var payload = packet.Message.Substring(achBadgePrefix.Length);
+                var parts = payload.Split(',');
+                if (parts.Length >= 1 && int.TryParse(parts[0], out var playerId))
+                {
+                    var badgeNames = parts.Skip(1).Where(s => !string.IsNullOrEmpty(s)).ToArray();
+
+
+                    // Update main character if it's us
+                    if (_characterRepository.MainCharacter.ID == playerId)
+                    {
+                        _characterRepository.MainCharacter = _characterRepository.MainCharacter
+                            .WithBadgeNames(badgeNames);
+
+                    }
+                    // Update map character
+                    else if (_currentMapStateRepository.Characters.ContainsKey(playerId))
+                    {
+                        var oldChar = _currentMapStateRepository.Characters[playerId];
+                        var newChar = oldChar.WithBadgeNames(badgeNames);
+                        _currentMapStateRepository.Characters.Update(oldChar, newChar);
+
+                    }
+
+                }
+                return true;
+            }
+
+            // [ACHMAXED]id1,id2,... — which achievements the player has fully completed
+            const string achMaxedPrefix = "[ACHMAXED]";
+            if (packet.Message.StartsWith(achMaxedPrefix))
+            {
+                var payload = packet.Message.Substring(achMaxedPrefix.Length);
+                var ids = new List<int>();
+                if (!string.IsNullOrEmpty(payload))
+                {
+                    foreach (var part in payload.Split(','))
+                    {
+                        if (int.TryParse(part, out var id))
+                            ids.Add(id);
+                    }
+                }
+                _achievementRepository.MaxedAchievementIds = ids;
+                return true;
+            }
+
+            // [ACHSELECTED]id1,id2,id3 — currently selected badge IDs
+            const string achSelectedPrefix = "[ACHSELECTED]";
+            if (packet.Message.StartsWith(achSelectedPrefix))
+            {
+                var payload = packet.Message.Substring(achSelectedPrefix.Length);
+                var ids = new List<int>();
+                if (!string.IsNullOrEmpty(payload))
+                {
+                    foreach (var part in payload.Split(','))
+                    {
+                        if (int.TryParse(part, out var id))
+                            ids.Add(id);
+                    }
+                }
+                _achievementRepository.SelectedBadgeIds = ids;
+                return true;
+            }
+
+            // [ACHBADGESELOK] — badge selection saved confirmation
+            const string achBadgeSelOkPrefix = "[ACHBADGESELOK]";
+            if (packet.Message.StartsWith(achBadgeSelOkPrefix))
+            {
+                // Selection was saved — no UI action needed, data already updated from broadcast
                 return true;
             }
 
