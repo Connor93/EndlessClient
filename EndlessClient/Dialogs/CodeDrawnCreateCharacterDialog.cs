@@ -19,15 +19,19 @@ using XNAControls;
 namespace EndlessClient.Dialogs
 {
     /// <summary>
-    /// A fully code-drawn character creation dialog replacing the broken texture-based version.
-    /// Features text-labeled selectors for gender, hair style, hair color, and race,
-    /// a name input field, character preview, and OK/Cancel buttons.
+    /// A fully code-drawn character creation dialog.
+    /// Inherits from XNADialog directly and implements IPostScaleDrawable
+    /// so that fills and the character preview draw to the render target
+    /// while crisp text/borders are drawn post-scale.
     /// </summary>
-    public class CodeDrawnCreateCharacterDialog : CodeDrawnDialog
+    public class CodeDrawnCreateCharacterDialog : XNADialog, IPostScaleDrawable
     {
         private readonly IUIStyleProvider _styleProvider;
+        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IEOMessageBoxFactory _messageBoxFactory;
         private readonly IXnaControlSoundMapper _xnaControlSoundMapper;
+        private readonly IContentProvider _contentProvider;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
 
@@ -47,6 +51,20 @@ namespace EndlessClient.Dialogs
         private static readonly string[] RaceNames = { "White", "Tan", "Pale", "Orc" };
         private const int MaxRaces = 4; // exclude skeleton and panda skins
 
+        private const int DialogWidth = 340;
+        private const int DialogHeight = 240;
+
+        // Layout constants
+        private const int LabelX = 20;
+        private const int ValueX = 100;
+        private const int ValueWidth = 106;
+        private const int ValueHeight = 22;
+        private const int ArrowX = 210;
+        private const int ArrowWidth = 28;
+        private const int ArrowHeight = 22;
+        private const int StartY = 70;
+        private const int RowSpacing = 30;
+
         public string Name => _inputBox.Text.Trim();
 
         private CharacterRenderProperties RenderProperties => _characterControl.RenderProperties;
@@ -54,6 +72,10 @@ namespace EndlessClient.Dialogs
         public int HairStyle => RenderProperties.HairStyle;
         public int HairColor => RenderProperties.HairColor;
         public int Race => RenderProperties.Race;
+
+        // IPostScaleDrawable implementation
+        public int PostScaleDrawOrder => 100;
+        public bool SkipRenderTargetDraw => false;
 
         public CodeDrawnCreateCharacterDialog(
             IUIStyleProvider styleProvider,
@@ -64,29 +86,28 @@ namespace EndlessClient.Dialogs
             IXnaControlSoundMapper xnaControlSoundMapper,
             IClientWindowSizeProvider clientWindowSizeProvider,
             IGraphicsDeviceProvider graphicsDeviceProvider)
-            : base(styleProvider, gameStateProvider, clientWindowSizeProvider, graphicsDeviceProvider)
         {
             _styleProvider = styleProvider;
+            _clientWindowSizeProvider = clientWindowSizeProvider;
+            _graphicsDeviceProvider = graphicsDeviceProvider;
             _messageBoxFactory = messageBoxFactory;
             _xnaControlSoundMapper = xnaControlSoundMapper;
+            _contentProvider = contentProvider;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize09];
-
-            DialogWidth = 340;
-            DialogHeight = 240;
 
             DrawArea = new Rectangle(0, 0, DialogWidth, DialogHeight);
 
             // --- Name input ---
             var cursorTexture = contentProvider.Textures[ContentProvider.Cursor];
-            _inputBox = new ClearableTextBox(new Rectangle(80, 38, 140, 19), Constants.FontSize08, caretTexture: cursorTexture)
+            _inputBox = new ClearableTextBox(new Rectangle(ValueX, 38, ValueWidth + 40, 19), Constants.FontSize08, caretTexture: cursorTexture)
             {
                 LeftPadding = 5,
                 DefaultText = " ",
                 Text = " ",
                 MaxChars = 12,
                 Selected = true,
-                TextColor = ColorConstants.LightBeigeText,
+                TextColor = Color.Black,
                 Visible = true
             };
             _inputBox.SetParentControl(this);
@@ -95,21 +116,16 @@ namespace EndlessClient.Dialogs
             // --- Character preview ---
             _characterControl = new CreateCharacterControl(rendererFactory)
             {
-                DrawPosition = new Vector2(242, 50)
+                DrawPosition = new Vector2(260, 50),
+                MaxHairStyle = 50,
             };
             _characterControl.SetParentControl(this);
 
             // --- Arrow buttons for each property ---
-            const int arrowWidth = 28;
-            const int arrowHeight = 22;
-            const int arrowX = 210;
-            const int startY = 70;
-            const int rowSpacing = 30;
-
-            _genderArrow = CreateArrowButton(arrowX, startY, arrowWidth, arrowHeight);
+            _genderArrow = CreateArrowButton(ArrowX, StartY, ArrowWidth, ArrowHeight);
             _genderArrow.OnClick += (_, _) => { _characterControl.NextGender(); };
 
-            _hairStyleArrow = CreateArrowButton(arrowX, startY + rowSpacing, arrowWidth, arrowHeight);
+            _hairStyleArrow = CreateArrowButton(ArrowX, StartY + RowSpacing, ArrowWidth, ArrowHeight);
             _hairStyleArrow.OnClick += (_, _) =>
             {
                 _characterControl.NextHairStyle();
@@ -117,10 +133,10 @@ namespace EndlessClient.Dialogs
                     _characterControl.NextHairStyle();
             };
 
-            _hairColorArrow = CreateArrowButton(arrowX, startY + rowSpacing * 2, arrowWidth, arrowHeight);
+            _hairColorArrow = CreateArrowButton(ArrowX, StartY + RowSpacing * 2, ArrowWidth, ArrowHeight);
             _hairColorArrow.OnClick += (_, _) => { _characterControl.NextHairColor(); };
 
-            _raceArrow = CreateArrowButton(arrowX, startY + rowSpacing * 3, arrowWidth, arrowHeight);
+            _raceArrow = CreateArrowButton(ArrowX, StartY + RowSpacing * 3, ArrowWidth, ArrowHeight);
             _raceArrow.OnClick += (_, _) => { NextRaceConstrained(); };
 
             // --- OK / Cancel buttons ---
@@ -144,12 +160,28 @@ namespace EndlessClient.Dialogs
             _cancelButton.OnClick += (_, _) => Close(XNADialogResult.Cancel);
             _cancelButton.SetParentControl(this);
 
-            // CenterInGameView() uses BackgroundTexture bounds which is null for code-drawn dialogs.
-            // Manually center using DrawArea dimensions instead.
             CenterInGameView();
-            DrawPosition = new Vector2(
-                DrawPosition.X - DialogWidth / 2,
-                DrawPosition.Y - DialogHeight / 2);
+        }
+
+        public override void CenterInGameView()
+        {
+            base.CenterInGameView();
+
+            int centerWidth, centerHeight;
+            if (XNADialog.GameViewportProvider != null)
+            {
+                centerWidth = XNADialog.GameViewportProvider.GameWidth;
+                centerHeight = XNADialog.GameViewportProvider.GameHeight;
+            }
+            else
+            {
+                centerWidth = Game.GraphicsDevice.Viewport.Width;
+                centerHeight = Game.GraphicsDevice.Viewport.Height;
+            }
+
+            var centerX = (centerWidth - DialogWidth) / 2;
+            var centerY = (centerHeight - DialogHeight) / 2;
+            DrawPosition = new Vector2(centerX, centerY);
         }
 
         private CodeDrawnButton CreateArrowButton(int x, int y, int width, int height)
@@ -184,101 +216,119 @@ namespace EndlessClient.Dialogs
             base.Initialize();
         }
 
+        /// <summary>
+        /// Draws fills and the character preview to the render target.
+        /// Text and borders are drawn in DrawPostScale for crisp rendering.
+        /// </summary>
         protected override void OnDrawControl(GameTime gameTime)
         {
-            DrawDialogBackground();
-            DrawLabelsAndValues();
+            var drawPos = DrawAreaWithParentOffset;
+            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
 
-            base.OnDrawControl(gameTime);
-        }
+            _spriteBatch.Begin(transformMatrix: transform);
 
-        /// <summary>
-        /// Draws the dialog background: rounded rect with title bar.
-        /// </summary>
-        private void DrawDialogBackground()
-        {
+            var bounds = new Rectangle(0, 0, DialogWidth, DialogHeight);
             var cornerRadius = _styleProvider.CornerRadius;
             var borderThickness = _styleProvider.BorderThickness;
             var titleBarHeight = _styleProvider.TitleBarHeight;
-
-            var drawPos = DrawAreaWithParentOffset;
-            var transform = Matrix.CreateTranslation(drawPos.X, drawPos.Y, 0);
-            var bounds = new Rectangle(0, 0, DrawArea.Width, DrawArea.Height);
-
-            _spriteBatch.Begin(transformMatrix: transform);
 
             // Main panel background
             DrawingPrimitives.DrawRoundedRect(_spriteBatch, bounds, _styleProvider.PanelBackground, cornerRadius);
 
             // Title bar fill
             DrawingPrimitives.DrawFilledRect(_spriteBatch,
-                new Rectangle(borderThickness, borderThickness, DrawArea.Width - borderThickness * 2, titleBarHeight - borderThickness),
+                new Rectangle(borderThickness, borderThickness, DialogWidth - borderThickness * 2, titleBarHeight - borderThickness),
                 _styleProvider.TitleBarBackground);
 
-            // Border
-            DrawingPrimitives.DrawRoundedRectBorder(_spriteBatch, bounds, _styleProvider.PanelBorder, cornerRadius, borderThickness);
+            // Name input background
+            var inputRect = new Rectangle(ValueX, 36, ValueWidth + 40, 21);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, inputRect, _styleProvider.InputBackground);
+
+            // Value background fields
+            for (int i = 0; i < 4; i++)
+            {
+                var valueRect = new Rectangle(ValueX, StartY + RowSpacing * i, ValueWidth, ValueHeight);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, valueRect, _styleProvider.PanelBackgroundAlt);
+            }
 
             _spriteBatch.End();
+
+            // Draw children (character preview, input box, etc.) in the render target
+            base.OnDrawControl(gameTime);
         }
 
         /// <summary>
-        /// Draws the text labels (Name, Gender, Hair Style, Hair Color, Race) and current values.
+        /// Draws crisp text labels and borders at post-scale coordinates.
         /// </summary>
-        private void DrawLabelsAndValues()
+        public void DrawPostScale(SpriteBatch spriteBatch, float scaleFactor, Point renderOffset)
         {
+            if (!Visible) return;
+
             var drawPos = DrawAreaWithParentOffset;
-            var titleBarHeight = _styleProvider.TitleBarHeight;
+            var scaledX = (int)(drawPos.X * scaleFactor) + renderOffset.X;
+            var scaledY = (int)(drawPos.Y * scaleFactor) + renderOffset.Y;
+            var scaledWidth = (int)(DialogWidth * scaleFactor);
+            var scaledHeight = (int)(DialogHeight * scaleFactor);
 
-            _spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
+            // Select appropriate font based on scale
+            var font = FontScaleHelper.GetScaledFont(_contentProvider, scaleFactor);
 
-            // Title
-            var titlePos = new Vector2(drawPos.X + 16, drawPos.Y + 8);
-            _spriteBatch.DrawString(_labelFont, "Create Character", titlePos, _styleProvider.TitleBarText);
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            try
+            {
+                // Border
+                var cornerRadius = (int)Math.Max(_styleProvider.CornerRadius, _styleProvider.CornerRadius * scaleFactor);
+                var borderThick = (int)Math.Max(2, _styleProvider.BorderThickness * scaleFactor);
+                DrawingPrimitives.DrawRoundedRectBorder(spriteBatch,
+                    new Rectangle(scaledX, scaledY, scaledWidth, scaledHeight),
+                    _styleProvider.PanelBorder, cornerRadius, borderThick);
 
-            // Label color - use a bright white for visibility
-            var labelColor = Color.White;
+                // Title text
+                var titlePos = new Vector2((int)(scaledX + 16 * scaleFactor), (int)(scaledY + 8 * scaleFactor));
+                spriteBatch.DrawString(font, "Create Character", titlePos, _styleProvider.TitleBarText);
 
-            // "Name:" label
-            var nameY = drawPos.Y + 40;
-            DrawBoldString("Name:", new Vector2(drawPos.X + 20, nameY), labelColor);
+                // Name label
+                var nameY = (int)(scaledY + 40 * scaleFactor);
+                spriteBatch.DrawString(font, "Name:", new Vector2((int)(scaledX + LabelX * scaleFactor), nameY), _styleProvider.TextPrimary);
 
-            // Input box background
-            var inputRect = new Rectangle(drawPos.X + 80, (int)nameY - 2, 142, 21);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, inputRect, new Color(20, 20, 20, 180));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, inputRect, _styleProvider.PanelBorder, 1);
+                // Name input border
+                var inputRect = new Rectangle(
+                    (int)(scaledX + ValueX * scaleFactor),
+                    (int)(scaledY + 36 * scaleFactor),
+                    (int)((ValueWidth + 40) * scaleFactor),
+                    (int)(21 * scaleFactor));
+                DrawingPrimitives.DrawRectBorder(spriteBatch, inputRect, _styleProvider.InputBorder, 1);
 
-            // Property rows
-            const int startY = 70;
-            const int rowSpacing = 30;
-            const int labelX = 20;
+                // Property rows
+                DrawScaledPropertyRow(spriteBatch, font, scaledX, scaledY, scaleFactor, StartY, "Gender:", GetGenderName());
+                DrawScaledPropertyRow(spriteBatch, font, scaledX, scaledY, scaleFactor, StartY + RowSpacing, "Hair Style:", GetHairStyleName());
+                DrawScaledPropertyRow(spriteBatch, font, scaledX, scaledY, scaleFactor, StartY + RowSpacing * 2, "Hair Color:", GetHairColorName());
+                DrawScaledPropertyRow(spriteBatch, font, scaledX, scaledY, scaleFactor, StartY + RowSpacing * 3, "Race:", GetRaceName());
 
-            DrawPropertyRow(drawPos, labelX, startY, "Gender:", GetGenderName());
-            DrawPropertyRow(drawPos, labelX, startY + rowSpacing, "Hair Style:", GetHairStyleName());
-            DrawPropertyRow(drawPos, labelX, startY + rowSpacing * 2, "Hair Color:", GetHairColorName());
-            DrawPropertyRow(drawPos, labelX, startY + rowSpacing * 3, "Race:", GetRaceName());
-
-            _spriteBatch.End();
+                // Value field borders
+                for (int i = 0; i < 4; i++)
+                {
+                    var valueRect = new Rectangle(
+                        (int)(scaledX + ValueX * scaleFactor),
+                        (int)(scaledY + (StartY + RowSpacing * i) * scaleFactor),
+                        (int)(ValueWidth * scaleFactor),
+                        (int)(ValueHeight * scaleFactor));
+                    DrawingPrimitives.DrawRectBorder(spriteBatch, valueRect, _styleProvider.PanelBorder, 1);
+                }
+            }
+            finally
+            {
+                spriteBatch.End();
+            }
         }
 
-        private void DrawPropertyRow(Rectangle drawPos, int labelX, int y, string label, string value)
+        private void DrawScaledPropertyRow(SpriteBatch spriteBatch, BitmapFont font, int scaledX, int scaledY, float scaleFactor, int y, string label, string value)
         {
-            var rowY = drawPos.Y + y;
-            DrawBoldString(label, new Vector2(drawPos.X + labelX, rowY + 3), Color.White);
+            var labelPos = new Vector2((int)(scaledX + LabelX * scaleFactor), (int)(scaledY + (y + 3) * scaleFactor));
+            spriteBatch.DrawString(font, label, labelPos, _styleProvider.TextPrimary);
 
-            // Value background
-            var valueRect = new Rectangle(drawPos.X + 100, (int)rowY, 106, 22);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, valueRect, new Color(30, 30, 30, 160));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, valueRect, _styleProvider.PanelBorder, 1);
-
-            DrawBoldString(value, new Vector2(drawPos.X + 106, rowY + 3), _styleProvider.TextHighlight);
-        }
-
-        /// <summary>
-        /// Draws text. Previously used shadow + double-strike but now renders clean single-pass text.
-        /// </summary>
-        private void DrawBoldString(string text, Vector2 position, Color color)
-        {
-            _spriteBatch.DrawString(_labelFont, text, position, color);
+            var valuePos = new Vector2((int)(scaledX + (ValueX + 6) * scaleFactor), (int)(scaledY + (y + 3) * scaleFactor));
+            spriteBatch.DrawString(font, value, valuePos, _styleProvider.TextPrimary);
         }
 
         private string GetGenderName()
