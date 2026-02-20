@@ -46,6 +46,16 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=false `
             -o publish/win-x64
 
+      - name: Publish ClientUpdater
+        run: |
+          dotnet publish ClientUpdater/ClientUpdater.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=false `
+            -o publish/win-x64
+
       - name: Clean debug files
         run: |
           Remove-Item publish\win-x64\*.pdb -Force -ErrorAction SilentlyContinue
@@ -117,6 +127,16 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -o publish/linux-x64
 
+      - name: Publish ClientUpdater
+        run: |
+          dotnet publish ClientUpdater/ClientUpdater.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/linux-x64
+
       - name: Clean debug files
         run: |
           rm -f publish/linux-x64/*.pdb
@@ -142,6 +162,7 @@ jobs:
         run: |
           chmod +x publish/linux-x64/EndlessClient
           chmod +x publish/linux-x64/SettingsEditor
+          chmod +x publish/linux-x64/ClientUpdater
 
       - name: Create tarball
         run: tar -czf EndlessClient-linux-x64.tar.gz -C publish linux-x64
@@ -181,6 +202,14 @@ jobs:
       - name: Publish SettingsEditor
         run: |
           dotnet publish SettingsEditor/SettingsEditor.csproj \
+            -c Debug \
+            -r osx-arm64 \
+            --self-contained true \
+            -o publish/osx-arm64
+
+      - name: Publish ClientUpdater
+        run: |
+          dotnet publish ClientUpdater/ClientUpdater.csproj \
             -c Debug \
             -r osx-arm64 \
             --self-contained true \
@@ -311,8 +340,57 @@ jobs:
           </plist>
           PLIST
 
+      - name: Create ClientUpdater .app bundle
+        run: |
+          CU_APP="ClientUpdater.app"
+          CU_CONTENTS="$CU_APP/Contents"
+          CU_MACOS="$CU_CONTENTS/MacOS"
+
+          mkdir -p "$CU_MACOS"
+
+          # Launcher script that runs ClientUpdater from sibling EndlessClient.app
+          cat > "$CU_MACOS/ClientUpdater" << 'LAUNCHER'
+          #!/bin/bash
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          APP_DIR="$(dirname "$(dirname "$DIR")")"
+          PARENT_DIR="$(dirname "$APP_DIR")"
+          RESOURCES="$PARENT_DIR/EndlessClient.app/Contents/Resources"
+          exec "$RESOURCES/ClientUpdater" "$@"
+          LAUNCHER
+          chmod +x "$CU_MACOS/ClientUpdater"
+
+          # Create Info.plist
+          cat > "$CU_CONTENTS/Info.plist" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>ClientUpdater</string>
+              <key>CFBundleDisplayName</key>
+              <string>EndlessClient Updater</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.endlessonline.clientupdater</string>
+              <key>CFBundleVersion</key>
+              <string>1.0.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleExecutable</key>
+              <string>ClientUpdater</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.15</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>LSApplicationCategoryType</key>
+              <string>public.app-category.utilities</string>
+          </dict>
+          </plist>
+          PLIST
+
       - name: Zip .app bundles
-        run: zip -r EndlessClient-macos-arm64.zip EndlessClient.app SettingsEditor.app
+        run: zip -r EndlessClient-macos-arm64.zip EndlessClient.app SettingsEditor.app ClientUpdater.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -342,9 +420,9 @@ jobs:
             Automated release from commit ${{ github.sha }}
 
             ### Downloads
-            - **Windows (x64):** `EndlessClient-win-x64.zip` — Extract and run `EndlessClient.exe` (Settings Editor: `SettingsEditor.exe`)
-            - **Linux (x64):** `EndlessClient-linux-x64.tar.gz` — Extract and run `./linux-x64/EndlessClient` (Settings Editor: `./linux-x64/SettingsEditor`)
-            - **macOS (Apple Silicon):** `EndlessClient-macos-arm64.zip` — Extract and open `EndlessClient.app` (Settings Editor: `SettingsEditor.app`)
+            - **Windows (x64):** `EndlessClient-win-x64.zip` — Extract and run `EndlessClient.exe` (Settings Editor: `SettingsEditor.exe`, Updater: `ClientUpdater.exe`)
+            - **Linux (x64):** `EndlessClient-linux-x64.tar.gz` — Extract and run `./linux-x64/EndlessClient` (Settings Editor: `./linux-x64/SettingsEditor`, Updater: `./linux-x64/ClientUpdater`)
+            - **macOS (Apple Silicon):** `EndlessClient-macos-arm64.zip` — Extract and open `EndlessClient.app` (Settings Editor: `SettingsEditor.app`, Updater: `ClientUpdater.app`)
           files: |
             artifacts/EndlessClient-win-x64/EndlessClient-win-x64.zip
             artifacts/EndlessClient-linux-x64/EndlessClient-linux-x64.tar.gz

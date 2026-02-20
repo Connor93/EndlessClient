@@ -196,8 +196,7 @@ namespace EndlessClient.Rendering.NPC
                             }
                         }
 
-                        _currentMapStateRepository.NPCs.Remove(npc);
-                        _currentMapStateRepository.NPCs.Add(nextFrameNPC);
+                        _currentMapStateRepository.NPCs.Update(npc, nextFrameNPC);
                     }
                     else
                     {

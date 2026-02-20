@@ -1,0 +1,211 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ClientUpdater.ViewModels"
+        x:Class="ClientUpdater.MainWindow"
+        Title="Endless Client Updater"
+        Width="600" Height="580"
+        MinWidth="500" MinHeight="500"
+        CanResize="True"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <Style Selector="Window">
+            <Setter Property="Background" Value="#1a1a2e" />
+        </Style>
+
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#e0e0ff" />
+        </Style>
+
+        <Style Selector="TextBlock.subtitle">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#8888aa" />
+        </Style>
+
+        <Style Selector="TextBlock.label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#b0b0cc" />
+        </Style>
+
+        <Style Selector="TextBlock.value">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#d0d0ff" />
+        </Style>
+
+        <Style Selector="TextBlock.status">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#66ccff" />
+        </Style>
+
+        <Style Selector="TextBlock.progressLabel">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#9999bb" />
+        </Style>
+
+        <Style Selector="ProgressBar">
+            <Setter Property="Height" Value="18" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Background" Value="#2a2a4a" />
+            <Setter Property="Foreground" Value="#5566cc" />
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#4455aa" />
+            <Setter Property="Foreground" Value="#ffffff" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#5566cc" />
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#333355" />
+            <Setter Property="Foreground" Value="#666688" />
+        </Style>
+
+        <Style Selector="Button.update">
+            <Setter Property="Background" Value="#2d8a4e" />
+            <Setter Property="Foreground" Value="#ffffff" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.update:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3aad62" />
+        </Style>
+        <Style Selector="Button.update:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#333355" />
+            <Setter Property="Foreground" Value="#666688" />
+        </Style>
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#22223a" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="BorderBrush" Value="#333355" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="Border.separator">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="#333355" />
+            <Setter Property="Margin" Value="0,8" />
+        </Style>
+
+        <Style Selector="TextBox.logBox">
+            <Setter Property="Background" Value="#111122" />
+            <Setter Property="Foreground" Value="#99aa99" />
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Menlo, monospace" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="BorderBrush" Value="#2a2a4a" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8" />
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Classes="title" Text="⚔ Endless Client Updater" />
+            <TextBlock Classes="subtitle" Text="{Binding PlatformLabel, StringFormat='Platform: {0}'}" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Version Info Card -->
+        <Border Grid.Row="1" Classes="card" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Column="0" Grid.Row="0" Classes="label" Text="Installed Version" />
+                <TextBlock Grid.Column="0" Grid.Row="1" Classes="value" Text="{Binding CurrentVersion}" Margin="0,2,0,0" />
+
+                <TextBlock Grid.Column="1" Grid.Row="0" Classes="label" Text="Latest Version" />
+                <TextBlock Grid.Column="1" Grid.Row="1" Classes="value" Text="{Binding LatestVersion, TargetNullValue='—', FallbackValue='—'}"
+                           Margin="0,2,0,0" />
+            </Grid>
+        </Border>
+
+        <!-- Status + Buttons -->
+        <Border Grid.Row="2" Classes="card" Margin="0,0,0,12">
+            <StackPanel Spacing="12">
+                <TextBlock Classes="status" Text="{Binding StatusText}" HorizontalAlignment="Center" />
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                    <Button Classes="primary"
+                            Content="Check for Updates"
+                            Command="{Binding CheckForUpdatesCommand}"
+                            IsEnabled="{Binding CanCheckForUpdates}" />
+                    <Button Classes="update"
+                            Content="⬇ Update Now"
+                            Command="{Binding UpdateCommand}"
+                            IsEnabled="{Binding CanUpdate}"
+                            IsVisible="{Binding UpdateAvailable}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Progress Bars -->
+        <Border Grid.Row="3" Classes="card" Margin="0,0,0,12">
+            <StackPanel Spacing="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Classes="progressLabel" Text="Download" />
+                    <TextBlock Grid.Column="1" Classes="progressLabel" Text="{Binding DownloadProgressText}" />
+                </Grid>
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding DownloadProgress}" />
+
+                <Border Classes="separator" />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Classes="progressLabel" Text="Extraction" />
+                    <TextBlock Grid.Column="1" Classes="progressLabel" Text="{Binding ExtractionProgressText}" />
+                </Grid>
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding ExtractionProgress}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Spacer/separator for layout -->
+        <TextBlock Grid.Row="4" Classes="progressLabel" Text="Log" Margin="4,0,0,4" />
+
+        <!-- Log Output -->
+        <TextBox Grid.Row="5"
+                 Classes="logBox"
+                 Text="{Binding LogText}"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 VerticalAlignment="Stretch" />
+    </Grid>
+</Window>

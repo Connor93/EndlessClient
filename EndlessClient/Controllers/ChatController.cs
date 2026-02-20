@@ -1,6 +1,7 @@
 ﻿using System;
 using AutomaticTypeMapper;
 using EndlessClient.Audio;
+using EndlessClient.Dialogs.Actions;
 using EndlessClient.ControlSets;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Chat;
@@ -10,6 +11,7 @@ using EOLib.Domain.Chat;
 using EOLib.Domain.Chat.Commands;
 using EOLib.Domain.Map;
 using EOLib.Localization;
+using EOLib.Net;
 
 namespace EndlessClient.Controllers
 {
@@ -25,6 +27,7 @@ namespace EndlessClient.Controllers
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IChatTypeCalculator _chatTypeCalculator;
         private readonly ICurrentMapStateProvider _currentMapStateProvider;
+        private readonly IErrorDialogDisplayAction _errorDialogDisplayAction;
 
         public ChatController(IChatTextBoxActions chatTextBoxActions,
                               IChatActions chatActions,
@@ -34,7 +37,8 @@ namespace EndlessClient.Controllers
                               IHudControlProvider hudControlProvider,
                               ISfxPlayer sfxPlayer,
                               IChatTypeCalculator chatTypeCalculator,
-                              ICurrentMapStateProvider currentMapStateProvider)
+                              ICurrentMapStateProvider currentMapStateProvider,
+                              IErrorDialogDisplayAction errorDialogDisplayAction)
         {
             _chatTextBoxActions = chatTextBoxActions;
             _chatActions = chatActions;
@@ -45,6 +49,7 @@ namespace EndlessClient.Controllers
             _sfxPlayer = sfxPlayer;
             _chatTypeCalculator = chatTypeCalculator;
             _currentMapStateProvider = currentMapStateProvider;
+            _errorDialogDisplayAction = errorDialogDisplayAction;
         }
 
         public void SendChatAndClearTextBox()
@@ -71,25 +76,32 @@ namespace EndlessClient.Controllers
                     _sfxPlayer.PlaySfx(SoundEffectID.AdminChatSent);
                 }
 
-                var (result, updatedChat) = _chatActions.SendChatToServer(localTypedText, targetCharacter, chatType);
-                switch (result)
+                try
                 {
-                    case ChatResult.Ok: _chatBubbleActions.ShowChatBubbleForMainCharacter(updatedChat, chatType == ChatType.Party); break;
-                    case ChatResult.YourMindPrevents: _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.YOUR_MIND_PREVENTS_YOU_TO_SAY); break;
-                    case ChatResult.Command:
-                        {
-                            var commandText = updatedChat[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
-                            _sfxPlayer.PlaySfx(commandText switch
+                    var (result, updatedChat) = _chatActions.SendChatToServer(localTypedText, targetCharacter, chatType);
+                    switch (result)
+                    {
+                        case ChatResult.Ok: _chatBubbleActions.ShowChatBubbleForMainCharacter(updatedChat, chatType == ChatType.Party); break;
+                        case ChatResult.YourMindPrevents: _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.YOUR_MIND_PREVENTS_YOU_TO_SAY); break;
+                        case ChatResult.Command:
                             {
-                                NoWallCommand.Text or PingCommand.Text => SoundEffectID.ServerCommand,
-                                _ => SoundEffectID.ServerMessage,
-                            });
-                        }
-                        break;
-                    case ChatResult.JailProtection: _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.JAIL_WARNING_CANNOT_USE_GLOBAL); break;
-                    case ChatResult.AdminAnnounce: _sfxPlayer.PlaySfx(SoundEffectID.AdminAnnounceReceived); goto case ChatResult.Ok;
-                    case ChatResult.HideSpeechBubble: break; // no-op
-                    case ChatResult.HideAll: break; // no-op
+                                var commandText = updatedChat[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
+                                _sfxPlayer.PlaySfx(commandText switch
+                                {
+                                    NoWallCommand.Text or PingCommand.Text => SoundEffectID.ServerCommand,
+                                    _ => SoundEffectID.ServerMessage,
+                                });
+                            }
+                            break;
+                        case ChatResult.JailProtection: _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_WARNING, EOResourceID.JAIL_WARNING_CANNOT_USE_GLOBAL); break;
+                        case ChatResult.AdminAnnounce: _sfxPlayer.PlaySfx(SoundEffectID.AdminAnnounceReceived); goto case ChatResult.Ok;
+                        case ChatResult.HideSpeechBubble: break; // no-op
+                        case ChatResult.HideAll: break; // no-op
+                    }
+                }
+                catch (NoDataSentException)
+                {
+                    _errorDialogDisplayAction.ShowException(new NoDataSentException());
                 }
             }
 

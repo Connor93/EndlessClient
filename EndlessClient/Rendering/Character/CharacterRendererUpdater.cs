@@ -118,16 +118,8 @@ namespace EndlessClient.Rendering.Character
         {
             _characterRendererRepository.MainCharacterRenderer.MatchSome(x => x.Update(gameTime));
 
-            var mainProps = _characterProvider.MainCharacter.RenderProperties;
             foreach (var renderer in _characterRendererRepository.CharacterRenderers.Values)
             {
-                // Skip expensive per-frame updates (name label, position calc, dead check)
-                // for characters well outside the render distance
-                var otherProps = renderer.Character.RenderProperties;
-                var dist = Math.Abs(mainProps.MapX - otherProps.MapX) + Math.Abs(mainProps.MapY - otherProps.MapY);
-                if (dist > 20)
-                    continue;
-
                 renderer.Update(gameTime);
             }
         }

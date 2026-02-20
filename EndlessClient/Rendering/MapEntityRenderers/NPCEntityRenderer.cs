@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using EndlessClient.Rendering.Map;
 using EndlessClient.Rendering.NPC;
 using EOLib.Domain.Character;
@@ -31,7 +32,9 @@ namespace EndlessClient.Rendering.MapEntityRenderers
         protected override bool ElementExistsAt(int row, int col)
         {
             var coordinate = new MapCoordinate(col, row);
-            return _currentMapStateProvider.NPCs.ContainsKey(coordinate) || _npcRendererProvider.DyingNPCs.ContainsKey(coordinate);
+            return _currentMapStateProvider.NPCs.ContainsKey(coordinate)
+                || _npcRendererProvider.DyingNPCs.ContainsKey(coordinate)
+                || _npcRendererProvider.NPCRenderers.Values.Any(r => !r.IsDead && r.NPC.X == col && r.NPC.Y == row);
         }
 
         public override void RenderElementAt(SpriteBatch spriteBatch, int row, int col, int alpha, Vector2 additionalOffset = default)
@@ -47,6 +50,20 @@ namespace EndlessClient.Rendering.MapEntityRenderers
             {
                 foreach (var npc in npcs)
                     indices.Add(npc.Index);
+            }
+
+            // Also include NPCs whose renderers are at this coordinate but whose
+            // domain position may have shifted (e.g. mid-walk coordinate change).
+            // This prevents NPCs from disappearing when the map render target is
+            // rebuilt and the diagonal grid iteration misses them at both old and
+            // new domain coordinates.
+            foreach (var kvp in _npcRendererProvider.NPCRenderers)
+            {
+                if (!kvp.Value.IsDead && !indices.Contains(kvp.Key)
+                    && kvp.Value.NPC.X == col && kvp.Value.NPC.Y == row)
+                {
+                    indices.Add(kvp.Key);
+                }
             }
 
             foreach (var index in indices)
