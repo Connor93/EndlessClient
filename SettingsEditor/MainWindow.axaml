@@ -1,0 +1,282 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SettingsEditor.ViewModels"
+        x:Class="SettingsEditor.MainWindow"
+        Title="EndlessClient Settings Editor"
+        Width="560" Height="720"
+        MinWidth="480" MinHeight="600"
+        Background="#1a1a2e"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Shared styles -->
+        <SolidColorBrush x:Key="SectionBg" Color="#16213e"/>
+        <SolidColorBrush x:Key="SectionBorder" Color="#0f3460"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#e94560"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#eaeaea"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#a0a0b0"/>
+        <SolidColorBrush x:Key="HeaderColor" Color="#e94560"/>
+    </Window.Resources>
+
+    <Window.Styles>
+        <!-- Section Card Style -->
+        <Style Selector="Border.section">
+            <Setter Property="Background" Value="{StaticResource SectionBg}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource SectionBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <!-- Section Header Style -->
+        <Style Selector="TextBlock.sectionHeader">
+            <Setter Property="Foreground" Value="{StaticResource HeaderColor}"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <!-- Label Style -->
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Hint Style -->
+        <Style Selector="TextBlock.hint">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Styles>
+
+    <DockPanel>
+        <!-- Title Bar -->
+        <Border DockPanel.Dock="Top" Background="#0f3460" Padding="16,12">
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Content="💾  Save Settings"
+                        Command="{Binding SaveCommand}"
+                        Background="{StaticResource AccentColor}"
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        Padding="16,8"
+                        CornerRadius="4"
+                        HorizontalAlignment="Right"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="EndlessClient Settings"
+                               FontSize="18" FontWeight="Bold"
+                               Foreground="White"/>
+                    <TextBlock Text="config/settings.ini"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondary}"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#0f3460" Padding="12,6">
+            <TextBlock Text="{Binding StatusText}"
+                       Foreground="{StaticResource TextSecondary}"
+                       FontSize="12"/>
+        </Border>
+
+        <!-- Scrollable Content -->
+        <ScrollViewer Padding="16,16,16,4">
+            <StackPanel>
+
+                <!-- CONNECTION Section -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="⚡ Connection"/>
+                        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" Margin="0,0,0,0">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Host"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Host}" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Port"/>
+                            <NumericUpDown Grid.Row="1" Grid.Column="1" Value="{Binding Port}"
+                                           Minimum="1" Maximum="65535" FormatString="0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- VERSION Section -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="📋 Version"/>
+                        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Major"/>
+                            <NumericUpDown Grid.Row="0" Grid.Column="1" Value="{Binding VersionMajor}"
+                                           Minimum="0" Maximum="255" FormatString="0" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Minor"/>
+                            <NumericUpDown Grid.Row="1" Grid.Column="1" Value="{Binding VersionMinor}"
+                                           Minimum="0" Maximum="255" FormatString="0" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="Client"/>
+                            <NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding VersionClient}"
+                                           Minimum="0" Maximum="255" FormatString="0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- SETTINGS Section -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="🔊 Audio &amp; Visuals"/>
+                        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Music"/>
+                            <ToggleSwitch Grid.Row="0" Grid.Column="1" IsChecked="{Binding MusicEnabled}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Sound Volume"/>
+                            <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,4">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding SoundVolume}"
+                                           Classes="hint" Width="30" TextAlignment="Right"/>
+                                <Slider Value="{Binding SoundVolume}" Minimum="0" Maximum="100"
+                                        TickFrequency="1" IsSnapToTickEnabled="True"/>
+                            </DockPanel>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="Chat Bubbles"/>
+                            <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding ShowBalloons}"
+                                          OnContent="Show" OffContent="Hide" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Classes="label" Text="Shadows"/>
+                            <ToggleSwitch Grid.Row="3" Grid.Column="1" IsChecked="{Binding ShowShadows}"
+                                          OnContent="Show" OffContent="Hide"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- CUSTOM Section -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="🎮 Game Settings"/>
+                        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Resolution"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                      ItemsSource="{Binding ResolutionList}"
+                                      SelectedIndex="{Binding SelectedResolutionIndex}"
+                                      HorizontalAlignment="Stretch" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Theme"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                      ItemsSource="{Binding ThemeList}"
+                                      SelectedIndex="{Binding SelectedThemeIndex}"
+                                      HorizontalAlignment="Stretch" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="UI Mode"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1"
+                                      ItemsSource="{Binding UIModeList}"
+                                      SelectedIndex="{Binding SelectedUIModeIndex}"
+                                      HorizontalAlignment="Stretch" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Classes="label" Text="UI Style"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1"
+                                      ItemsSource="{Binding UIStyleList}"
+                                      SelectedIndex="{Binding SelectedUIStyleIndex}"
+                                      HorizontalAlignment="Stretch" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Classes="label" Text="Map Zoom"/>
+                            <DockPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,4">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding MapZoom, StringFormat='{}{0:F2}'}"
+                                           Classes="hint" Width="35" TextAlignment="Right"/>
+                                <Slider Value="{Binding MapZoom}" Minimum="1" Maximum="2"
+                                        TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                            </DockPanel>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Classes="label" Text="Scroll Zoom"/>
+                            <ToggleSwitch Grid.Row="5" Grid.Column="1" IsChecked="{Binding ScrollWheelZoom}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Classes="label" Text="Transition"/>
+                            <ToggleSwitch Grid.Row="6" Grid.Column="1" IsChecked="{Binding ShowTransition}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Classes="label" Text="NPC Ghosting"/>
+                            <ToggleSwitch Grid.Row="7" Grid.Column="1" IsChecked="{Binding NPCGhosting}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Classes="label" Text="WASD Movement"/>
+                            <ToggleSwitch Grid.Row="8" Grid.Column="1" IsChecked="{Binding WASDMovement}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Classes="label" Text="Auto Loot"/>
+                            <ToggleSwitch Grid.Row="9" Grid.Column="1" IsChecked="{Binding AutoLoot}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Classes="label" Text="Max FPS"/>
+                            <NumericUpDown Grid.Row="10" Grid.Column="1" Value="{Binding MaxFPS}"
+                                           Minimum="0" Maximum="240" FormatString="0" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="11" Grid.Column="0" Classes="hint" Text=""/>
+                            <TextBlock Grid.Row="11" Grid.Column="1" Classes="hint"
+                                       Text="0 = unlimited, default 60" Margin="0,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- LANGUAGE Section -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="🌐 Language"/>
+                        <Grid ColumnDefinitions="120,*">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Language"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding LanguageList}"
+                                      SelectedIndex="{Binding SelectedLanguageIndex}"
+                                      HorizontalAlignment="Stretch"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- CHAT Section -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="💬 Chat"/>
+                        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Curse Filter"/>
+                            <ToggleSwitch Grid.Row="0" Grid.Column="1" IsChecked="{Binding CurseFilter}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="Strict Filter"/>
+                            <ToggleSwitch Grid.Row="1" Grid.Column="1" IsChecked="{Binding StrictFilter}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="Log Chat"/>
+                            <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding LogChat}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Classes="label" Text="Hear Whispers"/>
+                            <ToggleSwitch Grid.Row="3" Grid.Column="1" IsChecked="{Binding HearWhispers}"
+                                          OnContent="On" OffContent="Off" Margin="0,0,0,4"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Classes="label" Text="Interaction"/>
+                            <ToggleSwitch Grid.Row="4" Grid.Column="1" IsChecked="{Binding Interaction}"
+                                          OnContent="On" OffContent="Off"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Account Create Timeout (placed after main sections) -->
+                <Border Classes="section">
+                    <StackPanel>
+                        <TextBlock Classes="sectionHeader" Text="⚙️ Advanced"/>
+                        <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Account Timeout (ms)"/>
+                            <NumericUpDown Grid.Row="0" Grid.Column="1" Value="{Binding AccountCreateTimeout}"
+                                           Minimum="500" Maximum="30000" FormatString="0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Classes="hint" Text=""/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="hint"
+                                       Text="Timeout for account creation requests" Margin="0,4,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

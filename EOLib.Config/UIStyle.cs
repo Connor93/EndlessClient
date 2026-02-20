@@ -23,6 +23,11 @@ namespace EOLib.Config
         /// <summary>
         /// Parchment - warm beige/cream RPG-style with brown accents
         /// </summary>
-        Parchment
+        Parchment,
+
+        /// <summary>
+        /// DarkParchment - dark variant of Parchment with warm earthy tones
+        /// </summary>
+        DarkParchment
     }
 }

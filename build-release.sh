@@ -163,6 +163,29 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Build SettingsEditor
+echo "Publishing SettingsEditor..."
+if [[ "$RID" == osx-* ]]; then
+    dotnet publish SettingsEditor/SettingsEditor.csproj \
+        -c "$CONFIG" \
+        -r "$RID" \
+        --self-contained true \
+        -o "$OUTPUT_DIR"
+else
+    dotnet publish SettingsEditor/SettingsEditor.csproj \
+        -c "$CONFIG" \
+        -r "$RID" \
+        --self-contained true \
+        -p:PublishSingleFile=true \
+        -p:IncludeNativeLibrariesForSelfExtract=true \
+        -o "$OUTPUT_DIR"
+fi
+
+if [ $? -ne 0 ]; then
+    echo "SettingsEditor build failed!"
+    exit 1
+fi
+
 # Clean up debug files
 echo "Cleaning up debug files..."
 rm -f "$OUTPUT_DIR"/*.pdb 2>/dev/null || true
@@ -322,8 +345,67 @@ PLIST
     echo ""
     echo "You can now:"
     echo "  1. Double-click EndlessClient.app in Finder to run"
-    echo "  2. Drag it to /Applications to install"
-    echo "  3. Create a DMG for distribution"
+    echo "  2. Double-click SettingsEditor.app to edit settings"
+    echo "  3. Drag them to /Applications to install"
+    echo "  4. Create a DMG for distribution"
+
+    # Create SettingsEditor.app wrapper
+    echo ""
+    echo "Creating SettingsEditor.app bundle..."
+
+    SE_APP="$PROJECT_ROOT/bin/$CONFIG/SettingsEditor.app"
+    SE_CONTENTS="$SE_APP/Contents"
+    SE_MACOS="$SE_CONTENTS/MacOS"
+
+    if [ -d "$SE_APP" ]; then
+        rm -rf "$SE_APP"
+    fi
+
+    mkdir -p "$SE_MACOS"
+
+    # Launcher script that finds config inside sibling EndlessClient.app
+    cat > "$SE_MACOS/SettingsEditor" << 'LAUNCHER'
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_DIR="$(dirname "$(dirname "$DIR")")"
+PARENT_DIR="$(dirname "$APP_DIR")"
+CONFIG="$PARENT_DIR/EndlessClient.app/Contents/Resources/config/settings.ini"
+RESOURCES="$PARENT_DIR/EndlessClient.app/Contents/Resources"
+exec "$RESOURCES/SettingsEditor" --config "$CONFIG" "$@"
+LAUNCHER
+    chmod +x "$SE_MACOS/SettingsEditor"
+
+    # Create Info.plist
+    cat > "$SE_CONTENTS/Info.plist" << 'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>SettingsEditor</string>
+    <key>CFBundleDisplayName</key>
+    <string>EndlessClient Settings Editor</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.endlessonline.settingseditor</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>SettingsEditor</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+</dict>
+</plist>
+PLIST
+
+    echo "SettingsEditor.app created at: $SE_APP"
 elif [ "$CREATE_TAR" = true ]; then
     # Create tarball for Linux distribution
     if [[ "$RID" != linux-* ]]; then

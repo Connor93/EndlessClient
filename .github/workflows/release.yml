@@ -26,9 +26,19 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish
+      - name: Publish EndlessClient
         run: |
           dotnet publish EndlessClient/EndlessClient.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=false `
+            -o publish/win-x64
+
+      - name: Publish SettingsEditor
+        run: |
+          dotnet publish SettingsEditor/SettingsEditor.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
@@ -87,9 +97,19 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish
+      - name: Publish EndlessClient
         run: |
           dotnet publish EndlessClient/EndlessClient.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/linux-x64
+
+      - name: Publish SettingsEditor
+        run: |
+          dotnet publish SettingsEditor/SettingsEditor.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained true \
@@ -119,7 +139,9 @@ jobs:
           fi
 
       - name: Make executable
-        run: chmod +x publish/linux-x64/EndlessClient
+        run: |
+          chmod +x publish/linux-x64/EndlessClient
+          chmod +x publish/linux-x64/SettingsEditor
 
       - name: Create tarball
         run: tar -czf EndlessClient-linux-x64.tar.gz -C publish linux-x64
@@ -148,9 +170,17 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish
+      - name: Publish EndlessClient
         run: |
           dotnet publish EndlessClient/EndlessClient.csproj \
+            -c Debug \
+            -r osx-arm64 \
+            --self-contained true \
+            -o publish/osx-arm64
+
+      - name: Publish SettingsEditor
+        run: |
+          dotnet publish SettingsEditor/SettingsEditor.csproj \
             -c Debug \
             -r osx-arm64 \
             --self-contained true \
@@ -231,8 +261,58 @@ jobs:
           </plist>
           PLIST
 
-      - name: Zip .app bundle
-        run: zip -r EndlessClient-macos-arm64.zip EndlessClient.app
+      - name: Create SettingsEditor .app bundle
+        run: |
+          SE_APP="SettingsEditor.app"
+          SE_CONTENTS="$SE_APP/Contents"
+          SE_MACOS="$SE_CONTENTS/MacOS"
+
+          mkdir -p "$SE_MACOS"
+
+          # Launcher script that finds config inside sibling EndlessClient.app
+          cat > "$SE_MACOS/SettingsEditor" << 'LAUNCHER'
+          #!/bin/bash
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          APP_DIR="$(dirname "$(dirname "$DIR")")"
+          PARENT_DIR="$(dirname "$APP_DIR")"
+          CONFIG="$PARENT_DIR/EndlessClient.app/Contents/Resources/config/settings.ini"
+          RESOURCES="$PARENT_DIR/EndlessClient.app/Contents/Resources"
+          exec "$RESOURCES/SettingsEditor" --config "$CONFIG" "$@"
+          LAUNCHER
+          chmod +x "$SE_MACOS/SettingsEditor"
+
+          # Create Info.plist
+          cat > "$SE_CONTENTS/Info.plist" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>SettingsEditor</string>
+              <key>CFBundleDisplayName</key>
+              <string>EndlessClient Settings Editor</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.endlessonline.settingseditor</string>
+              <key>CFBundleVersion</key>
+              <string>1.0.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleExecutable</key>
+              <string>SettingsEditor</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.15</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>LSApplicationCategoryType</key>
+              <string>public.app-category.utilities</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Zip .app bundles
+        run: zip -r EndlessClient-macos-arm64.zip EndlessClient.app SettingsEditor.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -262,9 +342,9 @@ jobs:
             Automated release from commit ${{ github.sha }}
 
             ### Downloads
-            - **Windows (x64):** `EndlessClient-win-x64.zip` — Extract and run `EndlessClient.exe`
-            - **Linux (x64):** `EndlessClient-linux-x64.tar.gz` — Extract and run `./linux-x64/EndlessClient`
-            - **macOS (Apple Silicon):** `EndlessClient-macos-arm64.zip` — Extract and open `EndlessClient.app`
+            - **Windows (x64):** `EndlessClient-win-x64.zip` — Extract and run `EndlessClient.exe` (Settings Editor: `SettingsEditor.exe`)
+            - **Linux (x64):** `EndlessClient-linux-x64.tar.gz` — Extract and run `./linux-x64/EndlessClient` (Settings Editor: `./linux-x64/SettingsEditor`)
+            - **macOS (Apple Silicon):** `EndlessClient-macos-arm64.zip` — Extract and open `EndlessClient.app` (Settings Editor: `SettingsEditor.app`)
           files: |
             artifacts/EndlessClient-win-x64/EndlessClient-win-x64.zip
             artifacts/EndlessClient-linux-x64/EndlessClient-linux-x64.tar.gz
