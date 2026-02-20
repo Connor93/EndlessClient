@@ -260,7 +260,7 @@ namespace EndlessClient.HUD.Panels
 
             // Header bar fill
             var headerRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, _styleProvider.ListHeaderBackground);
 
             // Filter button fill
             var scaledFilterX = (int)(4 * scale);
@@ -276,7 +276,7 @@ namespace EndlessClient.HUD.Panels
             {
                 var rowY = listAreaY + (i * scaledRowHeight);
                 var rowRect = new Rectangle((int)pos.X + (int)(2 * scale), rowY, scaledWidth - (int)(4 * scale), scaledRowHeight);
-                var rowColor = i % 2 == 0 ? new Color(70, 60, 50, 150) : new Color(60, 50, 40, 150);
+                var rowColor = i % 2 == 0 ? _styleProvider.ListRowEven : _styleProvider.ListRowOdd;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowColor);
             }
 
@@ -286,14 +286,14 @@ namespace EndlessClient.HUD.Panels
             var scrollAreaHeight = scaledHeight - scaledHeaderHeight - (int)(6 * scale);
 
             var scrollTrackRect = new Rectangle(scrollX, scrollAreaTop, (int)(16 * scale), scrollAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollTrackRect, new Color(40, 35, 30, 200));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollTrackRect, _styleProvider.ScrollTrackBackground);
 
             var scrollUpRect = new Rectangle(scrollX, scrollAreaTop, (int)(16 * scale), (int)(16 * scale));
-            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : _styleProvider.ButtonDisabled;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollUpRect, upColor);
 
             var scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - (int)(16 * scale), (int)(16 * scale), (int)(16 * scale));
-            var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : _styleProvider.ButtonDisabled;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollDownRect, downColor);
 
             // Scroll thumb fill
@@ -323,7 +323,7 @@ namespace EndlessClient.HUD.Panels
 
             // Header bar fill
             var headerRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, HeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, _styleProvider.ListHeaderBackground);
 
             // Filter button fill
             _filterButtonRect = new Rectangle((int)pos.X + 4, (int)pos.Y + 3, 50, 14);
@@ -335,7 +335,7 @@ namespace EndlessClient.HUD.Panels
             {
                 var rowY = listAreaY + (i * RowHeight);
                 var rowRect = new Rectangle((int)pos.X + 2, rowY, PanelWidth - 4, RowHeight);
-                var rowColor = i % 2 == 0 ? new Color(70, 60, 50, 150) : new Color(60, 50, 40, 150);
+                var rowColor = i % 2 == 0 ? _styleProvider.ListRowEven : _styleProvider.ListRowOdd;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowColor);
             }
 
@@ -345,14 +345,14 @@ namespace EndlessClient.HUD.Panels
             var scrollAreaHeight = PanelHeight - HeaderHeight - 6;
 
             _scrollTrackRect = new Rectangle(scrollX, scrollAreaTop, 16, scrollAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollTrackRect, new Color(40, 35, 30, 200));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollTrackRect, _styleProvider.ScrollTrackBackground);
 
             _scrollUpRect = new Rectangle(scrollX, scrollAreaTop, 16, 16);
-            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : _styleProvider.ButtonDisabled;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollUpRect, upColor);
 
             _scrollDownRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - 16, 16, 16);
-            var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            var downColor = _scrollOffset < Math.Max(0, _filteredList.Count - VisibleRows) ? _styleProvider.ButtonNormal : _styleProvider.ButtonDisabled;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollDownRect, downColor);
 
             // Scroll thumb fill
@@ -411,20 +411,20 @@ namespace EndlessClient.HUD.Panels
                 (int)scaledPos.Y + (int)(3 * scale),
                 (int)(50 * scale),
                 (int)(14 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, filterRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, filterRect, _styleProvider.ButtonBorder, 1);
             var filterText = _filter.ToString();
-            _spriteBatch.DrawString(font, filterText, new Vector2(filterRect.X + (int)(4 * scale), filterRect.Y + (int)(1 * scale)), Color.White);
+            _spriteBatch.DrawString(font, filterText, new Vector2(filterRect.X + (int)(4 * scale), filterRect.Y + (int)(1 * scale)), _styleProvider.ButtonText);
 
             // Column headers
-            _spriteBatch.DrawString(headerFont, "Name", new Vector2(scaledPos.X + ColName * scale, scaledPos.Y + 3 * scale), Color.White);
-            _spriteBatch.DrawString(headerFont, "Title", new Vector2(scaledPos.X + ColTitle * scale, scaledPos.Y + 3 * scale), Color.White);
-            _spriteBatch.DrawString(headerFont, "Guild", new Vector2(scaledPos.X + ColGuild * scale, scaledPos.Y + 3 * scale), Color.White);
-            _spriteBatch.DrawString(headerFont, "Class", new Vector2(scaledPos.X + ColClass * scale, scaledPos.Y + 3 * scale), Color.White);
+            _spriteBatch.DrawString(headerFont, "Name", new Vector2(scaledPos.X + ColName * scale, scaledPos.Y + 3 * scale), _styleProvider.TextPrimary);
+            _spriteBatch.DrawString(headerFont, "Title", new Vector2(scaledPos.X + ColTitle * scale, scaledPos.Y + 3 * scale), _styleProvider.TextPrimary);
+            _spriteBatch.DrawString(headerFont, "Guild", new Vector2(scaledPos.X + ColGuild * scale, scaledPos.Y + 3 * scale), _styleProvider.TextPrimary);
+            _spriteBatch.DrawString(headerFont, "Class", new Vector2(scaledPos.X + ColClass * scale, scaledPos.Y + 3 * scale), _styleProvider.TextPrimary);
 
             // Player count
             var countText = $"{_filteredList.Count}";
             var countSize = headerFont.MeasureString(countText);
-            _spriteBatch.DrawString(headerFont, countText, new Vector2(scaledPos.X + panelWidth - countSize.Width - 8 * scale, scaledPos.Y + 3 * scale), Color.White);
+            _spriteBatch.DrawString(headerFont, countText, new Vector2(scaledPos.X + panelWidth - countSize.Width - 8 * scale, scaledPos.Y + 3 * scale), _styleProvider.TextPrimary);
 
             // Player rows (text only)
             var listAreaY = (int)(scaledPos.Y + (gameHeaderHeight + 2) * scale);
@@ -433,7 +433,7 @@ namespace EndlessClient.HUD.Panels
                 var player = _filteredList[_scrollOffset + i];
                 var rowY = listAreaY + (int)(i * gameRowHeight * scale);
 
-                var textColor = IsAdminIcon(player) ? new Color(255, 215, 0) : Color.White;
+                var textColor = IsAdminIcon(player) ? _styleProvider.GoldColor : _styleProvider.TextPrimary;
                 _spriteBatch.DrawString(font, player.Name, new Vector2(scaledPos.X + ColName * scale, rowY), textColor);
                 _spriteBatch.DrawString(font, player.Title, new Vector2(scaledPos.X + ColTitle * scale, rowY), _styleProvider.TextSecondary);
                 _spriteBatch.DrawString(font, player.Guild, new Vector2(scaledPos.X + ColGuild * scale, rowY), _styleProvider.TextSecondary);
@@ -447,17 +447,17 @@ namespace EndlessClient.HUD.Panels
 
             // Scroll track border
             var trackRect = new Rectangle(scrollX, scrollAreaTop, (int)(16 * scale), scrollAreaHeight);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, trackRect, new Color(80, 70, 60), 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, trackRect, _styleProvider.ScrollTrackBorder, 1);
 
             // Up button border and arrow
             var upRect = new Rectangle(scrollX, scrollAreaTop, (int)(16 * scale), (int)(16 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, upRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▲", new Vector2(upRect.X + 3 * scale, upRect.Y + 2 * scale), Color.White);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, upRect, _styleProvider.ButtonBorder, 1);
+            _spriteBatch.DrawString(font, "▲", new Vector2(upRect.X + 3 * scale, upRect.Y + 2 * scale), _styleProvider.TextPrimary);
 
             // Down button border and arrow
             var downRect = new Rectangle(scrollX, scrollAreaTop + scrollAreaHeight - (int)(16 * scale), (int)(16 * scale), (int)(16 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, downRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▼", new Vector2(downRect.X + 3 * scale, downRect.Y + 2 * scale), Color.White);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, downRect, _styleProvider.ButtonBorder, 1);
+            _spriteBatch.DrawString(font, "▼", new Vector2(downRect.X + 3 * scale, downRect.Y + 2 * scale), _styleProvider.TextPrimary);
 
             // Scroll thumb border
             if (_filteredList.Count > VisibleRows)
@@ -467,7 +467,7 @@ namespace EndlessClient.HUD.Panels
                 var maxOffset = _filteredList.Count - VisibleRows;
                 var thumbY = scrollAreaTop + (int)(17 * scale) + (int)((thumbTrackHeight - thumbHeight) * _scrollOffset / (float)maxOffset);
                 var thumbRect = new Rectangle(scrollX + (int)(2 * scale), thumbY, (int)(12 * scale), thumbHeight);
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, new Color(120, 110, 100), 1);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, _styleProvider.ScrollThumbBorder, 1);
             }
 
             _spriteBatch.End();

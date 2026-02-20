@@ -442,7 +442,7 @@ namespace EndlessClient.HUD.Windows
             {
                 var size = _labelFont.MeasureString(resetText);
                 rightEdge -= (int)size.Width;
-                _spriteBatch.DrawString(_labelFont, resetText, new Vector2(rightEdge, btnY), new Color(80, 40, 40));
+                _spriteBatch.DrawString(_labelFont, resetText, new Vector2(rightEdge, btnY), _styleProvider.DangerColor);
                 _resetBtnArea = new Rectangle(rightEdge - (int)pos.X, btnY - (int)pos.Y, (int)size.Width + 4, HeaderHeight);
                 rightEdge -= 6;
             }
@@ -456,7 +456,7 @@ namespace EndlessClient.HUD.Windows
             {
                 var size = _labelFont.MeasureString(toggleText);
                 rightEdge -= (int)size.Width;
-                var color = isActive ? new Color(140, 100, 0) : new Color(20, 100, 20);
+                var color = isActive ? _styleProvider.GoldColor : _styleProvider.CompletionColor;
                 _spriteBatch.DrawString(_labelFont, toggleText, new Vector2(rightEdge, btnY), color);
                 if (isActive)
                 {
@@ -489,7 +489,7 @@ namespace EndlessClient.HUD.Windows
             {
                 var size = font.MeasureString(resetText);
                 rightEdge -= (int)size.Width;
-                _spriteBatch.DrawString(font, resetText, new Vector2(rightEdge, btnY), new Color(80, 40, 40));
+                _spriteBatch.DrawString(font, resetText, new Vector2(rightEdge, btnY), _styleProvider.DangerColor);
                 _resetBtnArea = new Rectangle((int)((rightEdge - panelOriginX) / scale), (int)((btnY - panelOriginY) / scale), (int)(size.Width / scale) + 4, HeaderHeight);
                 rightEdge -= (int)(6 * scale);
             }
@@ -503,7 +503,7 @@ namespace EndlessClient.HUD.Windows
             {
                 var size = font.MeasureString(toggleText);
                 rightEdge -= (int)size.Width;
-                var color = isActive ? new Color(140, 100, 0) : new Color(20, 100, 20);
+                var color = isActive ? _styleProvider.GoldColor : _styleProvider.CompletionColor;
                 _spriteBatch.DrawString(font, toggleText, new Vector2(rightEdge, btnY), color);
                 var area = new Rectangle((int)((rightEdge - panelOriginX) / scale), (int)((btnY - panelOriginY) / scale), (int)(size.Width / scale) + 4, HeaderHeight);
                 if (isActive)
@@ -585,7 +585,7 @@ namespace EndlessClient.HUD.Windows
             if (isPaused) sessionStr += " (paused)";
 
             var defaultValue = _styleProvider.TextPrimary;
-            var goldColor = goldDelta >= 0 ? new Color(255, 215, 0) : new Color(200, 80, 80);
+            var goldColor = goldDelta >= 0 ? _styleProvider.GoldColor : _styleProvider.DangerColor;
 
             return (
                 new[] { "Session", "EXP/hr", "To Level", "Kills", "Gold" },
@@ -612,14 +612,14 @@ namespace EndlessClient.HUD.Windows
 
             // Background
             var bgRect = new Rectangle(barX, barY, barWidth, ProgressBarHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, new Color(40, 40, 50));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.ProgressBarBackground);
 
             // Fill
             var fillWidth = (int)(barWidth * progress);
             if (fillWidth > 0)
             {
                 var fillRect = new Rectangle(barX, barY, fillWidth, ProgressBarHeight);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, fillRect, new Color(80, 160, 220));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, fillRect, _styleProvider.ProgressBarFill);
             }
 
             // Border
@@ -630,7 +630,7 @@ namespace EndlessClient.HUD.Windows
             var pctSize = _font.MeasureString(pctText);
             var pctX = barX + (barWidth - pctSize.Width) / 2;
             var pctY = barY + (ProgressBarHeight - pctSize.Height) / 2;
-            _spriteBatch.DrawString(_font, pctText, new Vector2(pctX, pctY), Color.White);
+            _spriteBatch.DrawString(_font, pctText, new Vector2(pctX, pctY), _styleProvider.TextPrimary);
         }
 
         private void DrawProgressBarScaled(Vector2 scaledPos, float scale, BitmapFont font)
@@ -643,14 +643,14 @@ namespace EndlessClient.HUD.Windows
 
             // Background
             var bgRect = new Rectangle(barX, barY, barWidth, barHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, new Color(40, 40, 50));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, bgRect, _styleProvider.ProgressBarBackground);
 
             // Fill
             var fillWidth = (int)(barWidth * progress);
             if (fillWidth > 0)
             {
                 var fillRect = new Rectangle(barX, barY, fillWidth, barHeight);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, fillRect, new Color(80, 160, 220));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, fillRect, _styleProvider.ProgressBarFill);
             }
 
             // Border
@@ -661,7 +661,7 @@ namespace EndlessClient.HUD.Windows
             var pctSize = font.MeasureString(pctText);
             var pctX = barX + (barWidth - pctSize.Width) / 2;
             var pctY = barY + (barHeight - pctSize.Height) / 2;
-            _spriteBatch.DrawString(font, pctText, new Vector2(pctX, pctY), Color.White);
+            _spriteBatch.DrawString(font, pctText, new Vector2(pctX, pctY), _styleProvider.TextPrimary);
         }
     }
 }

@@ -448,7 +448,7 @@ namespace EndlessClient.Dialogs
                 (int)(scaledPos.Y + ListAreaTop * scale),
                 (int)((DialogWidth - 40) * scale),
                 (int)(ListAreaHeight * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, listBounds, new Color(0, 0, 0, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, listBounds, _styleProvider.SectionBackground);
 
             _spriteBatch.End();
         }
@@ -507,12 +507,12 @@ namespace EndlessClient.Dialogs
                             itemY,
                             (int)((DialogWidth - 48) * scale),
                             (int)(ItemHeight * scale));
-                        DrawingPrimitives.DrawFilledRect(_spriteBatch, hoverRect, new Color(255, 255, 255, 30));
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, hoverRect, _styleProvider.ListRowHover);
                     }
 
                     // Item text
                     var textColor = item.IsLink
-                        ? (item.IsHovered ? new Color(150, 230, 255) : _styleProvider.TextHighlight)
+                        ? (item.IsHovered ? _styleProvider.LinkHoverColor : _styleProvider.TextHighlight)
                         : _styleProvider.TextPrimary;
 
                     var textOffsetX = item.IconGraphic != null ? 40 : 4;
@@ -582,13 +582,13 @@ namespace EndlessClient.Dialogs
             var buttonRect = new Rectangle(x, y, width, height);
             var buttonColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, buttonRect, buttonColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, _styleProvider.ButtonBorder, 1);
 
             var textSize = font.MeasureString(text);
             var textPos = new Vector2(
                 x + (width - textSize.Width) / 2,
                 y + (height - textSize.Height) / 2);
-            _spriteBatch.DrawString(font, text, textPos, Color.White);
+            _spriteBatch.DrawString(font, text, textPos, _styleProvider.ButtonText);
         }
         /// <summary>
         /// Complete drawing for non-scaled mode or when SuppressPostScaleRendering is active.
@@ -625,7 +625,7 @@ namespace EndlessClient.Dialogs
 
             // List area background (slightly darker)
             var listBounds = new Rectangle(8, ListAreaTop, DialogWidth - 40, ListAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, listBounds, new Color(0, 0, 0, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, listBounds, _styleProvider.SectionBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, listBounds, _styleProvider.PanelBorder, 1);
 
             // Draw visible list items
@@ -641,12 +641,12 @@ namespace EndlessClient.Dialogs
                     if (item.IsHovered && item.IsLink)
                     {
                         var hoverRect = new Rectangle(8, itemY, DialogWidth - 48, ItemHeight);
-                        DrawingPrimitives.DrawFilledRect(_spriteBatch, hoverRect, new Color(255, 255, 255, 30));
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, hoverRect, _styleProvider.ListRowHover);
                     }
 
                     // Item text
                     var textColor = item.IsLink
-                        ? (item.IsHovered ? new Color(150, 230, 255) : _styleProvider.TextHighlight)
+                        ? (item.IsHovered ? _styleProvider.LinkHoverColor : _styleProvider.TextHighlight)
                         : _styleProvider.TextPrimary;
 
                     var textOffsetX = item.IconGraphic != null ? 40 : 4;
@@ -729,13 +729,13 @@ namespace EndlessClient.Dialogs
             var buttonRect = new Rectangle(x, y, width, height);
             var buttonColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, buttonRect, buttonColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, _styleProvider.ButtonBorder, 1);
 
             var textSize = font.MeasureString(text);
             var textPos = new Vector2(
                 x + (width - textSize.Width) / 2,
                 y + (height - textSize.Height) / 2);
-            _spriteBatch.DrawString(font, text, textPos, Color.White);
+            _spriteBatch.DrawString(font, text, textPos, _styleProvider.ButtonText);
         }
 
         /// <summary>
@@ -837,7 +837,7 @@ namespace EndlessClient.Dialogs
             {
                 DrawingPrimitives.DrawFilledRect(_spriteBatch,
                     new Rectangle(0, 0, DrawArea.Width, DrawArea.Height),
-                    new Color(255, 255, 255, 30));
+                    _styleProvider.ListRowHover);
             }
 
             // Calculate text offset (shifted right if icon present)
@@ -858,7 +858,7 @@ namespace EndlessClient.Dialogs
                 if (IsLink)
                 {
                     // Links always use highlight color, brighter when hovered
-                    textColor = _isHovered ? new Color(150, 230, 255) : _styleProvider.TextHighlight;
+                    textColor = _isHovered ? _styleProvider.LinkHoverColor : _styleProvider.TextHighlight;
                 }
                 else
                 {

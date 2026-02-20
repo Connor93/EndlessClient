@@ -48,8 +48,8 @@ namespace EndlessClient.HUD.Windows
         private Color HeaderAccent => _styleProvider.TitleBarText;
         private Color ExpBarBg => new Color(_styleProvider.StatusBarBackground, 0.78f);
         private Color ExpBarFill => _styleProvider.TNLBarFill;
-        private static readonly Color BuffActiveColor = new Color(100, 220, 130);
-        private static readonly Color BuffInactiveColor = new Color(100, 100, 100);
+        private Color BuffActiveColor => _styleProvider.CompletionColor;
+        private Color BuffInactiveColor => _styleProvider.ButtonDisabled;
 
         public CodeDrawnGuildInfoWindow(
             IUIStyleProvider styleProvider,
@@ -272,7 +272,7 @@ namespace EndlessClient.HUD.Windows
                 var expText = _guildInfo.Exp + "/" + (_guildInfo.Exp + _guildInfo.ExpToNext);
                 var expSize = _font.MeasureString(expText);
                 _spriteBatch.DrawString(_font, expText,
-                    new Vector2(barX + (barWidth - expSize.Width) / 2, y), Color.White);
+                    new Vector2(barX + (barWidth - expSize.Width) / 2, y), _styleProvider.TextPrimary);
             }
             else
             {
@@ -281,7 +281,7 @@ namespace EndlessClient.HUD.Windows
                 var maxText = "MAX";
                 var maxSize = _font.MeasureString(maxText);
                 _spriteBatch.DrawString(_font, maxText,
-                    new Vector2(barX + (barWidth - maxSize.Width) / 2, y), Color.White);
+                    new Vector2(barX + (barWidth - maxSize.Width) / 2, y), _styleProvider.TextPrimary);
             }
 
             y += (ExpBarHeight + 2) * scale;

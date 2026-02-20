@@ -77,26 +77,59 @@ namespace EndlessClient.HUD.Windows
         private Color TabTextActive => _styleProvider.TabText;
         private Color TabTextInactive => _styleProvider.TextSecondary;
 
-        // Card colors
-        private static readonly Color CardBg = new Color(35, 35, 45, 210);
-        private static readonly Color CardBorder = new Color(70, 70, 85, 150);
-        private static readonly Color CardSelectedBg = new Color(50, 45, 30, 220);
-        private static readonly Color CardSelectedBorder = new Color(180, 155, 80, 180);
-
-        // Tier colors
-        private static readonly Color[] TierColors = new[]
+        // Card colors - darken the panel background slightly for card fill
+        private Color CardBg
         {
-            new Color(220, 220, 240),  // Tier 1 - Bright silver
-            new Color(255, 215, 0),    // Tier 2 - Gold
-            new Color(0, 191, 255),    // Tier 3 - Diamond blue
-            new Color(148, 103, 189),  // Tier 4 - Purple
-            new Color(255, 69, 0),     // Tier 5 - Legendary red-orange
-        };
+            get
+            {
+                var p = _styleProvider.PanelBackground;
+                return new Color((int)(p.R * 0.82f), (int)(p.G * 0.82f), (int)(p.B * 0.82f), 230);
+            }
+        }
+        private Color CardBorder => new Color(_styleProvider.SlotBorder, 0.59f);
+        private Color CardSelectedBg
+        {
+            get
+            {
+                var p = _styleProvider.PanelBackground;
+                return new Color((int)(p.R * 0.72f), (int)(p.G * 0.72f), (int)(p.B * 0.72f), 240);
+            }
+        }
+        private Color CardSelectedBorder => new Color(_styleProvider.TextHighlight, 0.70f);
+
+        // Tier colors - use darker variants on light backgrounds, brighter on dark
+        private Color[] TierColors
+        {
+            get
+            {
+                var bg = _styleProvider.PanelBackground;
+                var lum = (bg.R * 0.299f + bg.G * 0.587f + bg.B * 0.114f) / 255f;
+                if (lum > 0.5f) // Light theme
+                {
+                    return new[]
+                    {
+                        new Color(120, 120, 140),  // Tier 1 - Dark silver
+                        new Color(180, 150, 0),    // Tier 2 - Dark gold
+                        new Color(0, 120, 200),    // Tier 3 - Deep blue
+                        new Color(110, 60, 160),   // Tier 4 - Deep purple
+                        new Color(200, 50, 0),     // Tier 5 - Deep red-orange
+                    };
+                }
+                return new[]
+                {
+                    new Color(220, 220, 240),  // Tier 1 - Bright silver
+                    new Color(255, 215, 0),    // Tier 2 - Gold
+                    new Color(0, 191, 255),    // Tier 3 - Diamond blue
+                    new Color(148, 103, 189),  // Tier 4 - Purple
+                    new Color(255, 69, 0),     // Tier 5 - Legendary red-orange
+                };
+            }
+        }
 
         // Progress bar colors
-        private static readonly Color ProgressBarBg = new Color(20, 20, 28, 200);
-        private static readonly Color ProgressBarFill = new Color(76, 175, 80);
-        private static readonly Color ProgressBarComplete = new Color(200, 170, 50);
+        private Color AchProgressBarBg => _styleProvider.ProgressBarBackground;
+        private Color AchProgressBarFill => _styleProvider.ProgressBarFill;
+        private Color AchProgressBarComplete => _styleProvider.CompletionColor;
 
         public CodeDrawnAchievementWindow(
             IUIStyleProvider styleProvider,
@@ -502,8 +535,8 @@ namespace EndlessClient.HUD.Windows
                 var footerRect = new Rectangle((int)pos.X + 1, footerTop, scaledW - 2, (int)(BadgeFooterHeight * scale));
 
                 // Footer background + separator line
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, footerRect, new Color(30, 30, 35));
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)pos.X + 1, footerTop, scaledW - 2, 1), new Color(100, 90, 60));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, footerRect, _styleProvider.SectionBackground);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle((int)pos.X + 1, footerTop, scaledW - 2, 1), _styleProvider.PanelBorder);
 
                 // Selection count on the left
                 var countText = $"{_selectedBadgeIds.Count}/3 selected";
@@ -511,7 +544,7 @@ namespace EndlessClient.HUD.Windows
                 var countY = footerTop + ((int)(BadgeFooterHeight * scale) - (int)countSize.Height) / 2;
                 _spriteBatch.DrawString(font, countText,
                     new Vector2(pos.X + Padding * scale, countY),
-                    new Color(200, 200, 200));
+                    _styleProvider.TextSecondary);
 
                 // Save button on the right
                 var saveW = (int)(80 * scale);
@@ -519,14 +552,14 @@ namespace EndlessClient.HUD.Windows
                 var saveX = (int)(pos.X + scaledW - saveW - Padding * scale);
                 var saveY = footerTop + ((int)(BadgeFooterHeight * scale) - saveH) / 2;
                 var saveRect = new Rectangle(saveX, saveY, saveW, saveH);
-                var btnColor = _badgesDirty ? new Color(76, 175, 80) : new Color(60, 60, 60);
+                var btnColor = _badgesDirty ? _styleProvider.CompletionColor : _styleProvider.ButtonDisabled;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, saveRect, btnColor);
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, saveRect, new Color(100, 100, 100), 1);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, saveRect, _styleProvider.ButtonBorder, 1);
                 var saveText = _badgesDirty ? "Save" : "Saved";
                 var saveTextSize = font.MeasureString(saveText);
                 _spriteBatch.DrawString(font, saveText,
                     new Vector2(saveX + (saveW - saveTextSize.Width) / 2, saveY + 4 * scale),
-                    Color.White);
+                    _styleProvider.ButtonText);
             }
 
             // Panel border (drawn last)
@@ -554,16 +587,16 @@ namespace EndlessClient.HUD.Windows
                 if ((int)_activeTab == i)
                 {
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, tabRect, new Color(0, 0, 0, 40));
-                    tabText = Color.White;
+                    tabText = _styleProvider.TabText;
                 }
                 else if (_hoveredTabIndex == i)
                 {
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, tabRect, new Color(0, 0, 0, 20));
-                    tabText = new Color(230, 230, 230);
+                    tabText = _styleProvider.TextPrimary;
                 }
                 else
                 {
-                    tabText = new Color(60, 55, 45);
+                    tabText = _styleProvider.TextSecondary;
                 }
 
                 var textSize = font.MeasureString(tabNames[i]);
@@ -584,7 +617,7 @@ namespace EndlessClient.HUD.Windows
                 var msg = _dataRequested ? "No achievements found" : "Loading...";
                 _spriteBatch.DrawString(font, msg,
                     new Vector2(pos.X + Padding * scale, contentTop + Padding * scale),
-                    new Color(100, 95, 85));
+                    _styleProvider.TextSecondary);
                 return;
             }
 
@@ -618,7 +651,7 @@ namespace EndlessClient.HUD.Windows
             var bg = (isSelected || isBadgeSelected) ? CardSelectedBg : CardBg;
             var border = (isSelected || isBadgeSelected) ? CardSelectedBorder : CardBorder;
             if (isHovered && !isSelected && !isBadgeSelected)
-                bg = new Color(45, 45, 55, 220);
+                bg = CardSelectedBg;
 
             DrawingPrimitives.DrawFilledRect(_spriteBatch, cardRect, bg);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, cardRect, border, Math.Max(1, (int)(isBadgeSelected ? 2 * scale : 1)));
@@ -630,7 +663,7 @@ namespace EndlessClient.HUD.Windows
                 var labelSize = font.MeasureString(labelText);
                 var labelX = cardX + cardW - (int)labelSize.Width - (int)(6 * scale);
                 var labelY = (int)cardY + (int)(4 * scale);
-                _spriteBatch.DrawString(font, labelText, new Vector2(labelX, labelY), new Color(255, 215, 0));
+                _spriteBatch.DrawString(font, labelText, new Vector2(labelX, labelY), _styleProvider.GoldColor);
             }
 
             var innerX = cardX + (int)(6 * scale);
@@ -638,7 +671,7 @@ namespace EndlessClient.HUD.Windows
 
             // Row 1: Name + Type label
             var y = cardY + 3 * scale;
-            _spriteBatch.DrawString(font, ach.Name, new Vector2(innerX, y), Color.White);
+            _spriteBatch.DrawString(font, ach.Name, new Vector2(innerX, y), _styleProvider.TextPrimary);
 
             var typeLabel = GetTypeLabel(ach.Type);
             var typeLabelSize = font.MeasureString(typeLabel);
@@ -657,20 +690,20 @@ namespace EndlessClient.HUD.Windows
 
             _spriteBatch.DrawString(font, typeLabel,
                 new Vector2(typeLabelX, y),
-                new Color(160, 155, 140));
+                _styleProvider.TextSecondary);
 
             // Row 1.5: Description (subtle grey, below name)
             if (!string.IsNullOrEmpty(ach.Description))
             {
                 y += 14 * scale;
-                _spriteBatch.DrawString(font, ach.Description, new Vector2(innerX, y), new Color(120, 115, 105));
+                _spriteBatch.DrawString(font, ach.Description, new Vector2(innerX, y), _styleProvider.TextSecondary);
             }
 
             // Row 2: Progress bar (full width within card)
             y += 16 * scale;
             var barH = Math.Max(2, (int)(6 * scale));
             var barRect = new Rectangle(innerX, (int)y, innerW, barH);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, barRect, ProgressBarBg);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, barRect, AchProgressBarBg);
 
             // Progress calculation
             float progressRatio = 0;
@@ -691,7 +724,7 @@ namespace EndlessClient.HUD.Windows
                 }
             }
 
-            var fillColor = progressRatio >= 1f ? ProgressBarComplete : ProgressBarFill;
+            var fillColor = progressRatio >= 1f ? AchProgressBarComplete : AchProgressBarFill;
             var fillRect = new Rectangle(barRect.X, barRect.Y, (int)(barRect.Width * progressRatio), barRect.Height);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, fillRect, fillColor);
 
@@ -708,7 +741,7 @@ namespace EndlessClient.HUD.Windows
             // Tier text with colored indicator
             var tierText = $"Tier {ach.CurrentTier}/{ach.Tiers.Length}";
             var tierColorIdx = Math.Max(0, Math.Min(ach.CurrentTier - 1, TierColors.Length - 1));
-            var tierColor = ach.CurrentTier > 0 ? TierColors[tierColorIdx] : new Color(100, 100, 110);
+            var tierColor = ach.CurrentTier > 0 ? TierColors[tierColorIdx] : _styleProvider.TextSecondary;
             _spriteBatch.DrawString(font, tierText, new Vector2(innerX, y), tierColor);
 
             // Next tier reward hint (center-ish)
@@ -729,7 +762,7 @@ namespace EndlessClient.HUD.Windows
                     var tierTextSize = font.MeasureString(tierText);
                     _spriteBatch.DrawString(font, rewardText,
                         new Vector2(innerX + tierTextSize.Width + 8 * scale, y),
-                        new Color(200, 180, 100));
+                        _styleProvider.GoldColor);
                 }
             }
             else
@@ -738,7 +771,7 @@ namespace EndlessClient.HUD.Windows
                 var tierTextSize = font.MeasureString(tierText);
                 _spriteBatch.DrawString(font, "\u2605 Complete!",
                     new Vector2(innerX + tierTextSize.Width + 8 * scale, y),
-                    ProgressBarComplete);
+                    AchProgressBarComplete);
             }
 
             // Progress count (right-aligned)
@@ -748,7 +781,7 @@ namespace EndlessClient.HUD.Windows
             var progressSize = font.MeasureString(progressText);
             _spriteBatch.DrawString(font, progressText,
                 new Vector2(cardX + cardW - (int)(6 * scale) - progressSize.Width, y),
-                new Color(200, 200, 210));
+                _styleProvider.TextSecondary);
         }
         private void DrawLeaderboardOverlay(Vector2 panelPos, float scale, BitmapFont font)
         {
@@ -782,7 +815,7 @@ namespace EndlessClient.HUD.Windows
                 var tier = selectedAch.Tiers[t];
                 var completed = t < selectedAch.CurrentTier;
                 var tierColorIdx = Math.Max(0, Math.Min(t, TierColors.Length - 1));
-                var col = completed ? TierColors[tierColorIdx] : new Color(140, 140, 150);
+                var col = completed ? TierColors[tierColorIdx] : _styleProvider.TextSecondary;
                 var check = completed ? "\u2713 " : "  ";
 
                 var rewardStr = $"Tier {t + 1} ({tier.Threshold}):";
@@ -819,14 +852,14 @@ namespace EndlessClient.HUD.Windows
             if (overlayY < 0) overlayY = 0;
 
             var overlayRect = new Rectangle(overlayX, overlayY, overlayWidth, overlayHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, overlayRect, new Color(20, 20, 30, 235));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, overlayRect, new Color(_styleProvider.PanelBackground, 0.92f));
             DrawingPrimitives.DrawRectBorder(_spriteBatch, overlayRect, _styleProvider.PanelBorder, Math.Max(1, (int)(1 * scale)));
 
             var drawY = overlayY + overlayPadding;
 
             // --- Rewards section ---
             _spriteBatch.DrawString(font, "\u2606 Tier Rewards",
-                new Vector2(overlayX + overlayPadding, drawY), new Color(255, 215, 0));
+                new Vector2(overlayX + overlayPadding, drawY), _styleProvider.GoldColor);
             drawY += headerLineHeight;
 
             foreach (var (text, color) in rewardLines)
@@ -840,13 +873,13 @@ namespace EndlessClient.HUD.Windows
 
             // --- Leaderboard section ---
             _spriteBatch.DrawString(font, "\u265F Leaderboard",
-                new Vector2(overlayX + overlayPadding, drawY), new Color(100, 200, 255));
+                new Vector2(overlayX + overlayPadding, drawY), _styleProvider.TextHighlight);
             drawY += headerLineHeight;
 
             if (maxEntries == 0)
             {
                 _spriteBatch.DrawString(font, "No entries yet",
-                    new Vector2(overlayX + overlayPadding, drawY), new Color(120, 120, 130));
+                    new Vector2(overlayX + overlayPadding, drawY), _styleProvider.TextSecondary);
             }
             else
             {
@@ -854,11 +887,11 @@ namespace EndlessClient.HUD.Windows
                 {
                     var entry = _leaderboardEntries[i];
                     var entryTierIdx = Math.Max(0, Math.Min(entry.TierReached - 1, TierColors.Length - 1));
-                    var entryColor = entry.TierReached > 0 ? TierColors[entryTierIdx] : new Color(180, 180, 190);
+                    var entryColor = entry.TierReached > 0 ? TierColors[entryTierIdx] : _styleProvider.TextSecondary;
 
                     var rankText = $"{i + 1}. {entry.Name}";
                     _spriteBatch.DrawString(font, rankText,
-                        new Vector2(overlayX + overlayPadding, drawY), new Color(200, 200, 210));
+                        new Vector2(overlayX + overlayPadding, drawY), _styleProvider.TextPrimary);
 
                     // Tier badge (right-aligned)
                     var tierBadge = $"T{entry.TierReached}";

@@ -592,7 +592,7 @@ namespace EndlessClient.Dialogs
             _spriteBatch.Begin(transformMatrix: transform);
 
             // Draw slot background (subtle)
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(0, 0, DrawArea.Width, DrawArea.Height), new Color(0, 0, 0, 20));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(0, 0, DrawArea.Width, DrawArea.Height), _styleProvider.OverlayDim);
 
             // Draw item if equipped - at natural size, centered in slot (like original StretchMode.CenterInFrame)
             if (_itemTexture != null)

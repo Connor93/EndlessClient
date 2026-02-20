@@ -72,5 +72,46 @@ namespace EndlessClient.UI.Styles
         Color TooltipBackground { get; }
         Color TooltipBorder { get; }
         Color TooltipText { get; }
+
+        // Slot styling (spells, macros, inventory grid cells)
+        Color SlotBackground { get; }
+        Color SlotBackgroundAlt { get; }
+        Color SlotBorder { get; }
+
+        // List/table row styling
+        Color ListRowEven { get; }
+        Color ListRowOdd { get; }
+        Color ListRowHover { get; }
+        Color ListHeaderBackground { get; }
+
+        // Scrollbar styling
+        Color ScrollTrackBackground { get; }
+        Color ScrollTrackBorder { get; }
+        Color ScrollThumbBorder { get; }
+
+        // Misc UI elements
+        Color ButtonDisabled { get; }
+        Color SectionBackground { get; }
+        Color OverlayDim { get; }
+        Color BadgeBackground { get; }
+
+        // Generic progress bar (non-stat)
+        Color ProgressBarBackground { get; }
+        Color ProgressBarFill { get; }
+
+        // Semantic colors
+        Color CompletionColor { get; }
+        Color AgreementColor { get; }
+        Color DangerColor { get; }
+        Color GoldColor { get; }
+        Color LinkHoverColor { get; }
+
+        // Chat text colors
+        Color ChatDefault { get; }
+        Color ChatServer { get; }
+        Color ChatError { get; }
+        Color ChatPM { get; }
+        Color ChatServerGlobal { get; }
+        Color ChatAdmin { get; }
     }
 }

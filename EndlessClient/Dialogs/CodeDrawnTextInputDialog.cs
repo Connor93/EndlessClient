@@ -227,13 +227,13 @@ namespace EndlessClient.Dialogs
             var buttonRect = new Rectangle(x, y, width, height);
             var buttonColor = isHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
             DrawingPrimitives.DrawFilledRect(spriteBatch, buttonRect, buttonColor);
-            DrawingPrimitives.DrawRectBorder(spriteBatch, buttonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(spriteBatch, buttonRect, _styleProvider.ButtonBorder, 1);
 
             var textSize = font.MeasureString(text);
             var textPos = new Vector2(
                 x + (width - textSize.Width) / 2,
                 y + (height - textSize.Height) / 2);
-            spriteBatch.DrawString(font, text, textPos, Color.White);
+            spriteBatch.DrawString(font, text, textPos, _styleProvider.ButtonText);
         }
 
         private void DrawWrappedText(SpriteBatch spriteBatch, BitmapFont font, string text, float x, float y, float maxWidth, Color color)

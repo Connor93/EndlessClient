@@ -286,7 +286,7 @@ namespace EndlessClient.Dialogs
                 playerStatusLabel.Text = actualOffer.Agrees
                     ? _localizedStringFinder.GetString(EOResourceID.DIALOG_TRADE_WORD_AGREE)
                     : _localizedStringFinder.GetString(EOResourceID.DIALOG_TRADE_WORD_TRADING);
-                playerStatusLabel.ForeColor = actualOffer.Agrees ? new Color(100, 255, 100) : _styleProvider.TextHighlight;
+                playerStatusLabel.ForeColor = actualOffer.Agrees ? _styleProvider.AgreementColor : _styleProvider.TextHighlight;
 
                 if (actualOffer.Agrees)
                 {
@@ -476,11 +476,11 @@ namespace EndlessClient.Dialogs
             DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(0, 0, DialogWidth, DialogHeight), _styleProvider.PanelBorder, 2);
 
             // Left panel background
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(4, ListAreaTop, PanelWidth - 30, ListAreaHeight), new Color(0, 0, 0, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(4, ListAreaTop, PanelWidth - 30, ListAreaHeight), _styleProvider.SectionBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(4, ListAreaTop, PanelWidth - 30, ListAreaHeight), _styleProvider.PanelBorder, 1);
 
             // Right panel background
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(PanelWidth + 4, ListAreaTop, PanelWidth - 30, ListAreaHeight), new Color(0, 0, 0, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, new Rectangle(PanelWidth + 4, ListAreaTop, PanelWidth - 30, ListAreaHeight), _styleProvider.SectionBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, new Rectangle(PanelWidth + 4, ListAreaTop, PanelWidth - 30, ListAreaHeight), _styleProvider.PanelBorder, 1);
 
             // Title bar

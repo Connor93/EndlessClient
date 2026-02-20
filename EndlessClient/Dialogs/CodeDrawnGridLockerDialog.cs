@@ -428,7 +428,7 @@ namespace EndlessClient.Dialogs
                 (int)(pos.Y + GridAreaTop * scale),
                 (int)((ScrollBarLeft - GridLeftMargin) * scale),
                 (int)(GridAreaHeight * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridBgRect, new Color(0, 0, 0, 40));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridBgRect, _styleProvider.SectionBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, gridBgRect, _styleProvider.PanelBorder, 1);
 
             // === Grid Items ===
@@ -511,8 +511,8 @@ namespace EndlessClient.Dialogs
                         var qtyY = tileY + tileH - (int)qtySize.Height - (int)(2 * scale);
 
                         var badgeRect = new Rectangle(qtyX - (int)(2 * scale), qtyY, (int)qtySize.Width + (int)(4 * scale), (int)qtySize.Height);
-                        DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeRect, new Color(0, 0, 0, 140));
-                        _spriteBatch.DrawString(font, qtyText, new Vector2(qtyX, qtyY), Color.White);
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeRect, _styleProvider.OverlayDim);
+                        _spriteBatch.DrawString(font, qtyText, new Vector2(qtyX, qtyY), _styleProvider.TextPrimary);
                     }
                 }
             }

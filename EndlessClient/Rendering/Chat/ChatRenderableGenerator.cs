@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EndlessClient.Services;
+using EndlessClient.UI.Styles;
 using EOLib.Domain.Chat;
 using EOLib.Graphics;
 using EOLib.Shared;
@@ -19,14 +20,17 @@ namespace EndlessClient.Rendering.Chat
         }
 
         private readonly INativeGraphicsManager _nativeGraphicsManager;
+        private readonly IUIStyleProvider _styleProvider;
         private readonly IFriendIgnoreListService _friendIgnoreListService;
         private readonly BitmapFont _chatFont;
 
         public ChatRenderableGenerator(INativeGraphicsManager nativeGraphicsManager,
+                                       IUIStyleProvider styleProvider,
                                        IFriendIgnoreListService friendIgnoreListService,
                                        BitmapFont chatFont)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
+            _styleProvider = styleProvider;
             _friendIgnoreListService = friendIgnoreListService;
             _chatFont = chatFont;
         }
@@ -120,7 +124,7 @@ namespace EndlessClient.Rendering.Chat
         {
             var shouldShowNoteIcon = pair.IsFirstLineOfMultilineMessage && !string.IsNullOrWhiteSpace(pair.Text);
             var chatData = new ChatData(ChatTab.Local, "", pair.Text, shouldShowNoteIcon ? ChatIcon.Note : ChatIcon.None, log: false);
-            return new NewsChatRenderable(_nativeGraphicsManager, i, chatData, pair.Text);
+            return new NewsChatRenderable(_nativeGraphicsManager, _styleProvider, i, chatData, pair.Text);
         }
 
         private ChatRenderable CreateChatRenderableFromChatPair(ChatPair pair, int displayIndex, ChatData data)
@@ -132,7 +136,7 @@ namespace EndlessClient.Rendering.Chat
                 pair.IsFirstLineOfMultilineMessage ? data.Icon : ChatIcon.None,
                 data.ChatColor);
 
-            return new ChatRenderable(_nativeGraphicsManager, displayIndex, modifiedData, pair.Text);
+            return new ChatRenderable(_nativeGraphicsManager, _styleProvider, displayIndex, modifiedData, pair.Text);
         }
     }
 }

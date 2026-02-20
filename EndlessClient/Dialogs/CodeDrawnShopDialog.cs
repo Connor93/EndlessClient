@@ -427,7 +427,7 @@ namespace EndlessClient.Dialogs
                 (int)(pos.Y + GridAreaTop * scale),
                 (int)((ScrollBarLeft - GridLeftMargin) * scale),
                 (int)(GridAreaHeight * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridBgRect, new Color(0, 0, 0, 40));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridBgRect, _styleProvider.SectionBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, gridBgRect, _styleProvider.PanelBorder, 1);
 
             // === Grid Items ===
@@ -519,11 +519,11 @@ namespace EndlessClient.Dialogs
                     var badgeBgRect = new Rectangle(
                         badgeX - (int)(2 * scale), badgeY,
                         (int)badgeSize.Width + (int)(4 * scale), (int)badgeSize.Height);
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeBgRect, new Color(0, 0, 0, 140));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeBgRect, _styleProvider.OverlayDim);
 
                     var badgeColor = _activeTab == ShopTab.Craft
-                        ? new Color(180, 160, 100)  // Muted gold for craft
-                        : new Color(255, 215, 0);   // Gold for prices
+                        ? new Color(_styleProvider.GoldColor, 0.70f)  // Muted gold for craft
+                        : _styleProvider.GoldColor;   // Gold for prices
                     _spriteBatch.DrawString(font, badgeText, new Vector2(badgeX, badgeY), badgeColor);
                 }
             }

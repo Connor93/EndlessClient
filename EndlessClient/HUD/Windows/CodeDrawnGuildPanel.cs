@@ -80,7 +80,7 @@ namespace EndlessClient.HUD.Windows
         private Color TabTextInactive => _styleProvider.TextSecondary;
         private Color ExpBarBg => new Color(_styleProvider.StatusBarBackground, 0.78f);
         private Color ExpBarFill => _styleProvider.TNLBarFill;
-        private static readonly Color BuffActiveColor = new Color(100, 220, 130);
+        private Color BuffActiveColor => _styleProvider.CompletionColor;
         private Color SectionHeaderColor => _styleProvider.TextHighlight;
         private Color ActionButtonBg => new Color(_styleProvider.ButtonNormal, 0.86f);
         private Color ActionButtonHover => new Color(_styleProvider.ButtonHover, 0.94f);
@@ -463,13 +463,13 @@ namespace EndlessClient.HUD.Windows
                     var lvText = member.Level.ToString();
                     _spriteBatch.DrawString(font, lvText,
                         new Vector2(pos.X + (PanelWidth - 100) * scale, y),
-                        new Color(140, 180, 220));
+                        _styleProvider.TextHighlight);
 
                     // Lifetime GP (right)
                     var gpText = member.LifetimeGuildPoints.ToString("N0");
                     _spriteBatch.DrawString(font, gpText,
                         new Vector2(pos.X + (PanelWidth - 50) * scale, y),
-                        new Color(220, 180, 60));
+                        _styleProvider.GoldColor);
                 }
 
                 y += RowHeight * scale;
@@ -937,14 +937,14 @@ namespace EndlessClient.HUD.Windows
                 var expText = _guildInfo.Exp + "/" + (_guildInfo.Exp + _guildInfo.ExpToNext);
                 var expSize = _font.MeasureString(expText);
                 _spriteBatch.DrawString(_font, expText,
-                    new Vector2(barX + (barWidth - expSize.Width) / 2, y), Color.White);
+                    new Vector2(barX + (barWidth - expSize.Width) / 2, y), _styleProvider.TextPrimary);
             }
             else
             {
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, barRect, ExpBarFill);
                 var maxSize = _font.MeasureString("MAX");
                 _spriteBatch.DrawString(_font, "MAX",
-                    new Vector2(barX + (barWidth - maxSize.Width) / 2, y), Color.White);
+                    new Vector2(barX + (barWidth - maxSize.Width) / 2, y), _styleProvider.TextPrimary);
             }
             y += (ExpBarHeight + 4) * scale;
 
@@ -959,7 +959,7 @@ namespace EndlessClient.HUD.Windows
 
             // Bank balance
             _spriteBatch.DrawString(font, "Guild Bank: " + _guildInfo.Bank.ToString("N0") + "g",
-                new Vector2(pos.X + Padding * scale, y), new Color(220, 190, 100));
+                new Vector2(pos.X + Padding * scale, y), _styleProvider.GoldColor);
             y += RowHeight * scale;
 
             // Divider
@@ -1049,7 +1049,7 @@ namespace EndlessClient.HUD.Windows
                             var progressText = bounty.Progress + "/" + bounty.Target;
                             var textSize = _font.MeasureString(progressText);
                             _spriteBatch.DrawString(_font, progressText,
-                                new Vector2(barX + (barWidth - textSize.Width) / 2, y - 1), Color.White);
+                                new Vector2(barX + (barWidth - textSize.Width) / 2, y - 1), _styleProvider.TextPrimary);
                         }
                     }
                     y += 14 * scale;
@@ -1108,7 +1108,7 @@ namespace EndlessClient.HUD.Windows
                         else
                         {
                             statusText = $"  {bounty.AcceptedBy} delivering";
-                            statusColor = new Color(200, 180, 100);
+                            statusColor = _styleProvider.GoldColor;
                         }
                         _spriteBatch.DrawString(font, statusText,
                             new Vector2(pos.X + (Padding + 4) * scale, y), statusColor);
@@ -1156,12 +1156,12 @@ namespace EndlessClient.HUD.Windows
                 else if (guildLevel >= perk.RequiredLevel)
                 {
                     status = "\u25C6";
-                    statusColor = new Color(220, 180, 60); // gold for available
+                    statusColor = _styleProvider.GoldColor; // gold for available
                 }
                 else
                 {
                     status = "\u2717";
-                    statusColor = new Color(160, 80, 80); // red for locked
+                    statusColor = _styleProvider.DangerColor; // red for locked
                 }
 
                 if (rowVisible)
@@ -1190,7 +1190,7 @@ namespace EndlessClient.HUD.Windows
                 if (rowVisible)
                     _spriteBatch.DrawString(font, "  " + detail,
                         new Vector2(pos.X + Padding * scale, y),
-                        new Color(120, 130, 150));
+                        _styleProvider.TextSecondary);
                 y += RowHeight * scale + 4 * scale;
             }
         }
@@ -1230,12 +1230,12 @@ namespace EndlessClient.HUD.Windows
                 else if (buff.IsUnlocked)
                 {
                     status = "[Ready]";
-                    nameColor = new Color(220, 180, 60);
+                    nameColor = _styleProvider.GoldColor;
                 }
                 else
                 {
                     status = "[Locked]";
-                    nameColor = new Color(160, 80, 80);
+                    nameColor = _styleProvider.DangerColor;
                 }
 
                 if (rowVisible)
@@ -1248,7 +1248,7 @@ namespace EndlessClient.HUD.Windows
                 {
                     _spriteBatch.DrawString(font, "  " + buff.StatsDescription,
                         new Vector2(pos.X + Padding * scale, y),
-                        new Color(140, 180, 220));
+                        _styleProvider.TextHighlight);
                 }
                 y += RowHeight * scale;
 
@@ -1256,7 +1256,7 @@ namespace EndlessClient.HUD.Windows
                 if (rowVisible)
                     _spriteBatch.DrawString(font, "  Upkeep: " + buff.UpkeepPoints + "pts + " + buff.UpkeepGold.ToString("N0") + "g/day",
                         new Vector2(pos.X + Padding * scale, y),
-                        new Color(120, 130, 150));
+                        _styleProvider.TextSecondary);
                 y += RowHeight * scale + 6 * scale;
             }
         }

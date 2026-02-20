@@ -167,7 +167,7 @@ namespace EndlessClient.HUD.Panels
 
         private void DrawInventoryGrid(Vector2 pos)
         {
-            var gridColor = new Color(80, 70, 60, 150);
+            var gridColor = _styleProvider.SlotBorder;
 
             var gridStartX = 4;
             var gridStartY = SlotsStartY;
@@ -214,7 +214,7 @@ namespace EndlessClient.HUD.Panels
             var textPos = new Vector2(
                 rect.X + (rect.Width - textSize.Width) / 2,
                 rect.Y + (rect.Height - textSize.Height) / 2);
-            _spriteBatch.DrawString(_labelFont, label, textPos, Color.White);
+            _spriteBatch.DrawString(_labelFont, label, textPos, _styleProvider.ButtonText);
         }
         private InventoryItemContextMenu _activeContextMenu;
 

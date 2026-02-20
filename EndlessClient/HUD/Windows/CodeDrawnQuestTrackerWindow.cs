@@ -204,11 +204,11 @@ namespace EndlessClient.HUD.Windows
 
             // Header
             var headerRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, scaledWidth, (int)(HeaderHeight * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, _styleProvider.ListHeaderBackground);
 
             // Title
             var titleText = "Quest Tracker";
-            _spriteBatch.DrawString(font, titleText, new Vector2(scaledPos.X + Padding * scale, scaledPos.Y + 2 * scale), Color.White);
+            _spriteBatch.DrawString(font, titleText, new Vector2(scaledPos.X + Padding * scale, scaledPos.Y + 2 * scale), _styleProvider.TextPrimary);
 
             // Draw tracked quests
             DrawTrackedQuestsScaled(scaledPos, scale, font);
@@ -227,8 +227,8 @@ namespace EndlessClient.HUD.Windows
 
             // Header
             var headerRect = new Rectangle((int)pos.X, (int)pos.Y, DrawArea.Width, HeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
-            _spriteBatch.DrawString(_labelFont, "Quest Tracker", new Vector2(pos.X + Padding, pos.Y + 2), Color.White);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, _styleProvider.ListHeaderBackground);
+            _spriteBatch.DrawString(_labelFont, "Quest Tracker", new Vector2(pos.X + Padding, pos.Y + 2), _styleProvider.TextPrimary);
 
             // Draw tracked quests
             DrawTrackedQuests(pos);
@@ -258,7 +258,7 @@ namespace EndlessClient.HUD.Windows
                 // Progress
                 var progressText = quest.Target > 0 ? $"{quest.Progress}/{quest.Target}" : "done";
                 var progressSize = _font.MeasureString(progressText);
-                var progressColor = quest.Progress >= quest.Target ? new Color(100, 200, 100) : _styleProvider.TextSecondary;
+                var progressColor = quest.Progress >= quest.Target ? _styleProvider.CompletionColor : _styleProvider.TextSecondary;
                 _spriteBatch.DrawString(_font, progressText, new Vector2(pos.X + DrawArea.Width - Padding - progressSize.Width, y), progressColor);
 
                 questIndex++;
@@ -292,7 +292,7 @@ namespace EndlessClient.HUD.Windows
                 // Progress
                 var progressText = quest.Target > 0 ? $"{quest.Progress}/{quest.Target}" : "done";
                 var progressSize = font.MeasureString(progressText);
-                var progressColor = quest.Progress >= quest.Target ? new Color(100, 200, 100) : _styleProvider.TextSecondary;
+                var progressColor = quest.Progress >= quest.Target ? _styleProvider.CompletionColor : _styleProvider.TextSecondary;
                 _spriteBatch.DrawString(font, progressText, new Vector2(scaledPos.X + DrawArea.Width * scale - Padding * scale - progressSize.Width, y), progressColor);
 
                 questIndex++;

@@ -107,7 +107,7 @@ namespace EndlessClient.Dialogs
                 Text = " ",
                 MaxChars = 12,
                 Selected = true,
-                TextColor = Color.Black,
+                TextColor = _styleProvider.InputText,
                 Visible = true
             };
             _inputBox.SetParentControl(this);

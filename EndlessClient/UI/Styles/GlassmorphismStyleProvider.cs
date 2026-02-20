@@ -75,5 +75,46 @@ namespace EndlessClient.UI.Styles
         public Color TooltipBackground => new Color(25, 30, 45, 230);
         public Color TooltipBorder => new Color(100, 130, 170, 220);
         public Color TooltipText => new Color(230, 235, 245);
+
+        // Slots - glass effect slots
+        public Color SlotBackground => new Color(20, 28, 45, 200);
+        public Color SlotBackgroundAlt => new Color(25, 35, 55, 180);
+        public Color SlotBorder => new Color(60, 80, 110, 180);
+
+        // List rows
+        public Color ListRowEven => new Color(30, 40, 65, 130);
+        public Color ListRowOdd => new Color(25, 35, 55, 130);
+        public Color ListRowHover => new Color(100, 150, 220, 40);
+        public Color ListHeaderBackground => new Color(40, 55, 80, 220);
+
+        // Scrollbar
+        public Color ScrollTrackBackground => new Color(15, 20, 35, 200);
+        public Color ScrollTrackBorder => new Color(60, 80, 110, 180);
+        public Color ScrollThumbBorder => new Color(100, 130, 170, 200);
+
+        // Misc UI
+        public Color ButtonDisabled => new Color(40, 50, 70, 160);
+        public Color SectionBackground => new Color(10, 15, 25, 100);
+        public Color OverlayDim => new Color(0, 0, 0, 30);
+        public Color BadgeBackground => new Color(0, 0, 0, 160);
+
+        // Progress bar
+        public Color ProgressBarBackground => new Color(15, 20, 35, 200);
+        public Color ProgressBarFill => new Color(70, 140, 220, 220);
+
+        // Semantic colors
+        public Color CompletionColor => new Color(100, 220, 120);
+        public Color AgreementColor => new Color(100, 255, 120);
+        public Color DangerColor => new Color(200, 80, 80);
+        public Color GoldColor => new Color(255, 215, 50);
+        public Color LinkHoverColor => new Color(150, 220, 255);
+
+        // Chat text colors
+        public Color ChatDefault => Color.Black;
+        public Color ChatServer => Color.FromNonPremultiplied(0x8a, 0x5c, 0x4a, 0xff);
+        public Color ChatError => Color.FromNonPremultiplied(0x7d, 0x0a, 0x0a, 0xff);
+        public Color ChatPM => Color.FromNonPremultiplied(0x5a, 0x3c, 0x00, 0xff);
+        public Color ChatServerGlobal => Color.FromNonPremultiplied(0x8a, 0x6d, 0x00, 0xff);
+        public Color ChatAdmin => Color.FromNonPremultiplied(0x7a, 0x4a, 0x2a, 0xff);
     }
 }

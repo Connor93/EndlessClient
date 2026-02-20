@@ -218,7 +218,7 @@ namespace EndlessClient.HUD.Panels
 
                 if (_hoveredSetting == setting)
                 {
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, new Color(100, 90, 80, 150));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, _styleProvider.ListRowHover);
                 }
             }
 
@@ -242,7 +242,7 @@ namespace EndlessClient.HUD.Panels
 
                 if (_hoveredSetting == setting)
                 {
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, new Color(255, 255, 255, 30));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, _styleProvider.ListRowHover);
                 }
             }
 
@@ -291,7 +291,7 @@ namespace EndlessClient.HUD.Panels
                         (int)(scaledPos.Y + hitArea.Y * scale),
                         (int)(hitArea.Width * scale),
                         (int)(hitArea.Height * scale));
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, rowRect, new Color(255, 255, 255, 60), 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, rowRect, _styleProvider.ListRowHover, 1);
                 }
 
                 var labelX = scaledPos.X + (10 + col * ColWidth) * scale;
@@ -307,7 +307,7 @@ namespace EndlessClient.HUD.Panels
 
                 // Toggle indicator arrow
                 var arrowX = scaledPos.X + (205 + col * ColWidth) * scale;
-                _spriteBatch.DrawString(font, "◄►", new Vector2(arrowX, y), new Color(120, 120, 120, 200));
+                _spriteBatch.DrawString(font, "◄►", new Vector2(arrowX, y), _styleProvider.TextSecondary);
             }
 
             _spriteBatch.End();
@@ -324,9 +324,9 @@ namespace EndlessClient.HUD.Panels
             var disabledStr = _localizedStringFinder.GetString(EOResourceID.SETTING_DISABLED);
 
             if (value == enabledStr)
-                return new Color(100, 200, 100);
+                return _styleProvider.CompletionColor;
             else if (value == disabledStr)
-                return new Color(200, 100, 100);
+                return _styleProvider.DangerColor;
             else
                 return _styleProvider.TextPrimary;
         }

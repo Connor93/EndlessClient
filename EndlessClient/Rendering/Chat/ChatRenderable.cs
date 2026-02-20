@@ -1,4 +1,5 @@
 using EndlessClient.HUD.Panels;
+using EndlessClient.UI.Styles;
 using EOLib.Domain.Chat;
 using EOLib.Extensions;
 using EOLib.Graphics;
@@ -15,6 +16,7 @@ namespace EndlessClient.Rendering.Chat
         private const int CHAT_MESSAGE_X_OFF = 20;
 
         private readonly INativeGraphicsManager _nativeGraphicsManager;
+        private readonly IUIStyleProvider _styleProvider;
 
         private readonly string _partialMessage;
 
@@ -25,11 +27,13 @@ namespace EndlessClient.Rendering.Chat
         public ChatData Data { get; private set; }
 
         public ChatRenderable(INativeGraphicsManager nativeGraphicsManager,
+                              IUIStyleProvider styleProvider,
                               int displayIndex,
                               ChatData data,
                               string partialMessage = null)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
+            _styleProvider = styleProvider;
 
             DisplayIndex = displayIndex;
             Data = data;
@@ -72,7 +76,7 @@ namespace EndlessClient.Rendering.Chat
             spriteBatch.DrawString(chatFont,
                                    strToDraw,
                                    new Vector2(pos.X + CHAT_MESSAGE_X_OFF, pos.Y + HeaderYOffset),
-                                   Data.ChatColor.ToColor());
+                                   Data.ChatColor.ToColor(_styleProvider));
 
             spriteBatch.End();
         }
@@ -97,7 +101,7 @@ namespace EndlessClient.Rendering.Chat
             spriteBatch.DrawString(chatFont,
                                    strToDraw,
                                    new Vector2(pos.X + CHAT_MESSAGE_X_OFF, pos.Y + HeaderYOffset),
-                                   Data.ChatColor.ToColor());
+                                   Data.ChatColor.ToColor(_styleProvider));
             // NOTE: SpriteBatch.End must be called by caller after all renderables are drawn
         }
 
@@ -129,7 +133,7 @@ namespace EndlessClient.Rendering.Chat
             spriteBatch.DrawString(chatFont,
                                    strToDraw,
                                    new Vector2(pos.X + textXOff, pos.Y + headerYOff),
-                                   Data.ChatColor.ToColor());
+                                   Data.ChatColor.ToColor(_styleProvider));
 
             spriteBatch.End();
         }
@@ -163,7 +167,7 @@ namespace EndlessClient.Rendering.Chat
             spriteBatch.DrawString(chatFont,
                                    strToDraw,
                                    new Vector2(pos.X + textXOff, pos.Y + headerYOff),
-                                   Data.ChatColor.ToColor());
+                                   Data.ChatColor.ToColor(_styleProvider));
             // NOTE: SpriteBatch.End must be called by caller after all renderables are drawn
         }
 
@@ -178,8 +182,8 @@ namespace EndlessClient.Rendering.Chat
     {
         protected override int HeaderYOffset => 23;
 
-        public NewsChatRenderable(INativeGraphicsManager nativeGraphicsManager, int displayIndex, ChatData data, string partialMessage)
-            : base(nativeGraphicsManager, displayIndex, data, partialMessage)
+        public NewsChatRenderable(INativeGraphicsManager nativeGraphicsManager, IUIStyleProvider styleProvider, int displayIndex, ChatData data, string partialMessage)
+            : base(nativeGraphicsManager, styleProvider, displayIndex, data, partialMessage)
         {
         }
     }

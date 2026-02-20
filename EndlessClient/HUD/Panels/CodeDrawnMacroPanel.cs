@@ -195,12 +195,12 @@ namespace EndlessClient.HUD.Panels
             var leftX = (int)(pos.X + (LeftPanelStartX - 4) * scale);
             var leftY = (int)(pos.Y + 4 * scale);
             var leftRect = new Rectangle(leftX, leftY, (int)((SlotsPerRow * SlotWidth + 8) * scale), (int)(96 * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftRect, _styleProvider.SlotBackground);
 
             // Right panel area fill
             var rightX = (int)(pos.X + (RightPanelStartX - 4) * scale);
             var rightRect = new Rectangle(rightX, leftY, (int)((SlotsPerRow * SlotWidth + 8) * scale), (int)(96 * scale));
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightRect, _styleProvider.SlotBackground);
 
             // NOTE: Slot grid fills intentionally omitted - icons are drawn to render target
             // and would be covered by fills drawn in post-scale phase
@@ -229,7 +229,7 @@ namespace EndlessClient.HUD.Panels
                     var x = (int)(pos.X + startX * scale) + col * scaledSlotWidth;
                     var y = (int)(pos.Y + GridStartY * scale) + row * scaledSlotHeight;
                     var slotRect = new Rectangle(x, y, scaledSlotWidth - (int)(2 * scale), scaledSlotHeight - (int)(2 * scale));
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, new Color(30, 25, 20, 200));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, _styleProvider.SlotBackground);
                 }
             }
         }
@@ -244,11 +244,11 @@ namespace EndlessClient.HUD.Panels
 
             // Left panel area fill
             var leftPanelRect = new Rectangle((int)pos.X + LeftPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, _styleProvider.SlotBackground);
 
             // Right panel area fill
             var rightPanelRect = new Rectangle((int)pos.X + RightPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightPanelRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightPanelRect, _styleProvider.SlotBackground);
 
             // Slot grid fills
             DrawSlotGridFills(pos, LeftPanelStartX);
@@ -290,18 +290,18 @@ namespace EndlessClient.HUD.Panels
                 (int)(scaledPos.Y + 4 * scale),
                 (int)((SlotsPerRow * SlotWidth + 8) * scale),
                 (int)(96 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(70, 60, 50), 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, _styleProvider.SlotBorder, 1);
 
             var rightPanelRect = new Rectangle(
                 (int)(scaledPos.X + (RightPanelStartX - 4) * scale),
                 (int)(scaledPos.Y + 4 * scale),
                 (int)((SlotsPerRow * SlotWidth + 8) * scale),
                 (int)(96 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, rightPanelRect, new Color(70, 60, 50), 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, rightPanelRect, _styleProvider.SlotBorder, 1);
 
             // Panel labels
-            _spriteBatch.DrawString(headerFont, "F1-F8", new Vector2(scaledPos.X + (LeftPanelStartX + 70) * scale, scaledPos.Y + 6 * scale), Color.White);
-            _spriteBatch.DrawString(headerFont, "^F1-^F8", new Vector2(scaledPos.X + (RightPanelStartX + 60) * scale, scaledPos.Y + 6 * scale), Color.White);
+            _spriteBatch.DrawString(headerFont, "F1-F8", new Vector2(scaledPos.X + (LeftPanelStartX + 70) * scale, scaledPos.Y + 6 * scale), _styleProvider.TextPrimary);
+            _spriteBatch.DrawString(headerFont, "^F1-^F8", new Vector2(scaledPos.X + (RightPanelStartX + 60) * scale, scaledPos.Y + 6 * scale), _styleProvider.TextPrimary);
 
             // Slot grid borders and labels
             DrawSlotGridBordersAndText(scaledPos, scale, LeftPanelStartX, new[] { "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8" }, font);
@@ -314,13 +314,13 @@ namespace EndlessClient.HUD.Panels
                 (int)(scaledPos.X + (PanelWidth - 80) / 2 * scale),
                 (int)(scaledPos.Y + (PanelHeight - 24 - 8) * scale),
                 buttonWidth, buttonHeight);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, _styleProvider.ButtonBorder, 1);
             var buttonText = "OK";
             var textSize = headerFont.MeasureString(buttonText);
             var textPos = new Vector2(
                 buttonRect.X + (buttonRect.Width - textSize.Width) / 2,
                 buttonRect.Y + (buttonRect.Height - textSize.Height) / 2);
-            _spriteBatch.DrawString(headerFont, buttonText, textPos, Color.White);
+            _spriteBatch.DrawString(headerFont, buttonText, textPos, _styleProvider.ButtonText);
 
             _spriteBatch.End();
         }
@@ -336,16 +336,16 @@ namespace EndlessClient.HUD.Panels
 
             // Draw left/right panel areas
             var leftPanelRect = new Rectangle((int)pos.X + LeftPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(40, 35, 30, 180));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(70, 60, 50), 1);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, _styleProvider.SlotBackground);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, _styleProvider.SlotBorder, 1);
 
             var rightPanelRect = new Rectangle((int)pos.X + RightPanelStartX - 4, (int)pos.Y + 4, SlotsPerRow * SlotWidth + 8, 96);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightPanelRect, new Color(40, 35, 30, 180));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, rightPanelRect, new Color(70, 60, 50), 1);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, rightPanelRect, _styleProvider.SlotBackground);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, rightPanelRect, _styleProvider.SlotBorder, 1);
 
             // Draw panel labels
-            _spriteBatch.DrawString(headerFont, "F1-F8", new Vector2(pos.X + LeftPanelStartX + 70, pos.Y + 6), Color.White);
-            _spriteBatch.DrawString(headerFont, "^F1-^F8", new Vector2(pos.X + RightPanelStartX + 60, pos.Y + 6), Color.White);
+            _spriteBatch.DrawString(headerFont, "F1-F8", new Vector2(pos.X + LeftPanelStartX + 70, pos.Y + 6), _styleProvider.TextPrimary);
+            _spriteBatch.DrawString(headerFont, "^F1-^F8", new Vector2(pos.X + RightPanelStartX + 60, pos.Y + 6), _styleProvider.TextPrimary);
 
             // Draw slot grids
             DrawSlotGrid(pos, LeftPanelStartX, new[] { "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8" });
@@ -361,14 +361,14 @@ namespace EndlessClient.HUD.Panels
 
             var buttonColor = _okButtonHovered ? _styleProvider.ButtonHover : _styleProvider.ButtonNormal;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _okButtonRect, buttonColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, _okButtonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, _okButtonRect, _styleProvider.ButtonBorder, 1);
 
             var buttonText = "OK";
             var textSize = headerFont.MeasureString(buttonText);
             var textPos = new Vector2(
                 _okButtonRect.X + (_okButtonRect.Width - textSize.Width) / 2,
                 _okButtonRect.Y + (_okButtonRect.Height - textSize.Height) / 2);
-            _spriteBatch.DrawString(headerFont, buttonText, textPos, Color.White);
+            _spriteBatch.DrawString(headerFont, buttonText, textPos, _styleProvider.ButtonText);
 
             _spriteBatch.End();
         }
@@ -382,7 +382,7 @@ namespace EndlessClient.HUD.Panels
                     var slotX = (int)panelPos.X + startX + (col * SlotWidth);
                     var slotY = (int)panelPos.Y + GridStartY + (row * SlotHeight);
                     var slotRect = new Rectangle(slotX, slotY, SlotWidth - 4, SlotHeight - 4);
-                    var slotColor = (row + col) % 2 == 0 ? new Color(55, 50, 45, 180) : new Color(50, 45, 40, 180);
+                    var slotColor = (row + col) % 2 == 0 ? _styleProvider.SlotBackgroundAlt : _styleProvider.SlotBackground;
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, slotColor);
                 }
             }
@@ -399,13 +399,13 @@ namespace EndlessClient.HUD.Panels
                     var slotWidth = (int)((SlotWidth - 4) * scale);
                     var slotHeight = (int)((SlotHeight - 4) * scale);
                     var slotRect = new Rectangle(slotX, slotY, slotWidth, slotHeight);
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, new Color(70, 60, 50), 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, _styleProvider.SlotBorder, 1);
 
                     var labelIndex = row * SlotsPerRow + col;
                     if (labelIndex < labels.Length)
                     {
                         _spriteBatch.DrawString(font, labels[labelIndex],
-                            new Vector2(slotX + 2 * scale, slotY + (SlotHeight - 16) * scale), new Color(150, 140, 130));
+                            new Vector2(slotX + 2 * scale, slotY + (SlotHeight - 16) * scale), _styleProvider.TextSecondary);
                     }
                 }
             }
@@ -423,16 +423,16 @@ namespace EndlessClient.HUD.Panels
                     var slotRect = new Rectangle(slotX, slotY, SlotWidth - 4, SlotHeight - 4);
 
                     // Draw slot background
-                    var slotColor = (row + col) % 2 == 0 ? new Color(55, 50, 45, 180) : new Color(50, 45, 40, 180);
+                    var slotColor = (row + col) % 2 == 0 ? _styleProvider.SlotBackgroundAlt : _styleProvider.SlotBackground;
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, slotColor);
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, new Color(70, 60, 50), 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, _styleProvider.SlotBorder, 1);
 
                     // Draw function key label in corner
                     var labelIndex = row * SlotsPerRow + col;
                     if (labelIndex < labels.Length)
                     {
                         _spriteBatch.DrawString(_font, labels[labelIndex],
-                            new Vector2(slotX + 2, slotY + SlotHeight - 16), new Color(150, 140, 130));
+                            new Vector2(slotX + 2, slotY + SlotHeight - 16), _styleProvider.TextSecondary);
                     }
                 }
             }

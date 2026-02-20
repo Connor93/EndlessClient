@@ -155,7 +155,7 @@ namespace EndlessClient.HUD.Panels
             var chatFont = _contentProvider.Fonts[Constants.FontSize11];
 
             return new NewsPanel(_nativeGraphicsManager,
-                                 new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                 new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
                                  _newsProvider,
                                  chatFont,
                                  _clientWindowSizeProvider)
@@ -279,7 +279,7 @@ namespace EndlessClient.HUD.Panels
             {
                 return new CodeDrawnChatPanel(_nativeGraphicsManager,
                                               _chatActions,
-                                              new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                              new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
                                               _chatProvider,
                                               _hudControlProvider,
                                               _styleProvider,
@@ -293,7 +293,7 @@ namespace EndlessClient.HUD.Panels
             {
                 return new ChatPanel(_nativeGraphicsManager,
                                      _chatActions,
-                                     new ChatRenderableGenerator(_nativeGraphicsManager, _friendIgnoreListService, chatFont),
+                                     new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
                                      _chatProvider,
                                      _hudControlProvider,
                                      chatFont,

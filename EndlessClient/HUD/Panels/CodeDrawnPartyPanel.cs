@@ -180,14 +180,14 @@ namespace EndlessClient.HUD.Panels
 
             // Header fill
             var headerRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, scaledHeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(_styleProvider.TitleBarBackground, 0.90f));
 
             // Leave button fill
             var scaledBtnSize = (int)(RemoveButtonSize * scale);
             var leaveRect = new Rectangle((int)pos.X + scaledWidth - scaledBtnSize - (int)(4 * scale), (int)pos.Y + (int)(3 * scale), scaledBtnSize, scaledBtnSize);
             _leaveButtonRect = leaveRect;
             _panelScreenRect = new Rectangle((int)pos.X, (int)pos.Y, scaledWidth, panelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leaveRect, new Color(180, 60, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leaveRect, _styleProvider.DangerColor);
 
             // Member row fills and health bar backgrounds
             var memberIndex = 0;
@@ -196,25 +196,25 @@ namespace EndlessClient.HUD.Panels
             {
                 var rowY = (int)pos.Y + scaledHeaderHeight + (memberIndex * scaledRowHeight);
                 var rowRect = new Rectangle((int)pos.X + (int)(2 * scale), rowY, scaledWidth - (int)(4 * scale), scaledRowHeight - (int)(2 * scale));
-                var rowBgColor = memberIndex % 2 == 0 ? new Color(80, 70, 60, 180) : new Color(70, 60, 50, 180);
+                var rowBgColor = memberIndex % 2 == 0 ? _styleProvider.ListRowEven : _styleProvider.ListRowOdd;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowBgColor);
 
                 // Remove button fill
                 if (isLeader && member.CharacterID != _characterProvider.MainCharacter.ID)
                 {
                     var removeRect = new Rectangle((int)pos.X + scaledWidth - scaledBtnSize - (int)(8 * scale), rowY + (int)(2 * scale), scaledBtnSize, scaledBtnSize);
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, removeRect, new Color(140, 50, 50));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, removeRect, new Color(_styleProvider.DangerColor, 0.80f));
                     _removeButtonRects[member.CharacterID] = removeRect;
                 }
 
                 // Health bar background
                 var healthBarY = rowY + scaledRowHeight - (int)(HealthBarHeight * scale) - (int)(4 * scale);
                 var healthBarRect = new Rectangle((int)pos.X + (int)(Padding * scale), healthBarY, scaledWidth - (int)((Padding * 2 + 4) * scale), (int)(HealthBarHeight * scale));
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, new Color(40, 40, 40, 200));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, _styleProvider.StatusBarBackground);
 
                 // Health bar foreground
                 var healthPercent = member.PercentHealth / 100f;
-                var healthColor = healthPercent > 0.5f ? new Color(60, 180, 60) : healthPercent > 0.25f ? new Color(200, 180, 60) : new Color(200, 60, 60);
+                var healthColor = healthPercent > 0.5f ? _styleProvider.CompletionColor : healthPercent > 0.25f ? _styleProvider.GoldColor : _styleProvider.DangerColor;
                 var healthWidth = (int)((healthBarRect.Width - 4) * healthPercent);
                 var healthFillRect = new Rectangle(healthBarRect.X + 2, healthBarRect.Y + 2, healthWidth, healthBarRect.Height - 4);
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, healthFillRect, healthColor);
@@ -237,11 +237,11 @@ namespace EndlessClient.HUD.Panels
 
             // Header fill
             var headerRect = new Rectangle((int)pos.X, (int)pos.Y, PanelWidth, HeaderHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(60, 50, 40, 230));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, headerRect, new Color(_styleProvider.TitleBarBackground, 0.90f));
 
             // Leave button fill
             _leaveButtonRect = new Rectangle((int)pos.X + PanelWidth - RemoveButtonSize - 4, (int)pos.Y + 3, RemoveButtonSize, RemoveButtonSize);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _leaveButtonRect, new Color(180, 60, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, _leaveButtonRect, _styleProvider.DangerColor);
 
             // Member row fills and health bar backgrounds
             var memberIndex = 0;
@@ -250,28 +250,28 @@ namespace EndlessClient.HUD.Panels
             {
                 var rowY = (int)pos.Y + HeaderHeight + (memberIndex * MemberRowHeight);
                 var rowRect = new Rectangle((int)pos.X + 2, rowY, PanelWidth - 4, MemberRowHeight - 2);
-                var rowBgColor = memberIndex % 2 == 0 ? new Color(80, 70, 60, 180) : new Color(70, 60, 50, 180);
+                var rowBgColor = memberIndex % 2 == 0 ? _styleProvider.ListRowEven : _styleProvider.ListRowOdd;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowBgColor);
 
                 // Remove button fill
                 if (isLeader && member.CharacterID != _characterProvider.MainCharacter.ID)
                 {
                     var removeRect = new Rectangle((int)pos.X + PanelWidth - RemoveButtonSize - 8, rowY + 2, RemoveButtonSize, RemoveButtonSize);
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, removeRect, new Color(140, 50, 50));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, removeRect, new Color(_styleProvider.DangerColor, 0.80f));
                     _removeButtonRects[member.CharacterID] = removeRect;
                 }
 
                 // Health bar background
                 var healthBarY = rowY + MemberRowHeight - HealthBarHeight - 4;
                 var healthBarRect = new Rectangle((int)pos.X + Padding, healthBarY, PanelWidth - (Padding * 2) - 4, HealthBarHeight);
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, new Color(40, 40, 40, 200));
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, _styleProvider.StatusBarBackground);
 
                 // Health bar fill
                 var healthPercent = member.PercentHealth / 100f;
                 var healthFillWidth = (int)((healthBarRect.Width - 2) * healthPercent);
-                var healthColor = member.PercentHealth > 50 ? new Color(80, 180, 80) :
-                                  member.PercentHealth > 25 ? new Color(220, 180, 50) :
-                                  new Color(200, 60, 60);
+                var healthColor = member.PercentHealth > 50 ? _styleProvider.CompletionColor :
+                                  member.PercentHealth > 25 ? _styleProvider.GoldColor :
+                                  _styleProvider.DangerColor;
                 var healthFillRect = new Rectangle(healthBarRect.X + 1, healthBarRect.Y + 1, healthFillWidth, HealthBarHeight - 2);
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, healthFillRect, healthColor);
 
@@ -297,7 +297,7 @@ namespace EndlessClient.HUD.Panels
 
             // Header text
             _spriteBatch.DrawString(nameFont, $"Party ({_cachedParty.Count})",
-                new Vector2(scaledPos.X + Padding * scale, scaledPos.Y + 2 * scale), Color.White);
+                new Vector2(scaledPos.X + Padding * scale, scaledPos.Y + 2 * scale), _styleProvider.ButtonText);
 
             // Leave button border and text
             var leaveRect = new Rectangle(
@@ -305,9 +305,9 @@ namespace EndlessClient.HUD.Panels
                 (int)(scaledPos.Y + 3 * scale),
                 (int)(RemoveButtonSize * scale),
                 (int)(RemoveButtonSize * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, leaveRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leaveRect, _styleProvider.ButtonBorder, 1);
             var xSize = detailFont.MeasureString("X");
-            _spriteBatch.DrawString(detailFont, "X", new Vector2(leaveRect.X + (leaveRect.Width - xSize.Width) / 2, leaveRect.Y + (leaveRect.Height - xSize.Height) / 2 - 1), Color.White);
+            _spriteBatch.DrawString(detailFont, "X", new Vector2(leaveRect.X + (leaveRect.Width - xSize.Width) / 2, leaveRect.Y + (leaveRect.Height - xSize.Height) / 2 - 1), _styleProvider.ButtonText);
 
             // Draw each party member text
             var memberIndex = 0;
@@ -317,7 +317,7 @@ namespace EndlessClient.HUD.Panels
                 var rowY = (int)(scaledPos.Y + (HeaderHeight + memberIndex * MemberRowHeight) * scale);
 
                 // Name
-                var nameColor = member.IsLeader ? new Color(255, 215, 0) : Color.White;
+                var nameColor = member.IsLeader ? _styleProvider.GoldColor : _styleProvider.TextPrimary;
                 var nameText = member.IsLeader ? $"★ {member.Name}" : member.Name;
                 _spriteBatch.DrawString(nameFont, nameText, new Vector2(scaledPos.X + (Padding + 2) * scale, rowY + 2 * scale), nameColor);
 
@@ -329,9 +329,9 @@ namespace EndlessClient.HUD.Panels
                         (int)(rowY + 2 * scale),
                         (int)(RemoveButtonSize * scale),
                         (int)(RemoveButtonSize * scale));
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, removeRect, Color.Black, 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, removeRect, _styleProvider.ButtonBorder, 1);
                     var txtSize = detailFont.MeasureString("x");
-                    _spriteBatch.DrawString(detailFont, "x", new Vector2(removeRect.X + (removeRect.Width - txtSize.Width) / 2, removeRect.Y + (removeRect.Height - txtSize.Height) / 2 - 1), Color.White);
+                    _spriteBatch.DrawString(detailFont, "x", new Vector2(removeRect.X + (removeRect.Width - txtSize.Width) / 2, removeRect.Y + (removeRect.Height - txtSize.Height) / 2 - 1), _styleProvider.ButtonText);
                 }
 
                 // Level
@@ -343,7 +343,7 @@ namespace EndlessClient.HUD.Panels
                 var healthText = $"{member.PercentHealth}%";
                 var textSize = detailFont.MeasureString(healthText);
                 var healthBarWidth = (PanelWidth - (Padding * 2) - 4) * scale;
-                _spriteBatch.DrawString(detailFont, healthText, new Vector2(scaledPos.X + Padding * scale + (healthBarWidth - textSize.Width) / 2, healthBarY - 1 * scale), Color.White);
+                _spriteBatch.DrawString(detailFont, healthText, new Vector2(scaledPos.X + Padding * scale + (healthBarWidth - textSize.Width) / 2, healthBarY - 1 * scale), _styleProvider.TextPrimary);
 
                 memberIndex++;
             }
@@ -361,11 +361,11 @@ namespace EndlessClient.HUD.Panels
             var rowRect = new Rectangle((int)panelPos.X + 2, rowY, PanelWidth - 4, MemberRowHeight - 2);
 
             // Alternating row background
-            var rowBgColor = index % 2 == 0 ? new Color(80, 70, 60, 180) : new Color(70, 60, 50, 180);
+            var rowBgColor = index % 2 == 0 ? _styleProvider.ListRowEven : _styleProvider.ListRowOdd;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowBgColor);
 
             // Leader indicator
-            var nameColor = member.IsLeader ? new Color(255, 215, 0) : Color.White; // Gold for leader
+            var nameColor = member.IsLeader ? _styleProvider.GoldColor : _styleProvider.TextPrimary; // Gold for leader
 
             // Name (with star for leader)
             var nameText = member.IsLeader ? $"★ {member.Name}" : member.Name;
@@ -376,7 +376,7 @@ namespace EndlessClient.HUD.Panels
             if (isLeader && member.CharacterID != _characterProvider.MainCharacter.ID)
             {
                 var removeRect = new Rectangle((int)panelPos.X + PanelWidth - RemoveButtonSize - 8, rowY + 2, RemoveButtonSize, RemoveButtonSize);
-                DrawRemoveButton(removeRect, "x", new Color(140, 50, 50), _detailFont);
+                DrawRemoveButton(removeRect, "x", new Color(_styleProvider.DangerColor, 0.80f), _detailFont);
                 _removeButtonRects[member.CharacterID] = removeRect;
             }
 
@@ -388,14 +388,14 @@ namespace EndlessClient.HUD.Panels
             // Health bar background
             var healthBarY = rowY + MemberRowHeight - HealthBarHeight - 4;
             var healthBarRect = new Rectangle((int)panelPos.X + Padding, healthBarY, PanelWidth - (Padding * 2) - 4, HealthBarHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, new Color(40, 40, 40, 200));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, healthBarRect, _styleProvider.StatusBarBackground);
 
             // Health bar fill
             var healthPercent = member.PercentHealth / 100f;
             var healthFillWidth = (int)((healthBarRect.Width - 2) * healthPercent);
-            var healthColor = member.PercentHealth > 50 ? new Color(80, 180, 80) :
-                              member.PercentHealth > 25 ? new Color(220, 180, 50) :
-                              new Color(200, 60, 60);
+            var healthColor = member.PercentHealth > 50 ? _styleProvider.CompletionColor :
+                              member.PercentHealth > 25 ? _styleProvider.GoldColor :
+                              _styleProvider.DangerColor;
             var healthFillRect = new Rectangle(healthBarRect.X + 1, healthBarRect.Y + 1, healthFillWidth, HealthBarHeight - 2);
             DrawingPrimitives.DrawFilledRect(_spriteBatch, healthFillRect, healthColor);
 
@@ -404,20 +404,20 @@ namespace EndlessClient.HUD.Panels
             var textSize = _detailFont.MeasureString(healthText);
             _spriteBatch.DrawString(_detailFont, healthText,
                 new Vector2(healthBarRect.X + (healthBarRect.Width - textSize.Width) / 2, healthBarY - 1),
-                Color.White);
+                _styleProvider.TextPrimary);
         }
 
 
         private void DrawRemoveButton(Rectangle rect, string label, Color bgColor, BitmapFont font)
         {
             DrawingPrimitives.DrawFilledRect(_spriteBatch, rect, bgColor);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, rect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, rect, _styleProvider.ButtonBorder, 1);
 
             var textSize = font.MeasureString(label);
             var textPos = new Vector2(
                 rect.X + (rect.Width - textSize.Width) / 2,
                 rect.Y + (rect.Height - textSize.Height) / 2 - 1);
-            _spriteBatch.DrawString(font, label, textPos, Color.White);
+            _spriteBatch.DrawString(font, label, textPos, _styleProvider.ButtonText);
         }
     }
 }

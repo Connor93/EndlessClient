@@ -132,7 +132,7 @@ namespace EndlessClient.HUD.Panels
 
             // Draw left info panel fill
             var leftPanelRect = new Rectangle((int)pos.X, (int)pos.Y, scaledLeftWidth, scaledHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(50, 45, 40, 220));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, _styleProvider.SlotBackground);
 
             _spriteBatch.End();
         }
@@ -149,11 +149,11 @@ namespace EndlessClient.HUD.Panels
 
             // Draw left info panel fill
             var leftPanelRect = new Rectangle((int)pos.X, (int)pos.Y, LeftPanelWidth, PanelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(50, 45, 40, 220));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, _styleProvider.SlotBackground);
 
             // Draw grid area background fill
             var gridRect = new Rectangle((int)pos.X + GridStartX - 2, (int)pos.Y + 2, PanelWidth - GridStartX, PanelHeight - 4);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridRect, _styleProvider.ScrollTrackBackground);
 
             // Draw slot fills (8 columns x 2 visible rows)
             // Match SpellPanelItem.GetDisplayPosition: X=101+col*45, Y=9+row*52
@@ -165,7 +165,7 @@ namespace EndlessClient.HUD.Panels
                     var slotY = (int)pos.Y + GridStartY + (row * SlotYSpacing);
                     var slotRect = new Rectangle(slotX, slotY, SlotWidth, SlotHeight);
 
-                    var slotColor = (row + col) % 2 == 0 ? new Color(55, 50, 45, 180) : new Color(50, 45, 40, 180);
+                    var slotColor = (row + col) % 2 == 0 ? _styleProvider.SlotBackgroundAlt : _styleProvider.SlotBackground;
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, slotColor);
                 }
             }
@@ -204,7 +204,7 @@ namespace EndlessClient.HUD.Panels
 
             // Draw left info panel border
             var leftPanelRect = new Rectangle((int)scaledPos.X, (int)scaledPos.Y, (int)(LeftPanelWidth * scale), (int)(PanelHeight * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(80, 70, 60), 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, _styleProvider.SlotBorder, 1);
 
             // Draw slot borders (8 columns x 2 visible rows)
             // Match SpellPanelItem.GetDisplayPosition: X=101+col*45, Y=9+row*52
@@ -216,7 +216,7 @@ namespace EndlessClient.HUD.Panels
                     var slotY = (int)(scaledPos.Y + (GridStartY + row * SlotYSpacing) * scale);
                     var slotRect = new Rectangle(slotX, slotY, (int)(SlotWidth * scale), (int)(SlotHeight * scale));
 
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, new Color(70, 60, 50), 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, _styleProvider.SlotBorder, 1);
                 }
             }
 
@@ -242,12 +242,12 @@ namespace EndlessClient.HUD.Panels
 
             // Draw left info panel (selected spell)
             var leftPanelRect = new Rectangle((int)pos.X, (int)pos.Y, LeftPanelWidth, PanelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(50, 45, 40, 220));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(80, 70, 60), 1);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, _styleProvider.SlotBackground);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, _styleProvider.SlotBorder, 1);
 
             // Draw grid area background
             var gridRect = new Rectangle((int)pos.X + GridStartX - 2, (int)pos.Y + 2, PanelWidth - GridStartX, PanelHeight - 4);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridRect, _styleProvider.ScrollTrackBackground);
 
             // Draw slot grid lines (8 columns x 2 visible rows)
             // Match SpellPanelItem.GetDisplayPosition: X=101+col*45, Y=9+row*52
@@ -260,9 +260,9 @@ namespace EndlessClient.HUD.Panels
                     var slotRect = new Rectangle(slotX, slotY, SlotWidth, SlotHeight);
 
                     // Draw slot background
-                    var slotColor = (row + col) % 2 == 0 ? new Color(55, 50, 45, 180) : new Color(50, 45, 40, 180);
+                    var slotColor = (row + col) % 2 == 0 ? _styleProvider.SlotBackgroundAlt : _styleProvider.SlotBackground;
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, slotColor);
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, new Color(70, 60, 50), 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, _styleProvider.SlotBorder, 1);
                 }
             }
 

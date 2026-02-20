@@ -222,6 +222,11 @@ namespace EndlessClient
                                 // Avoid IDisposable and System interfaces
                                 if (i.Namespace != null && i.Namespace.StartsWith("System")) continue;
 
+                                // Skip IUIStyleProvider - multiple providers implement this interface
+                                // but we want UIStyleProviderProxy (via MappedType) to be the sole registration
+                                // so the correct theme is resolved through the factory
+                                if (i.Name == "IUIStyleProvider") continue;
+
                                 try
                                 {
                                     var lifetimeManager = autoMap.IsSingleton ? Activator.CreateInstance(singletonManagerType) : Activator.CreateInstance(transientManagerType);

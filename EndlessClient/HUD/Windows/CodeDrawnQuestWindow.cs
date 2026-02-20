@@ -347,13 +347,13 @@ namespace EndlessClient.HUD.Windows
             var checkRect = new Rectangle((int)checkboxX, (int)checkboxY, checkboxSize, checkboxSize);
 
             // Checkbox background
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, new Color(40, 40, 40));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, _styleProvider.SlotBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, checkRect, _styleProvider.PanelBorder, 1);
 
             // Checkmark if enabled
             if (_questTrackerEnabled)
             {
-                _spriteBatch.DrawString(font, "x", new Vector2(checkboxX + 2, checkboxY), new Color(100, 200, 100));
+                _spriteBatch.DrawString(font, "x", new Vector2(checkboxX + 2, checkboxY), _styleProvider.CompletionColor);
             }
 
             // Label
@@ -398,13 +398,13 @@ namespace EndlessClient.HUD.Windows
             _trackerCheckboxRect = new Rectangle((int)checkboxX, (int)checkboxY, CheckboxSize, CheckboxSize);
 
             // Checkbox background
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, _trackerCheckboxRect, new Color(40, 40, 40));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, _trackerCheckboxRect, _styleProvider.SlotBackground);
             DrawingPrimitives.DrawRectBorder(_spriteBatch, _trackerCheckboxRect, _styleProvider.PanelBorder, 1);
 
             // Checkmark if enabled
             if (_questTrackerEnabled)
             {
-                _spriteBatch.DrawString(_font, "x", new Vector2(checkboxX + 2, checkboxY), new Color(100, 200, 100));
+                _spriteBatch.DrawString(_font, "x", new Vector2(checkboxX + 2, checkboxY), _styleProvider.CompletionColor);
             }
 
             // Label
@@ -440,12 +440,12 @@ namespace EndlessClient.HUD.Windows
                         var checkRect = new Rectangle(checkX, checkY, CheckboxSize, CheckboxSize);
                         _questCheckboxRects[i] = checkRect;
 
-                        DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, new Color(40, 40, 40));
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, _styleProvider.SlotBackground);
                         DrawingPrimitives.DrawRectBorder(_spriteBatch, checkRect, _styleProvider.PanelBorder, 1);
 
                         if (_trackedQuestNames.Contains(quest.Name))
                         {
-                            _spriteBatch.DrawString(_font, "x", new Vector2(checkX + 2, checkY), new Color(100, 200, 100));
+                            _spriteBatch.DrawString(_font, "x", new Vector2(checkX + 2, checkY), _styleProvider.CompletionColor);
                         }
                     }
 
@@ -509,12 +509,12 @@ namespace EndlessClient.HUD.Windows
                         var checkY = (int)(y + 2 * scale);
                         var checkRect = new Rectangle(checkX, checkY, checkboxSize, checkboxSize);
 
-                        DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, new Color(40, 40, 40));
+                        DrawingPrimitives.DrawFilledRect(_spriteBatch, checkRect, _styleProvider.SlotBackground);
                         DrawingPrimitives.DrawRectBorder(_spriteBatch, checkRect, _styleProvider.PanelBorder, 1);
 
                         if (_trackedQuestNames.Contains(quest.Name))
                         {
-                            _spriteBatch.DrawString(font, "x", new Vector2(checkX + 2, checkY), new Color(100, 200, 100));
+                            _spriteBatch.DrawString(font, "x", new Vector2(checkX + 2, checkY), _styleProvider.CompletionColor);
                         }
                     }
 

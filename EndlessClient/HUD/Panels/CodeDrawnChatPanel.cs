@@ -737,7 +737,7 @@ namespace EndlessClient.HUD.Panels
                 var absRect = new Rectangle((int)pos.X + tabRect.X, (int)pos.Y + tabRect.Y, tabRect.Width, tabRect.Height);
 
                 // Draw tab background
-                var bgColor = info.Active ? _styleProvider.ButtonPressed : info.HasUnread ? new Color(180, 140, 60) : _styleProvider.ButtonNormal;
+                var bgColor = info.Active ? _styleProvider.ButtonPressed : info.HasUnread ? _styleProvider.GoldColor : _styleProvider.ButtonNormal;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, absRect, bgColor);
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
 
@@ -750,7 +750,7 @@ namespace EndlessClient.HUD.Panels
                 if ((tab == ChatTab.Private1 || tab == ChatTab.Private2) && info.Active)
                 {
                     var closeRect = new Rectangle(absRect.X + 3, absRect.Y + 3, 12, 12);
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, new Color(150, 50, 50));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, _styleProvider.DangerColor);
                     _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + 2, closeRect.Y - 1), _styleProvider.TabText);
                 }
             }
@@ -772,7 +772,7 @@ namespace EndlessClient.HUD.Panels
                     (int)(tabRect.Height * scale));
 
                 // Draw tab background
-                var bgColor = info.Active ? _styleProvider.ButtonPressed : info.HasUnread ? new Color(180, 140, 60) : _styleProvider.ButtonNormal;
+                var bgColor = info.Active ? _styleProvider.ButtonPressed : info.HasUnread ? _styleProvider.GoldColor : _styleProvider.ButtonNormal;
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, absRect, bgColor);
                 DrawingPrimitives.DrawRectBorder(_spriteBatch, absRect, _styleProvider.PanelBorder, 1);
 
@@ -786,7 +786,7 @@ namespace EndlessClient.HUD.Panels
                 {
                     var closeSize = (int)(12 * scale);
                     var closeRect = new Rectangle(absRect.X + (int)(3 * scale), absRect.Y + (int)(3 * scale), closeSize, closeSize);
-                    DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, new Color(150, 50, 50));
+                    DrawingPrimitives.DrawFilledRect(_spriteBatch, closeRect, _styleProvider.DangerColor);
                     _spriteBatch.DrawString(_labelFont, "X", new Vector2(closeRect.X + (int)(2 * scale), closeRect.Y - (int)(1 * scale)), _styleProvider.TabText);
                 }
             }
@@ -832,8 +832,8 @@ namespace EndlessClient.HUD.Panels
                                                badgeRadius * 2, badgeRadius * 2);
 
                 // Red badge circle (approximated with filled rect — matches code-drawn style)
-                DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeRect, new Color(220, 50, 50));
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, badgeRect, new Color(180, 30, 30), 1);
+                DrawingPrimitives.DrawFilledRect(_spriteBatch, badgeRect, _styleProvider.DangerColor);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, badgeRect, new Color(_styleProvider.DangerColor, 0.80f), 1);
 
                 // Badge text
                 var badgeText = _unreadCount > 99 ? "99+" : _unreadCount.ToString();
@@ -841,7 +841,7 @@ namespace EndlessClient.HUD.Panels
                 var textPos = new Vector2(
                     badgeCenterX - textSize.Width / 2,
                     badgeCenterY - textSize.Height / 2);
-                _spriteBatch.DrawString(_labelFont, badgeText, textPos, Color.White);
+                _spriteBatch.DrawString(_labelFont, badgeText, textPos, _styleProvider.ButtonText);
             }
 
             _spriteBatch.End();

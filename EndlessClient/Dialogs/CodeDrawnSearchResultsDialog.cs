@@ -240,7 +240,7 @@ namespace EndlessClient.Dialogs
 
             // List area background
             var listRect = new Rectangle((int)pos.X + 8, (int)pos.Y + ListAreaTop, DialogWidth - 40, ListAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, listRect, new Color(0, 0, 0, 60));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, listRect, _styleProvider.SectionBackground);
 
             // Row fills
             for (int i = 0; i < VisibleItems && _scrollOffset + i < _items.Count; i++)
@@ -251,9 +251,9 @@ namespace EndlessClient.Dialogs
                 var itemIndex = _scrollOffset + i;
                 Color rowColor;
                 if (itemIndex == _hoveredIndex)
-                    rowColor = new Color(255, 255, 255, 30);
+                    rowColor = _styleProvider.ListRowHover;
                 else
-                    rowColor = i % 2 == 0 ? new Color(70, 60, 50, 80) : new Color(60, 50, 40, 80);
+                    rowColor = i % 2 == 0 ? _styleProvider.ListRowEven : _styleProvider.ListRowOdd;
 
                 DrawingPrimitives.DrawFilledRect(_spriteBatch, rowRect, rowColor);
             }
@@ -261,14 +261,14 @@ namespace EndlessClient.Dialogs
             // Scrollbar fills
             var scrollX = (int)pos.X + DialogWidth - 24;
             var scrollTrackRect = new Rectangle(scrollX, (int)pos.Y + ListAreaTop, 16, ListAreaHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollTrackRect, new Color(40, 35, 30, 200));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, scrollTrackRect, _styleProvider.ScrollTrackBackground);
 
             // Scroll buttons
-            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            var upColor = _scrollOffset > 0 ? _styleProvider.ButtonNormal : _styleProvider.ButtonDisabled;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollUpRect, upColor);
 
             var maxOffset = Math.Max(0, _items.Count - VisibleItems);
-            var downColor = _scrollOffset < maxOffset ? _styleProvider.ButtonNormal : new Color(60, 55, 50);
+            var downColor = _scrollOffset < maxOffset ? _styleProvider.ButtonNormal : _styleProvider.ButtonDisabled;
             DrawingPrimitives.DrawFilledRect(_spriteBatch, _scrollDownRect, downColor);
 
             // Scroll thumb
@@ -328,7 +328,7 @@ namespace EndlessClient.Dialogs
                 var rowY = (int)(scaledPos.Y + (ListAreaTop + i * ItemHeight) * scale);
 
                 var textColor = itemIndex == _hoveredIndex
-                    ? new Color(150, 230, 255)
+                    ? _styleProvider.LinkHoverColor
                     : _styleProvider.TextHighlight;
 
                 _spriteBatch.DrawString(font, item.Text, new Vector2(scaledPos.X + 12 * scale, rowY + 2 * scale), textColor);
@@ -337,15 +337,15 @@ namespace EndlessClient.Dialogs
             // Scrollbar borders and arrows
             var scrollX = (int)(scaledPos.X + (DialogWidth - 24) * scale);
             var scrollTrackRect = new Rectangle(scrollX, (int)(scaledPos.Y + ListAreaTop * scale), (int)(16 * scale), (int)(ListAreaHeight * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, scrollTrackRect, new Color(80, 70, 60), 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, scrollTrackRect, _styleProvider.ScrollTrackBorder, 1);
 
             var upRect = new Rectangle(scrollX, (int)(scaledPos.Y + ListAreaTop * scale), (int)(16 * scale), (int)(16 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, upRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▲", new Vector2(upRect.X + 3 * scale, upRect.Y + 1 * scale), Color.White);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, upRect, _styleProvider.ButtonBorder, 1);
+            _spriteBatch.DrawString(font, "▲", new Vector2(upRect.X + 3 * scale, upRect.Y + 1 * scale), _styleProvider.ButtonText);
 
             var downRect = new Rectangle(scrollX, (int)(scaledPos.Y + (ListAreaTop + ListAreaHeight - 16) * scale), (int)(16 * scale), (int)(16 * scale));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, downRect, Color.Black, 1);
-            _spriteBatch.DrawString(font, "▼", new Vector2(downRect.X + 3 * scale, downRect.Y + 1 * scale), Color.White);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, downRect, _styleProvider.ButtonBorder, 1);
+            _spriteBatch.DrawString(font, "▼", new Vector2(downRect.X + 3 * scale, downRect.Y + 1 * scale), _styleProvider.ButtonText);
 
             // Scroll thumb border
             if (_items.Count > VisibleItems)
@@ -355,7 +355,7 @@ namespace EndlessClient.Dialogs
                 var maxOffset = _items.Count - VisibleItems;
                 var thumbY = (int)(scaledPos.Y + (ListAreaTop + 17) * scale) + (int)((thumbTrackHeight - thumbHeight) * _scrollOffset / (float)maxOffset);
                 var thumbRect = new Rectangle(scrollX + (int)(2 * scale), thumbY, (int)(12 * scale), thumbHeight);
-                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, new Color(120, 110, 100), 1);
+                DrawingPrimitives.DrawRectBorder(_spriteBatch, thumbRect, _styleProvider.ScrollThumbBorder, 1);
             }
 
             // Cancel button border and text
@@ -365,14 +365,14 @@ namespace EndlessClient.Dialogs
                 (int)(scaledPos.X + (DialogWidth - 80) / 2 * scale),
                 (int)(scaledPos.Y + (DialogHeight - 24 - 12) * scale),
                 buttonWidth, buttonHeight);
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, Color.Black, 1);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, buttonRect, _styleProvider.ButtonBorder, 1);
 
             var buttonText = "Cancel";
             var textSize = headerFont.MeasureString(buttonText);
             var textPos = new Vector2(
                 buttonRect.X + (buttonRect.Width - textSize.Width) / 2,
                 buttonRect.Y + (buttonRect.Height - textSize.Height) / 2);
-            _spriteBatch.DrawString(headerFont, buttonText, textPos, Color.White);
+            _spriteBatch.DrawString(headerFont, buttonText, textPos, _styleProvider.ButtonText);
 
             _spriteBatch.End();
         }

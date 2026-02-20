@@ -89,12 +89,12 @@ namespace EndlessClient.HUD.Panels
 
             // Draw left info panel
             var leftPanelRect = new Rectangle((int)pos.X, (int)pos.Y, LeftPanelWidth, PanelHeight);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, new Color(50, 45, 40, 220));
-            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, new Color(80, 70, 60), 1);
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, leftPanelRect, _styleProvider.SlotBackground);
+            DrawingPrimitives.DrawRectBorder(_spriteBatch, leftPanelRect, _styleProvider.SlotBorder, 1);
 
             // Draw "Passive Skills" header
-            _spriteBatch.DrawString(_headerFont, "Passive", new Vector2(pos.X + 20, pos.Y + 10), Color.White);
-            _spriteBatch.DrawString(_headerFont, "Skills", new Vector2(pos.X + 25, pos.Y + 26), Color.White);
+            _spriteBatch.DrawString(_headerFont, "Passive", new Vector2(pos.X + 20, pos.Y + 10), _styleProvider.TextPrimary);
+            _spriteBatch.DrawString(_headerFont, "Skills", new Vector2(pos.X + 25, pos.Y + 26), _styleProvider.TextPrimary);
 
             // Draw placeholder text
             _spriteBatch.DrawString(_font, "(Not yet", new Vector2(pos.X + 18, pos.Y + 55), _styleProvider.TextSecondary);
@@ -102,7 +102,7 @@ namespace EndlessClient.HUD.Panels
 
             // Draw grid area background
             var gridRect = new Rectangle((int)pos.X + GridStartX - 2, (int)pos.Y + 2, PanelWidth - GridStartX, PanelHeight - 4);
-            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridRect, new Color(40, 35, 30, 180));
+            DrawingPrimitives.DrawFilledRect(_spriteBatch, gridRect, _styleProvider.ScrollTrackBackground);
 
             // Draw empty slot grid (8 columns x 2 visible rows)
             for (int row = 0; row < 2; row++)
@@ -114,9 +114,9 @@ namespace EndlessClient.HUD.Panels
                     var slotRect = new Rectangle(slotX, slotY, SlotSize - 2, SlotSize - 2);
 
                     // Draw slot background
-                    var slotColor = (row + col) % 2 == 0 ? new Color(55, 50, 45, 180) : new Color(50, 45, 40, 180);
+                    var slotColor = (row + col) % 2 == 0 ? _styleProvider.SlotBackgroundAlt : _styleProvider.SlotBackground;
                     DrawingPrimitives.DrawFilledRect(_spriteBatch, slotRect, slotColor);
-                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, new Color(70, 60, 50), 1);
+                    DrawingPrimitives.DrawRectBorder(_spriteBatch, slotRect, _styleProvider.SlotBorder, 1);
                 }
             }
 

@@ -248,7 +248,7 @@ namespace EndlessClient.HUD.Windows
                 var y = startY + i * RowHeight;
 
                 // Bounty name
-                var nameColor = bounty.Status == BountyStatus.Complete ? new Color(100, 200, 100) : _styleProvider.TextPrimary;
+                var nameColor = bounty.Status == BountyStatus.Complete ? _styleProvider.CompletionColor : _styleProvider.TextPrimary;
                 _spriteBatch.DrawString(_font, bounty.Name, new Vector2(pos.X + Padding, y), nameColor);
 
                 // Progress
@@ -256,7 +256,7 @@ namespace EndlessClient.HUD.Windows
                     ? "\u2713"
                     : $"{bounty.Progress}/{bounty.Target}";
                 var progressSize = _font.MeasureString(progressText);
-                var progressColor = bounty.Status == BountyStatus.Complete ? new Color(100, 200, 100) : _styleProvider.TextSecondary;
+                var progressColor = bounty.Status == BountyStatus.Complete ? _styleProvider.CompletionColor : _styleProvider.TextSecondary;
                 _spriteBatch.DrawString(_font, progressText, new Vector2(pos.X + DrawArea.Width - Padding - progressSize.Width, y), progressColor);
             }
         }
@@ -277,7 +277,7 @@ namespace EndlessClient.HUD.Windows
                 var y = startY + i * RowHeight * scale;
 
                 // Bounty name
-                var nameColor = bounty.Status == BountyStatus.Complete ? new Color(100, 200, 100) : _styleProvider.TextPrimary;
+                var nameColor = bounty.Status == BountyStatus.Complete ? _styleProvider.CompletionColor : _styleProvider.TextPrimary;
                 _spriteBatch.DrawString(font, bounty.Name, new Vector2(scaledPos.X + Padding * scale, y), nameColor);
 
                 // Progress
@@ -285,7 +285,7 @@ namespace EndlessClient.HUD.Windows
                     ? "\u2713"
                     : $"{bounty.Progress}/{bounty.Target}";
                 var progressSize = font.MeasureString(progressText);
-                var progressColor = bounty.Status == BountyStatus.Complete ? new Color(100, 200, 100) : _styleProvider.TextSecondary;
+                var progressColor = bounty.Status == BountyStatus.Complete ? _styleProvider.CompletionColor : _styleProvider.TextSecondary;
                 _spriteBatch.DrawString(font, progressText, new Vector2(scaledPos.X + DrawArea.Width * scale - Padding * scale - progressSize.Width, y), progressColor);
             }
         }
