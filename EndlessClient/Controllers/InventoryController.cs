@@ -478,9 +478,17 @@ namespace EndlessClient.Controllers
                 {
                     if (e.Result == XNADialogResult.OK)
                     {
-                        _lockerDataRepository.SuppressDialog = true;
-                        _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
-                        _lockerActions.AddItemToLocker(inventoryItem.WithAmount(transferDialog.SelectedAmount));
+                        if (_lockerActions.GetNewItemAmount(inventoryItem.ItemID, transferDialog.SelectedAmount) > Constants.LockerMaxSingleItemAmount)
+                        {
+                            var dlg = _eoMessageBoxFactory.CreateMessageBox(DialogResourceID.LOCKER_FULL_SINGLE_ITEM_MAX);
+                            dlg.ShowDialog();
+                        }
+                        else
+                        {
+                            _lockerDataRepository.SuppressDialog = true;
+                            _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
+                            _lockerActions.AddItemToLocker(inventoryItem.WithAmount(transferDialog.SelectedAmount));
+                        }
                     }
                 };
 
@@ -488,9 +496,17 @@ namespace EndlessClient.Controllers
             }
             else
             {
-                _lockerDataRepository.SuppressDialog = true;
-                _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
-                _lockerActions.AddItemToLocker(inventoryItem.WithAmount(1));
+                if (_lockerActions.GetNewItemAmount(inventoryItem.ItemID, 1) > Constants.LockerMaxSingleItemAmount)
+                {
+                    var dlg = _eoMessageBoxFactory.CreateMessageBox(DialogResourceID.LOCKER_FULL_SINGLE_ITEM_MAX);
+                    dlg.ShowDialog();
+                }
+                else
+                {
+                    _lockerDataRepository.SuppressDialog = true;
+                    _itemActions.UseItem(InventoryConstants.PortableLockerItemID);
+                    _lockerActions.AddItemToLocker(inventoryItem.WithAmount(1));
+                }
             }
         }
 
