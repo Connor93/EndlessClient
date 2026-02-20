@@ -192,6 +192,20 @@ namespace EndlessClient.Rendering.Character
 
         public void StartOtherCharacterWalkAnimation(int characterID, MapCoordinate destination, EODirection direction)
         {
+            // If the character is mid-attack, cancel it immediately
+            // so the walk doesn't cause dual-animation position drift
+            if (_otherPlayerStartAttackingTimes.ContainsKey(characterID))
+            {
+                _otherPlayerStartAttackingTimes.Remove(characterID);
+
+                GetCurrentCharacterFromRepository(
+                    new RenderFrameActionTime(characterID, 0)).MatchSome(character =>
+                {
+                    var rp = character.RenderProperties.ResetAnimationFrames();
+                    UpdateCharacterInRepository(character, character.WithRenderProperties(rp));
+                });
+            }
+
             if (_otherPlayerStartWalkingTimes.ContainsKey(characterID))
             {
                 _otherPlayerStartWalkingTimes[characterID].SetReplay();

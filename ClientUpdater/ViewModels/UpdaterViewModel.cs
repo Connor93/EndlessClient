@@ -688,12 +688,13 @@ public class UpdaterViewModel : INotifyPropertyChanged
         {
             if (existingIni.Sections.TryGetValue(section.Key, out var existingSection))
             {
+                var overrides = new List<KeyValuePair<string, string>>();
                 foreach (var kvp in section.Value)
                 {
                     if (existingSection.TryGetValue(kvp.Key, out var userValue))
                     {
                         // User has this key — keep their value in the new INI
-                        section.Value[kvp.Key] = userValue;
+                        overrides.Add(new KeyValuePair<string, string>(kvp.Key, userValue));
                         userValuesPreserved++;
                     }
                     else
@@ -702,6 +703,9 @@ public class UpdaterViewModel : INotifyPropertyChanged
                         newKeysAdded++;
                     }
                 }
+
+                foreach (var kvp in overrides)
+                    section.Value[kvp.Key] = kvp.Value;
             }
             else
             {
