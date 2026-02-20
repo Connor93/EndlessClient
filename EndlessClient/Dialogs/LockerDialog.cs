@@ -105,7 +105,7 @@ namespace EndlessClient.Dialogs
 
                 _statusLabelSetter.SetStatusLabel(EOResourceID.STATUS_LABEL_TYPE_INFORMATION, EOResourceID.STATUS_LABEL_ITEM_PICKUP_NO_SPACE_LEFT);
             }
-            else if (itemData.Weight * item.Amount + _characterProvider.MainCharacter.Stats[CharacterStat.Weight] > _characterProvider.MainCharacter.Stats[CharacterStat.MaxWeight])
+            else if (_characterProvider.MainCharacter.Stats[CharacterStat.Weight] >= _characterProvider.MainCharacter.Stats[CharacterStat.MaxWeight])
             {
                 var dlg = _messageBoxFactory.CreateMessageBox(EOResourceID.DIALOG_ITS_TOO_HEAVY_WEIGHT, EOResourceID.STATUS_LABEL_TYPE_WARNING);
                 dlg.ShowDialog();

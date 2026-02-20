@@ -338,8 +338,7 @@ namespace EndlessClient.Dialogs
                     EOResourceID.STATUS_LABEL_TYPE_INFORMATION,
                     EOResourceID.STATUS_LABEL_ITEM_PICKUP_NO_SPACE_LEFT);
             }
-            else if (itemData.Weight * item.Amount +
-                     _characterProvider.MainCharacter.Stats[CharacterStat.Weight] >
+            else if (_characterProvider.MainCharacter.Stats[CharacterStat.Weight] >=
                      _characterProvider.MainCharacter.Stats[CharacterStat.MaxWeight])
             {
                 var dlg = _messageBoxFactory.CreateMessageBox(
