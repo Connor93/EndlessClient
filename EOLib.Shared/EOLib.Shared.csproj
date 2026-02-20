@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../common.targets" />
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>8.0</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
     <OutputPath>..\bin\$(Configuration)\lib\</OutputPath>
-    <Nullable>enable</Nullable>
     <Description>Base library for Endless Online development</Description>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
