@@ -500,22 +500,29 @@ namespace EndlessClient.HUD.Panels
                         {
                             case PaperdollDialog:
                             case CodeDrawnPaperdollDialog:
+                            case MyraPaperdollDialog:
                                 if (item.Data.GetEquipLocation() != EquipLocation.PAPERDOLL_MAX)
                                     _inventoryController.EquipItem(item.Data);
                                 break;
                             case ChestDialog:
                             case CodeDrawnChestDialog:
+                            case MyraChestDialog:
                                 _inventoryController.DropItemInChest(item.Data, item.InventoryItem); break;
                             case LockerDialog:
                             case CodeDrawnLockerDialog:
                             case CodeDrawnGridLockerDialog:
+                            case MyraLockerDialog:
+                            case MyraGridLockerDialog:
                                 _inventoryController.DropItemInLocker(item.Data, item.InventoryItem); break;
                             case BankAccountDialog:
                                 if (item.Data.ID == 1)
                                     _inventoryController.DropItemInBank(item.Data, item.InventoryItem);
                                 break;
                             case TradeDialog:
-                            case CodeDrawnTradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
+                            case CodeDrawnTradeDialog:
+                            case MyraTradeDialog: _inventoryController.TradeItem(item.Data, item.InventoryItem); break;
+                            case MyraShopDialog shopDialog:
+                                shopDialog.AcceptItemDrop(item.Data.ID); break;
                             default: return false;
                         }
                         ;

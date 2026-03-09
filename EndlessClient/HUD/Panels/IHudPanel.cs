@@ -18,6 +18,8 @@ namespace EndlessClient.HUD.Panels
 
         bool IsBeingDragged { get; }
 
+        event Action Activated;
+
         event Action DragCompleted;
     }
 }

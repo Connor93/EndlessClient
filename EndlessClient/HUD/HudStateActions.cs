@@ -79,17 +79,17 @@ namespace EndlessClient.HUD
         {
             switch (newState)
             {
-                case InGameStates.News: return hudPanel is NewsPanel;
+                case InGameStates.News: return hudPanel is NewsPanel or MyraNewsPanel;
                 case InGameStates.Inventory: return hudPanel is InventoryPanel;
                 case InGameStates.ActiveSpells: return hudPanel is ActiveSpellsPanel or CodeDrawnActiveSpellsPanel;
-                case InGameStates.PassiveSpells: return hudPanel is PassiveSpellsPanel or CodeDrawnPassiveSpellsPanel;
-                case InGameStates.Chat: return hudPanel is ChatPanel or CodeDrawnChatPanel;
-                case InGameStates.Stats: return hudPanel is StatsPanel or CodeDrawnStatsPanel;
-                case InGameStates.OnlineList: return hudPanel is OnlineListPanel or CodeDrawnOnlineListPanel;
-                case InGameStates.Party: return hudPanel is PartyPanel or CodeDrawnPartyPanel;
+                case InGameStates.PassiveSpells: return hudPanel is PassiveSpellsPanel or CodeDrawnPassiveSpellsPanel or MyraPassiveSpellsPanel;
+                case InGameStates.Chat: return hudPanel is ChatPanel or CodeDrawnChatPanel or MyraChatPanel;
+                case InGameStates.Stats: return hudPanel is StatsPanel or CodeDrawnStatsPanel or MyraStatsPanel;
+                case InGameStates.OnlineList: return hudPanel is OnlineListPanel or CodeDrawnOnlineListPanel or MyraOnlineListPanel;
+                case InGameStates.Party: return hudPanel is PartyPanel or CodeDrawnPartyPanel or MyraPartyPanel;
                 case InGameStates.Macro: return hudPanel is MacroPanel or CodeDrawnMacroPanel;
-                case InGameStates.Settings: return hudPanel is SettingsPanel or CodeDrawnSettingsPanel;
-                case InGameStates.Help: return hudPanel is HelpPanel;
+                case InGameStates.Settings: return hudPanel is SettingsPanel or CodeDrawnSettingsPanel or MyraSettingsPanel;
+                case InGameStates.Help: return hudPanel is HelpPanel or MyraHelpPanel;
                 default: throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
             }
         }

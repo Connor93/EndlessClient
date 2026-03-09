@@ -308,7 +308,7 @@ namespace EndlessClient.Dialogs
             if (needItemTransferDialog)
             {
                 var itemTransferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(data.Name,
-                    CodeDrawnItemTransferDialog.TransferType.ShopTransfer,
+                    ItemTransferType.ShopTransfer,
                     buying ? shopItem.MaxBuy : inventoryItem.Match(x => x.Amount, () => 0),
                     buying ? EOResourceID.DIALOG_TRANSFER_BUY : EOResourceID.DIALOG_TRANSFER_SELL);
                 itemTransferDialog.DialogClosing += (_, e) =>

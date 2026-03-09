@@ -4,4 +4,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Prevent System.Windows.Forms implicit using on net8.0-windows -->
+    <!-- This causes CS0104 ambiguity between System.Windows.Forms.Keys and Microsoft.Xna.Framework.Input.Keys -->
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
 </Project>

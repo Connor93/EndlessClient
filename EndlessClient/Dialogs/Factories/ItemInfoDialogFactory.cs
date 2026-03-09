@@ -4,6 +4,7 @@ using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering;
 using EndlessClient.Services;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Interact;
@@ -28,6 +29,7 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IMyraUIManager _myraUIManager;
 
         public ItemInfoDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                      IEODialogButtonService dialogButtonService,
@@ -39,7 +41,8 @@ namespace EndlessClient.Dialogs.Factories
                                      IGameStateProvider gameStateProvider,
                                      IClientWindowSizeProvider clientWindowSizeProvider,
                                      IGraphicsDeviceProvider graphicsDeviceProvider,
-                                     IContentProvider contentProvider)
+                                     IContentProvider contentProvider,
+                                     IMyraUIManager myraUIManager)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _dialogButtonService = dialogButtonService;
@@ -52,22 +55,21 @@ namespace EndlessClient.Dialogs.Factories
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _contentProvider = contentProvider;
+            _myraUIManager = myraUIManager;
         }
 
         public IXNADialog Create(EIFRecord item)
         {
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
-                return new CodeDrawnItemInfoDialog(
-                    _styleProviderFactory.Create(),
-                    _gameStateProvider,
+                return new MyraItemInfoDialog(
+                    _myraUIManager,
                     _clientWindowSizeProvider,
                     _graphicsDeviceProvider,
-                    _contentProvider,
+                    _nativeGraphicsManager,
                     _itemSourceProvider,
                     _eifFileProvider,
                     _enfFileProvider,
-                    _nativeGraphicsManager,
                     item);
             }
 

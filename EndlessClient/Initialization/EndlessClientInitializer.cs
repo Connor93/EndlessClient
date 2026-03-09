@@ -9,6 +9,7 @@ using EndlessClient.HUD.Controls;
 using EndlessClient.Input;
 using EndlessClient.Network;
 using EndlessClient.Rendering;
+using EndlessClient.UI.Myra;
 using EndlessClient.UIControls;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Input.InputListeners;
@@ -36,6 +37,7 @@ namespace EndlessClient.Initialization
         private readonly IHudControlsFactory _hudControlsFactory;
         private readonly IPaperdollDialogFactory _paperdollDialogFactory;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
+        private readonly IMyraUIManager _myraUIManager;
         private readonly DispatcherGameComponent _dispatcherGameComponent;
         private readonly PacketHandlerGameComponent _packetHandlerGameComponent;
 
@@ -57,6 +59,7 @@ namespace EndlessClient.Initialization
                                         IHudControlsFactory hudControlsFactory,
                                         IPaperdollDialogFactory paperdollDialogFactory,
                                         IClientWindowSizeProvider clientWindowSizeProvider,
+                                        IMyraUIManager myraUIManager,
                                         // Persistent game components (required for macOS manual registration)
                                         DispatcherGameComponent dispatcherGameComponent,
                                         PacketHandlerGameComponent packetHandlerGameComponent)
@@ -77,6 +80,7 @@ namespace EndlessClient.Initialization
             _hudControlsFactory = hudControlsFactory;
             _paperdollDialogFactory = paperdollDialogFactory;
             _clientWindowSizeProvider = clientWindowSizeProvider;
+            _myraUIManager = myraUIManager;
             _dispatcherGameComponent = dispatcherGameComponent;
             _packetHandlerGameComponent = packetHandlerGameComponent;
         }
@@ -100,9 +104,10 @@ namespace EndlessClient.Initialization
                 DoubleClickMilliseconds = 150,
                 DragThreshold = 1
             };
-            // Pass MouseCoordinateTransformer for scaled rendering support
             var mouseCoordinateTransformer = new MouseCoordinateTransformer(_clientWindowSizeProvider);
-            _game.Components.Add(new InputManager(GameRepository.GetGame(), mouseListenerSettings, mouseCoordinateTransformer));
+            var inputManager = new InputManager(GameRepository.GetGame(), mouseListenerSettings, mouseCoordinateTransformer);
+            inputManager.ShouldBlockMouseInput = () => _myraUIManager.IsMouseOverGUI();
+            _game.Components.Add(inputManager);
 
             _endlessGameRepository.Game = _game;
 

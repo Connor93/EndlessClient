@@ -23,7 +23,7 @@ namespace EndlessClient.HUD.Windows
     /// which is populated by the quest progress poll cycle.
     /// Polls independently so bounties update without the quest window being open.
     /// </summary>
-    public class CodeDrawnBountyTrackerWindow : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnBountyTrackerWindow : DraggableHudPanel, IZOrderedWindow, IBountyTrackerWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;

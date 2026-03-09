@@ -8,6 +8,7 @@ using EndlessClient.GameExecution;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.Rendering;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
@@ -37,6 +38,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IItemStringService _itemStringService;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
         private IInventoryController _inventoryController;
 
         public PaperdollDialogFactory(INativeGraphicsManager nativeGraphicsManager,
@@ -54,7 +57,9 @@ namespace EndlessClient.Dialogs.Factories
             IContentProvider contentProvider,
             IClientWindowSizeProvider clientWindowSizeProvider,
             IGraphicsDeviceProvider graphicsDeviceProvider,
-            IItemStringService itemStringService)
+            IItemStringService itemStringService,
+            IMyraUIManager myraUIManager,
+            IMyraFontProvider myraFontProvider)
         {
             _paperdollProvider = paperdollProvider;
             _pubFileProvider = pubFileProvider;
@@ -72,27 +77,25 @@ namespace EndlessClient.Dialogs.Factories
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _itemStringService = itemStringService;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public IXNADialog Create(Character character, bool isMainCharacter)
         {
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
-                return new CodeDrawnPaperdollDialog(
-                    _styleProviderFactory.Create(),
-                    _gameStateProvider,
-                    _clientWindowSizeProvider,
-                    _graphicsDeviceProvider,
+                return new MyraPaperdollDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
                     _nativeGraphicsManager,
                     _inventoryController,
                     _paperdollProvider,
                     _pubFileProvider,
-                    _hudControlProvider,
                     _inventorySpaceValidator,
                     _eoMessageBoxFactory,
                     _statusLabelSetter,
                     _sfxPlayer,
-                    _contentProvider,
                     _itemStringService,
                     character,
                     isMainCharacter);

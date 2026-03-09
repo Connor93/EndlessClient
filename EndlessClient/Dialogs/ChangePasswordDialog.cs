@@ -16,7 +16,7 @@ using XNAControls;
 
 namespace EndlessClient.Dialogs
 {
-    public class ChangePasswordDialog : BaseEODialog
+    public class ChangePasswordDialog : BaseEODialog, IChangePasswordDialog
     {
         private readonly IEOMessageBoxFactory _eoMessageBoxFactory;
         private readonly IPlayerInfoProvider _playerInfoProvider;

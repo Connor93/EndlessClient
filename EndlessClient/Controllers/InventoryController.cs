@@ -325,7 +325,7 @@ namespace EndlessClient.Controllers
                         _lockerActions.AddItemToLocker(inventoryItem.WithAmount(a));
                     }
                 },
-                CodeDrawnItemTransferDialog.TransferType.ShopTransfer,
+                ItemTransferType.ShopTransfer,
                 EOResourceID.DIALOG_TRANSFER_TRANSFER);
             }
         }
@@ -342,7 +342,7 @@ namespace EndlessClient.Controllers
                 DoItemDrop(itemData,
                     inventoryItem,
                     a => _bankActions.Deposit(a),
-                    CodeDrawnItemTransferDialog.TransferType.BankTransfer,
+                    ItemTransferType.BankTransfer,
                     EOResourceID.DIALOG_TRANSFER_DEPOSIT);
             }
         }
@@ -364,7 +364,7 @@ namespace EndlessClient.Controllers
                 {
                     var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(
                         itemData.Name,
-                        CodeDrawnItemTransferDialog.TransferType.JunkItems,
+                        ItemTransferType.JunkItems,
                         inventoryItem.Amount,
                         EOResourceID.DIALOG_TRANSFER_JUNK);
                     transferDialog.DialogClosing += (sender, e) =>
@@ -403,13 +403,13 @@ namespace EndlessClient.Controllers
             {
                 DoItemDrop(itemData, inventoryItem,
                     a => _tradeActions.AddItemToOffer(inventoryItem.ItemID, a),
-                    CodeDrawnItemTransferDialog.TransferType.TradeItems,
+                    ItemTransferType.TradeItems,
                     EOResourceID.DIALOG_TRANSFER_OFFER);
             }
         }
 
         private void DoItemDrop(EIFRecord itemData, InventoryItem inventoryItem, Action<int> dropAction,
-                 CodeDrawnItemTransferDialog.TransferType transferType = CodeDrawnItemTransferDialog.TransferType.DropItems,
+                 ItemTransferType transferType = ItemTransferType.DropItems,
                  EOResourceID message = EOResourceID.DIALOG_TRANSFER_DROP)
         {
             if (inventoryItem.Amount > 1)
@@ -424,7 +424,7 @@ namespace EndlessClient.Controllers
                 {
                     if (e.Result == XNADialogResult.OK)
                     {
-                        var isLargeGoldItemDrop = inventoryItem.ItemID == 1 && inventoryItem.Amount > 10000 && transferType == CodeDrawnItemTransferDialog.TransferType.DropItems;
+                        var isLargeGoldItemDrop = inventoryItem.ItemID == 1 && inventoryItem.Amount > 10000 && transferType == ItemTransferType.DropItems;
 
                         if (isLargeGoldItemDrop && !_goldWarningShown)
                         {
@@ -470,7 +470,7 @@ namespace EndlessClient.Controllers
             {
                 var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(
                     itemData.Name,
-                    CodeDrawnItemTransferDialog.TransferType.ShopTransfer,
+                    ItemTransferType.ShopTransfer,
                     inventoryItem.Amount,
                     EOResourceID.DIALOG_TRANSFER_TRANSFER);
 

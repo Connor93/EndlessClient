@@ -4,6 +4,7 @@ using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering;
 using EndlessClient.Services;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Interact.Quest;
@@ -29,6 +30,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IGameStateProvider _gameStateProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public QuestDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                   IQuestActions questActions,
@@ -41,7 +44,9 @@ namespace EndlessClient.Dialogs.Factories
                                   IUIStyleProviderFactory styleProviderFactory,
                                   IGameStateProvider gameStateProvider,
                                   IClientWindowSizeProvider clientWindowSizeProvider,
-                                  IGraphicsDeviceProvider graphicsDeviceProvider)
+                                  IGraphicsDeviceProvider graphicsDeviceProvider,
+                                  IMyraUIManager myraUIManager,
+                                  IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _questActions = questActions;
@@ -55,11 +60,23 @@ namespace EndlessClient.Dialogs.Factories
             _gameStateProvider = gameStateProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public IXNADialog Create()
         {
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraQuestDialog(_myraUIManager,
+                                            _myraFontProvider,
+                                            _questActions,
+                                            _questDataProvider,
+                                            _enfFileProvider,
+                                            _localizedStringFinder);
+            }
+
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
                 return new CodeDrawnQuestDialog(_styleProviderFactory.Create(),
                                                 _gameStateProvider,

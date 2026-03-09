@@ -5,6 +5,7 @@ using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Chat;
 using EndlessClient.Rendering;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Graphics;
@@ -21,10 +22,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IConfigurationProvider _configProvider;
-        private readonly IUIStyleProviderFactory _styleProviderFactory;
-        private readonly IGameStateProvider _gameStateProvider;
-        private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
-        private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public TextInputDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                       IChatTextBoxActions chatTextBoxActions,
@@ -32,10 +31,8 @@ namespace EndlessClient.Dialogs.Factories
                                       IContentProvider contentProvider,
                                       ISfxPlayer sfxPlayer,
                                       IConfigurationProvider configProvider,
-                                      IUIStyleProviderFactory styleProviderFactory,
-                                      IGameStateProvider gameStateProvider,
-                                      IClientWindowSizeProvider clientWindowSizeProvider,
-                                      IGraphicsDeviceProvider graphicsDeviceProvider)
+                                      IMyraUIManager myraUIManager,
+                                      IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _chatTextBoxActions = chatTextBoxActions;
@@ -43,25 +40,19 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _sfxPlayer = sfxPlayer;
             _configProvider = configProvider;
-            _styleProviderFactory = styleProviderFactory;
-            _gameStateProvider = gameStateProvider;
-            _clientWindowSizeProvider = clientWindowSizeProvider;
-            _graphicsDeviceProvider = graphicsDeviceProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public ITextInputDialog Create(string prompt, int maxInputChars = 12, bool upperCase = false)
         {
             ITextInputDialog dlg;
 
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
-                dlg = new CodeDrawnTextInputDialog(
-                    _styleProviderFactory.Create(),
-                    _gameStateProvider,
-                    _clientWindowSizeProvider,
-                    _graphicsDeviceProvider,
-                    _contentProvider,
-                    _chatTextBoxActions,
+                dlg = new MyraTextInputDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
                     prompt,
                     maxInputChars,
                     upperCase);
@@ -87,3 +78,4 @@ namespace EndlessClient.Dialogs.Factories
         ITextInputDialog Create(string prompt, int maxInputChars = 12, bool upperCase = false);
     }
 }
+

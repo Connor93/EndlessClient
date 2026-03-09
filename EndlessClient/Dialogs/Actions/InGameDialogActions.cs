@@ -112,7 +112,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.FriendIgnoreDialog.MatchNone(() =>
             {
                 var dlg = _friendIgnoreListDialogFactory.Create(isFriendList: true);
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.FriendIgnoreDialog = Option.None<FriendIgnoreListDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.FriendIgnoreDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.FriendIgnoreDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -126,7 +126,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.FriendIgnoreDialog.MatchNone(() =>
             {
                 var dlg = _friendIgnoreListDialogFactory.Create(isFriendList: false);
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.FriendIgnoreDialog = Option.None<FriendIgnoreListDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.FriendIgnoreDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.FriendIgnoreDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -140,7 +140,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.SessionExpDialog.MatchNone(() =>
             {
                 var dlg = _sessionExpDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.SessionExpDialog = Option.None<SessionExpDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.SessionExpDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.SessionExpDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -154,7 +154,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.QuestStatusDialog.MatchNone(() =>
             {
                 var dlg = _questStatusDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.QuestStatusDialog = Option.None<QuestStatusDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.QuestStatusDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.QuestStatusDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -204,8 +204,8 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.BookDialog.MatchNone(() =>
             {
                 var dlg = _bookDialogFactory.Create(character, isMainCharacter);
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.BookDialog = Option.None<BookDialog>();
-                _activeDialogRepository.BookDialog = Option.Some(dlg);
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.BookDialog = Option.None<IXNADialog>();
+                _activeDialogRepository.BookDialog = Option.Some<IXNADialog>(dlg);
 
                 UseDefaultDialogSounds(dlg);
 
@@ -284,7 +284,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.BankAccountDialog.MatchNone(() =>
             {
                 var dlg = _bankAccountDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.BankAccountDialog = Option.None<BankAccountDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.BankAccountDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.BankAccountDialog = Option.Some(dlg);
 
                 UseDefaultDialogSounds(dlg);
@@ -298,7 +298,7 @@ namespace EndlessClient.Dialogs.Actions
             var dlg = _skillmasterDialogFactory.Create();
             dlg.DialogClosed += (_, _) =>
             {
-                _activeDialogRepository.SkillmasterDialog = Option.None<SkillmasterDialog>();
+                _activeDialogRepository.SkillmasterDialog = Option.None<IXNADialog>();
                 _skillDataRepository.ResetState();
             };
             _activeDialogRepository.SkillmasterDialog = Option.Some(dlg);
@@ -315,9 +315,9 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _bardDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.BardDialog = Option.None<BardDialog>();
+                    _activeDialogRepository.BardDialog = Option.None<IXNADialog>();
                 };
-                _activeDialogRepository.BardDialog = Option.Some(dlg);
+                _activeDialogRepository.BardDialog = Option.Some<IXNADialog>(dlg);
 
                 UseDefaultDialogSounds(dlg);
 
@@ -413,7 +413,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.BoardDialog.MatchNone(() =>
             {
                 var dlg = _boardDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.BoardDialog = Option.None<BoardDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.BoardDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.BoardDialog = Option.Some(dlg);
 
                 dlg.Show();
@@ -430,8 +430,8 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.JukeboxDialog.MatchNone(() =>
             {
                 var dlg = _jukeboxDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.JukeboxDialog = Option.None<JukeboxDialog>();
-                _activeDialogRepository.JukeboxDialog = Option.Some(dlg);
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.JukeboxDialog = Option.None<IXNADialog>();
+                _activeDialogRepository.JukeboxDialog = Option.Some<IXNADialog>(dlg);
 
                 dlg.Show();
 
@@ -448,8 +448,8 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.InnkeeperDialog.MatchNone(() =>
             {
                 var dlg = _innkeeperDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.InnkeeperDialog = Option.None<InnkeeperDialog>();
-                _activeDialogRepository.InnkeeperDialog = Option.Some(dlg);
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.InnkeeperDialog = Option.None<IXNADialog>();
+                _activeDialogRepository.InnkeeperDialog = Option.Some<IXNADialog>(dlg);
 
                 dlg.Show();
 
@@ -462,8 +462,8 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.LawDialog.MatchNone(() =>
             {
                 var dlg = _lawDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.LawDialog = Option.None<LawDialog>();
-                _activeDialogRepository.LawDialog = Option.Some(dlg);
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.LawDialog = Option.None<IXNADialog>();
+                _activeDialogRepository.LawDialog = Option.Some<IXNADialog>(dlg);
 
                 dlg.Show();
 
@@ -476,7 +476,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.GuildDialog.MatchNone(() =>
             {
                 var dlg = _guildDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.GuildDialog = Option.None<GuildDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.GuildDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.GuildDialog = Option.Some(dlg);
 
                 dlg.Show();
@@ -490,7 +490,7 @@ namespace EndlessClient.Dialogs.Actions
             _activeDialogRepository.HelpDialog.MatchNone(() =>
             {
                 var dlg = _helpDialogFactory.Create();
-                dlg.DialogClosed += (_, _) => _activeDialogRepository.HelpDialog = Option.None<ScrollingListDialog>();
+                dlg.DialogClosed += (_, _) => _activeDialogRepository.HelpDialog = Option.None<IXNADialog>();
                 _activeDialogRepository.HelpDialog = Option.Some(dlg);
 
                 dlg.Show();
@@ -506,7 +506,7 @@ namespace EndlessClient.Dialogs.Actions
                 var dlg = _barberDialogFactory.Create();
                 dlg.DialogClosed += (_, _) =>
                 {
-                    _activeDialogRepository.BarberDialog = Option.None<CodeDrawnBarberDialog>();
+                    _activeDialogRepository.BarberDialog = Option.None<IBarberDialog>();
                 };
                 _activeDialogRepository.BarberDialog = Option.Some(dlg);
 

@@ -5,8 +5,10 @@ using EndlessClient.GameExecution;
 using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Factories;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EndlessClient.UIControls;
+using EOLib.Config;
 using EOLib.Graphics;
 
 namespace EndlessClient.Dialogs.Factories
@@ -22,6 +24,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IXnaControlSoundMapper _xnaControlSoundMapper;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
+        private readonly IConfigurationProvider _configProvider;
 
         public CreateCharacterDialogFactory(IUIStyleProvider styleProvider,
                                             IGameStateProvider gameStateProvider,
@@ -30,7 +35,10 @@ namespace EndlessClient.Dialogs.Factories
                                             IEOMessageBoxFactory eoMessageBoxFactory,
                                             IXnaControlSoundMapper xnaControlSoundMapper,
                                             IClientWindowSizeProvider clientWindowSizeProvider,
-                                            IGraphicsDeviceProvider graphicsDeviceProvider)
+                                            IGraphicsDeviceProvider graphicsDeviceProvider,
+                                            IMyraUIManager myraUIManager,
+                                            IMyraFontProvider myraFontProvider,
+                                            IConfigurationProvider configProvider)
         {
             _styleProvider = styleProvider;
             _gameStateProvider = gameStateProvider;
@@ -40,10 +48,25 @@ namespace EndlessClient.Dialogs.Factories
             _xnaControlSoundMapper = xnaControlSoundMapper;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
+            _configProvider = configProvider;
         }
 
-        public CodeDrawnCreateCharacterDialog BuildCreateCharacterDialog()
+        public ICreateCharacterResult BuildCreateCharacterDialog()
         {
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                var dialog = new MyraCreateCharacterDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _characterRendererFactory,
+                    _eoMessageBoxFactory,
+                    _clientWindowSizeProvider);
+                dialog.InitializeOverlay();
+                return dialog;
+            }
+
             return new CodeDrawnCreateCharacterDialog(_styleProvider,
                                                       _gameStateProvider,
                                                       _characterRendererFactory,
@@ -55,8 +78,20 @@ namespace EndlessClient.Dialogs.Factories
         }
     }
 
+    /// <summary>
+    /// Common interface for accessing character creation results from either dialog type.
+    /// </summary>
+    public interface ICreateCharacterResult : XNAControls.IXNADialog
+    {
+        string CharacterName { get; }
+        int Gender { get; }
+        int HairStyle { get; }
+        int HairColor { get; }
+        int Race { get; }
+    }
+
     public interface ICreateCharacterDialogFactory
     {
-        CodeDrawnCreateCharacterDialog BuildCreateCharacterDialog();
+        ICreateCharacterResult BuildCreateCharacterDialog();
     }
 }

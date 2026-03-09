@@ -2,11 +2,14 @@
 using EndlessClient.ControlSets;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD;
+using EndlessClient.UI.Myra;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Bank;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -25,6 +28,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IBankDataProvider _bankDataProvider;
         private readonly ICharacterInventoryProvider _characterInventoryProvider;
         private readonly IEIFFileProvider _eifFileProvider;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public BankAccountDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                         IBankActions bankActions,
@@ -37,7 +43,10 @@ namespace EndlessClient.Dialogs.Factories
                                         IHudControlProvider hudControlProvider,
                                         IBankDataProvider bankDataProvider,
                                         ICharacterInventoryProvider characterInventoryProvider,
-                                        IEIFFileProvider eifFileProvider)
+                                        IEIFFileProvider eifFileProvider,
+                                        IConfigurationProvider configProvider,
+                                        IMyraUIManager myraUIManager,
+                                        IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _bankActions = bankActions;
@@ -51,10 +60,28 @@ namespace EndlessClient.Dialogs.Factories
             _bankDataProvider = bankDataProvider;
             _characterInventoryProvider = characterInventoryProvider;
             _eifFileProvider = eifFileProvider;
+            _configProvider = configProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public BankAccountDialog Create()
+        public IXNADialog Create()
         {
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraBankAccountDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _bankActions,
+                    _localizedStringFinder,
+                    _statusLabelSetter,
+                    _messageBoxFactory,
+                    _itemTransferDialogFactory,
+                    _bankDataProvider,
+                    _characterInventoryProvider,
+                    _eifFileProvider);
+            }
+
             return new BankAccountDialog(_nativeGraphicsManager,
                                          _bankActions,
                                          _dialogButtonService,
@@ -72,6 +99,6 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IBankAccountDialogFactory
     {
-        BankAccountDialog Create();
+        IXNADialog Create();
     }
 }

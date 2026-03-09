@@ -2,6 +2,6 @@
 {
     public interface IChangePasswordDialogFactory
     {
-        ChangePasswordDialog BuildChangePasswordDialog();
+        IChangePasswordDialog BuildChangePasswordDialog();
     }
 }

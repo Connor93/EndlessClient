@@ -19,7 +19,7 @@ namespace EndlessClient.Dialogs
     /// A code-drawn search results dialog with post-scale rendering support.
     /// Used by #item and #npc commands when multiple matches are found.
     /// </summary>
-    public class CodeDrawnSearchResultsDialog : XNADialog, IPostScaleDrawable
+    public class CodeDrawnSearchResultsDialog : XNADialog, IPostScaleDrawable, ISearchResultsDialog
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;

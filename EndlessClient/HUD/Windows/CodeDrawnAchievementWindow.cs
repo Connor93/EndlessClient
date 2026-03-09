@@ -8,6 +8,7 @@ using EndlessClient.Rendering.Character;
 using EndlessClient.UI.Controls;
 using EndlessClient.UI.Styles;
 using EOLib.Domain.Achievement;
+using EOLib.Domain.Character;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Shared;
@@ -23,7 +24,7 @@ namespace EndlessClient.HUD.Windows
     /// A draggable floating window that displays all achievements, their progress,
     /// tier details, and per-tier leaderboard.
     /// </summary>
-    public class CodeDrawnAchievementWindow : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnAchievementWindow : DraggableHudPanel, IZOrderedWindow, IAchievementWindow
     {
         private enum AchievementTab { All, NpcKills, Quests, Maps, Equipment, Crafting, Pets, Badges }
 
@@ -34,6 +35,7 @@ namespace EndlessClient.HUD.Windows
         private readonly IAchievementActions _achievementActions;
         private readonly IContentProvider _contentProvider;
         private readonly IEIFFileProvider _eifFileProvider;
+        private readonly ICharacterRepository _characterRepository;
         private readonly BitmapFont _font;
         private readonly BitmapFont _labelFont;
         private Texture2D _badgeSheet;
@@ -138,7 +140,8 @@ namespace EndlessClient.HUD.Windows
             IClientWindowSizeProvider clientWindowSizeProvider,
             IAchievementProvider achievementProvider,
             IAchievementActions achievementActions,
-            IEIFFileProvider eifFileProvider)
+            IEIFFileProvider eifFileProvider,
+            ICharacterRepository characterRepository)
             : base(true)
         {
             _styleProvider = styleProvider;
@@ -148,6 +151,7 @@ namespace EndlessClient.HUD.Windows
             _achievementActions = achievementActions;
             _contentProvider = contentProvider;
             _eifFileProvider = eifFileProvider;
+            _characterRepository = characterRepository;
             _font = contentProvider.Fonts[Constants.FontSize08];
             _labelFont = contentProvider.Fonts[Constants.FontSize08pt5];
 
@@ -236,6 +240,17 @@ namespace EndlessClient.HUD.Windows
                 if (localX >= saveX && localX <= saveX + saveW && localY >= saveY && localY <= saveY + saveH)
                 {
                     _achievementActions.SendBadgeSelection(_selectedBadgeIds.ToArray());
+                    _achievementActions.RequestBadgeData();
+
+                    // Immediately update the local character's badge names
+                    var badgeNames = _selectedBadgeIds
+                        .Select(id => _achievementProvider.Achievements.FirstOrDefault(a => a.Id == id))
+                        .Where(a => a != null)
+                        .Select(a => a.Name)
+                        .ToArray();
+                    _characterRepository.MainCharacter = _characterRepository.MainCharacter
+                        .WithBadgeNames(badgeNames);
+
                     _badgesDirty = false;
                     return true;
                 }

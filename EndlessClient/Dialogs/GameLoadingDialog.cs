@@ -10,7 +10,7 @@ using XNAControls;
 
 namespace EndlessClient.Dialogs
 {
-    public class GameLoadingDialog : BaseEODialog
+    public class GameLoadingDialog : BaseEODialog, IGameLoadingDialog
     {
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly Texture2D _backgroundSprite;

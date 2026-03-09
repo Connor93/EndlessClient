@@ -1,11 +1,15 @@
 ﻿using AutomaticTypeMapper;
 using EndlessClient.Content;
+using EndlessClient.Dialogs.Factories;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.UI.Myra;
+using EOLib.Config;
 using EOLib.Domain.Interact.Law;
 using EOLib.Domain.Map;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -21,6 +25,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly ICurrentMapStateProvider _currentMapStateProvider;
         private readonly IENFFileProvider _enfFileProvider;
+        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public LawDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                 IEODialogButtonService dialogButtonService,
@@ -30,7 +37,10 @@ namespace EndlessClient.Dialogs.Factories
                                 ILawActions lawActions,
                                 IContentProvider contentProvider,
                                 ICurrentMapStateProvider currentMapStateProvider,
-                                IENFFileProvider enfFileProvider)
+                                IENFFileProvider enfFileProvider,
+                                IConfigurationProvider configurationProvider,
+                                IMyraUIManager myraUIManager,
+                                IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _dialogButtonService = dialogButtonService;
@@ -41,10 +51,25 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _currentMapStateProvider = currentMapStateProvider;
             _enfFileProvider = enfFileProvider;
+            _configurationProvider = configurationProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public LawDialog Create()
+        public IXNADialog Create()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraLawDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _localizedStringFinder,
+                    _textInputDialogFactory,
+                    _lawActions,
+                    _currentMapStateProvider,
+                    _enfFileProvider);
+            }
+
             return new LawDialog(_nativeGraphicsManager,
                                  _dialogButtonService,
                                  _dialogIconService,
@@ -59,6 +84,6 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface ILawDialogFactory
     {
-        LawDialog Create();
+        IXNADialog Create();
     }
 }

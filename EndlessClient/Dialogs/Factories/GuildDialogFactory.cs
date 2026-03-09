@@ -2,11 +2,14 @@
 using EndlessClient.Audio;
 using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.UI.Myra;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Guild;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -28,6 +31,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly ICharacterInventoryProvider _characterInventoryProvider;
         private readonly IEIFFileProvider _eifFileProvider;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public GuildDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                 IEODialogButtonService dialogButtonService,
@@ -43,7 +49,10 @@ namespace EndlessClient.Dialogs.Factories
                                 IContentProvider contentProvider,
                                 ICharacterInventoryProvider characterInventoryProvider,
                                 IEIFFileProvider eifFileProvider,
-                                ISfxPlayer sfxPlayer)
+                                ISfxPlayer sfxPlayer,
+                                IConfigurationProvider configProvider,
+                                IMyraUIManager myraUIManager,
+                                IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _dialogButtonService = dialogButtonService;
@@ -60,10 +69,31 @@ namespace EndlessClient.Dialogs.Factories
             _characterInventoryProvider = characterInventoryProvider;
             _eifFileProvider = eifFileProvider;
             _sfxPlayer = sfxPlayer;
+            _configProvider = configProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public GuildDialog Create()
+        public IXNADialog Create()
         {
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraGuildDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _localizedStringFinder,
+                    _characterProvider,
+                    _messageBoxFactory,
+                    _guildSessionProvider,
+                    _guildActions,
+                    _textInputDialogFactory,
+                    _textMultiInputDialogFactory,
+                    _itemTransferDialogFactory,
+                    _characterInventoryProvider,
+                    _eifFileProvider,
+                    _sfxPlayer);
+            }
+
             return new GuildDialog(_nativeGraphicsManager,
                                    _dialogButtonService,
                                    _dialogIconService,
@@ -84,6 +114,6 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IGuildDialogFactory
     {
-        GuildDialog Create();
+        IXNADialog Create();
     }
 }

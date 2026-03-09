@@ -21,7 +21,7 @@ namespace EndlessClient.HUD.Windows
     /// A small, draggable floating window that shows tracked quest progress.
     /// Implements IPostScaleDrawable for crisp text rendering at any scale.
     /// </summary>
-    public class CodeDrawnQuestTrackerWindow : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnQuestTrackerWindow : DraggableHudPanel, IZOrderedWindow, IQuestTrackerWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;

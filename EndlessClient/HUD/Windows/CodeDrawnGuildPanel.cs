@@ -28,7 +28,7 @@ namespace EndlessClient.HUD.Windows
     /// A tabbed guild management panel providing GUI access to all guild features.
     /// Sends #guild commands via local chat for server interaction.
     /// </summary>
-    public class CodeDrawnGuildPanel : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnGuildPanel : DraggableHudPanel, IZOrderedWindow, IGuildPanel
     {
         private enum GuildTab { Overview, Members, Bounties, Perks, Buffs }
 

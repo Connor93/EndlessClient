@@ -70,6 +70,7 @@
     <PackageReference Include="Monogame.Content.Builder.Task" Version="3.8.2.1105" />
     <PackageReference Include="MonoGame.Extended.Content.Pipeline" Version="3.8.0" />
     <PackageReference Include="MonoGame.Extended.Input" Version="3.8.0" />
+    <PackageReference Include="Myra" Version="1.5.10" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.10" />
   </ItemGroup>
@@ -83,8 +84,6 @@
       <_customAssets Include="$(MSBuildThisFileDirectory)..\ClientAssets\**\*.*" />
     </ItemGroup>
 
-    <Copy SourceFiles="@(_customAssets)"
-          DestinationFiles="@(_customAssets->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(_customAssets)" DestinationFiles="@(_customAssets->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="false" />
   </Target>
 </Project>

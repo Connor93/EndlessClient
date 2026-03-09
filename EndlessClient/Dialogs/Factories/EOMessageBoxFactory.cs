@@ -6,6 +6,7 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Graphics;
@@ -30,6 +31,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public EOMessageBoxFactory(INativeGraphicsManager nativeGraphicsManager,
                                    IGameStateProvider gameStateProvider,
@@ -41,7 +44,9 @@ namespace EndlessClient.Dialogs.Factories
                                    IUIStyleProviderFactory styleProviderFactory,
                                    IContentProvider contentProvider,
                                    IClientWindowSizeProvider clientWindowSizeProvider,
-                                   IGraphicsDeviceProvider graphicsDeviceProvider)
+                                   IGraphicsDeviceProvider graphicsDeviceProvider,
+                                   IMyraUIManager myraUIManager,
+                                   IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _gameStateProvider = gameStateProvider;
@@ -54,6 +59,8 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public IXNADialog CreateMessageBox(string message,
@@ -63,21 +70,14 @@ namespace EndlessClient.Dialogs.Factories
         {
             IXNADialog messageBox;
 
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
-                var codeDialog = new CodeDrawnDialog(
-                    _styleProviderFactory.Create(),
-                    _gameStateProvider,
-                    _clientWindowSizeProvider,
-                    _graphicsDeviceProvider)
-                {
-                    Message = message,
-                    Caption = caption
-                };
-                var font = _contentProvider.Fonts[Constants.FontSize09];
-                var scaledFont = _contentProvider.Fonts[Constants.FontSize10];
-                codeDialog.SetupDialog(whichButtons, font, scaledFont, _contentProvider);
-                messageBox = codeDialog;
+                messageBox = new MyraEOMessageBox(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    message,
+                    caption,
+                    whichButtons);
             }
             else
             {

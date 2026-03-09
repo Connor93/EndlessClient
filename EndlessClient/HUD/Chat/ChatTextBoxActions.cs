@@ -24,14 +24,17 @@ namespace EndlessClient.HUD.Chat
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                var chatPanel = GetCodeDrawnChatPanel();
-                if (chatPanel != null)
-                    chatPanel.InputText = "";
+                var panel = GetIntegratedChatPanel();
+                if (panel.codeDrawn != null)
+                    panel.codeDrawn.InputText = "";
+                else if (panel.myra != null)
+                    panel.myra.InputText = "";
+                else
+                    GetChatTextBox().Text = "";
             }
             else
             {
-                var chatTextBox = GetChatTextBox();
-                chatTextBox.Text = "";
+                GetChatTextBox().Text = "";
             }
         }
 
@@ -39,9 +42,13 @@ namespace EndlessClient.HUD.Chat
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                var chatPanel = GetCodeDrawnChatPanel();
-                if (chatPanel != null)
-                    chatPanel.InputSelected = true;
+                var panel = GetIntegratedChatPanel();
+                if (panel.codeDrawn != null)
+                    panel.codeDrawn.InputSelected = true;
+                else if (panel.myra != null)
+                    panel.myra.InputSelected = true;
+                else
+                    GetChatTextBox().Selected = true;
             }
             else
             {
@@ -53,8 +60,13 @@ namespace EndlessClient.HUD.Chat
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                var chatPanel = GetCodeDrawnChatPanel();
-                return chatPanel?.InputText ?? "";
+                var panel = GetIntegratedChatPanel();
+                if (panel.codeDrawn != null)
+                    return panel.codeDrawn.InputText ?? "";
+                else if (panel.myra != null)
+                    return panel.myra.InputText ?? "";
+                else
+                    return GetChatTextBox()?.Text ?? "";
             }
             else
             {
@@ -67,9 +79,13 @@ namespace EndlessClient.HUD.Chat
             return _hudControlProvider.GetComponent<ChatTextBox>(HudControlIdentifier.ChatTextBox);
         }
 
-        private CodeDrawnChatPanel GetCodeDrawnChatPanel()
+        /// <summary>
+        /// Returns whichever integrated chat panel is active (CodeDrawn or Myra), or both null if neither.
+        /// </summary>
+        private (CodeDrawnChatPanel codeDrawn, MyraChatPanel myra) GetIntegratedChatPanel()
         {
-            return _hudControlProvider.GetComponent<CodeDrawnChatPanel>(HudControlIdentifier.ChatPanel);
+            var panel = _hudControlProvider.GetComponent<IChatPanel>(HudControlIdentifier.ChatPanel);
+            return (panel as CodeDrawnChatPanel, panel as MyraChatPanel);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace EndlessClient.Dialogs
     /// so that fills and the character preview draw to the render target
     /// while crisp text/borders are drawn post-scale.
     /// </summary>
-    public class CodeDrawnCreateCharacterDialog : XNADialog, IPostScaleDrawable
+    public class CodeDrawnCreateCharacterDialog : XNADialog, IPostScaleDrawable, ICreateCharacterResult
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
@@ -66,6 +66,7 @@ namespace EndlessClient.Dialogs
         private const int RowSpacing = 30;
 
         public string Name => _inputBox.Text.Trim();
+        public string CharacterName => Name;
 
         private CharacterRenderProperties RenderProperties => _characterControl.RenderProperties;
         public int Gender => RenderProperties.Gender;

@@ -17,17 +17,8 @@ using XNAControls;
 
 namespace EndlessClient.Dialogs
 {
-    public class CodeDrawnItemTransferDialog : XNADialog, IPostScaleDrawable
+    public class CodeDrawnItemTransferDialog : XNADialog, IPostScaleDrawable, IItemTransferDialog
     {
-        public enum TransferType
-        {
-            DropItems,
-            JunkItems,
-            GiveItems,
-            TradeItems,
-            ShopTransfer,
-            BankTransfer
-        }
 
         private readonly IUIStyleProvider _styleProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
@@ -63,7 +54,7 @@ namespace EndlessClient.Dialogs
                                            IChatTextBoxActions chatTextBoxActions,
                                            ILocalizedStringFinder localizedStringFinder,
                                            string itemName,
-                                           TransferType transferType,
+                                           ItemTransferType transferType,
                                            int totalAmount,
                                            EOResourceID message)
         {

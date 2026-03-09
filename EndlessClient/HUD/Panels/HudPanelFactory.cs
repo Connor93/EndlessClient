@@ -12,7 +12,9 @@ using EndlessClient.Input;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.Services;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
+using Microsoft.Xna.Framework;
 using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Chat;
@@ -70,6 +72,9 @@ namespace EndlessClient.HUD.Panels
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
         private readonly IConfigFileSaveActions _configFileSaveActions;
+        private readonly Game _game;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public HudPanelFactory(INativeGraphicsManager nativeGraphicsManager,
                                IInventoryController inventoryController,
@@ -108,7 +113,10 @@ namespace EndlessClient.HUD.Panels
                                IEODialogButtonService dialogButtonService,
                                IUIStyleProvider styleProvider,
                                IGraphicsDeviceProvider graphicsDeviceProvider,
-                               IConfigFileSaveActions configFileSaveActions)
+                               IConfigFileSaveActions configFileSaveActions,
+                               Game game,
+                               IMyraUIManager myraUIManager,
+                               IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _inventoryController = inventoryController;
@@ -148,18 +156,28 @@ namespace EndlessClient.HUD.Panels
             _styleProvider = styleProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
             _configFileSaveActions = configFileSaveActions;
+            _game = game;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public NewsPanel CreateNewsPanel()
+        public IHudPanel CreateNewsPanel()
         {
-            var chatFont = _contentProvider.Fonts[Constants.FontSize11];
-
-            return new NewsPanel(_nativeGraphicsManager,
-                                 new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
-                                 _newsProvider,
-                                 chatFont,
-                                 _clientWindowSizeProvider)
-            { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new MyraNewsPanel(_game, _myraUIManager, _myraFontProvider, _newsProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                var chatFont = _contentProvider.Fonts[Constants.FontSize11];
+                return new NewsPanel(_nativeGraphicsManager,
+                                     new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
+                                     _newsProvider,
+                                     chatFont,
+                                     _clientWindowSizeProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
 
         public InventoryPanel CreateInventoryPanel()
@@ -254,15 +272,11 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public PassiveSpellsPanel CreatePassiveSpellsPanel()
+        public IHudPanel CreatePassiveSpellsPanel()
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnPassiveSpellsPanel(_nativeGraphicsManager,
-                    _styleProvider,
-                    _graphicsDeviceProvider,
-                    _contentProvider,
-                    _clientWindowSizeProvider)
+                return new MyraPassiveSpellsPanel(_game, _myraUIManager, _myraFontProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else
@@ -271,26 +285,17 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public DraggableHudPanel CreateChatPanel()
+        public IHudPanel CreateChatPanel()
         {
-            var chatFont = _contentProvider.Fonts[Constants.FontSize11];
-
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnChatPanel(_nativeGraphicsManager,
-                                              _chatActions,
-                                              new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
-                                              _chatProvider,
-                                              _hudControlProvider,
-                                              _styleProvider,
-                                              _graphicsDeviceProvider,
-                                              _contentProvider,
-                                              _clientWindowSizeProvider,
-                                              _configurationProvider)
+                return new MyraChatPanel(_game, _myraUIManager, _myraFontProvider,
+                    _chatActions, _chatProvider, _styleProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else
             {
+                var chatFont = _contentProvider.Fonts[Constants.FontSize11];
                 return new ChatPanel(_nativeGraphicsManager,
                                      _chatActions,
                                      new ChatRenderableGenerator(_nativeGraphicsManager, _styleProvider, _friendIgnoreListService, chatFont),
@@ -302,19 +307,13 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public DraggableHudPanel CreateStatsPanel()
+        public IHudPanel CreateStatsPanel()
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnStatsPanel(_characterProvider,
-                                               _characterInventoryProvider,
-                                               _experienceTableProvider,
-                                               _messageBoxFactory,
-                                               _trainingController,
-                                               _styleProvider,
-                                               _graphicsDeviceProvider,
-                                               _contentProvider,
-                                               _clientWindowSizeProvider)
+                return new MyraStatsPanel(_game, _myraUIManager, _myraFontProvider,
+                    _characterProvider, _characterInventoryProvider,
+                    _experienceTableProvider, _messageBoxFactory, _trainingController)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else
@@ -330,21 +329,13 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public DraggableHudPanel CreateOnlineListPanel()
+        public IHudPanel CreateOnlineListPanel()
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnOnlineListPanel(_hudControlProvider,
-                    _onlinePlayerProvider,
-                    _onlinePlayerActions,
-                    _partyDataProvider,
-                    _characterProvider,
-                    _friendIgnoreListService,
-                    _sfxPlayer,
-                    _styleProvider,
-                    _graphicsDeviceProvider,
-                    _contentProvider,
-                    _clientWindowSizeProvider)
+                return new MyraOnlineListPanel(_game, _myraUIManager, _myraFontProvider,
+                    _onlinePlayerProvider, _friendIgnoreListService, _partyDataProvider,
+                    _characterProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else
@@ -354,17 +345,12 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public DraggableHudPanel CreatePartyPanel()
+        public IHudPanel CreatePartyPanel()
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnPartyPanel(_partyActions,
-                    _partyDataProvider,
-                    _characterProvider,
-                    _styleProvider,
-                    _graphicsDeviceProvider,
-                    _contentProvider,
-                    _clientWindowSizeProvider)
+                return new MyraPartyPanel(_game, _myraUIManager, _myraFontProvider,
+                    _partyActions, _partyDataProvider, _characterProvider)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
             else
@@ -373,21 +359,13 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public DraggableHudPanel CreateSettingsPanel()
+        public IHudPanel CreateSettingsPanel()
         {
             if (_configurationProvider.UIMode == UIMode.Code)
             {
-                return new CodeDrawnSettingsPanel(_chatActions,
-                    _audioActions,
-                    _statusLabelSetter,
-                    _localizedStringFinder,
-                    _messageBoxFactory,
-                    _configurationRepository,
-                    _sfxPlayer,
-                    _styleProvider,
-                    _graphicsDeviceProvider,
-                    _contentProvider,
-                    _clientWindowSizeProvider,
+                return new MyraSettingsPanel(_game, _myraUIManager, _myraFontProvider,
+                    _chatActions, _audioActions, _localizedStringFinder,
+                    _messageBoxFactory, _configurationRepository, _sfxPlayer,
                     _configFileSaveActions)
                 { DrawOrder = HUD_CONTROL_LAYER };
             }
@@ -445,9 +423,17 @@ namespace EndlessClient.HUD.Panels
             }
         }
 
-        public HelpPanel CreateHelpPanel()
+        public IHudPanel CreateHelpPanel()
         {
-            return new HelpPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            if (_configurationProvider.UIMode == UIMode.Code)
+            {
+                return new MyraHelpPanel(_game, _myraUIManager, _myraFontProvider)
+                { DrawOrder = HUD_CONTROL_LAYER };
+            }
+            else
+            {
+                return new HelpPanel(_nativeGraphicsManager, _clientWindowSizeProvider) { DrawOrder = HUD_CONTROL_LAYER };
+            }
         }
     }
 }

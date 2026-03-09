@@ -7,6 +7,7 @@ using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Quest;
 using EOLib.Domain.Online;
 using EOLib.Localization;
+using Microsoft.Xna.Framework;
 using Moffat.EndlessOnline.SDK.Protocol.Net;
 
 namespace EndlessClient.HUD
@@ -146,7 +147,7 @@ namespace EndlessClient.HUD
         {
             if (_hudControlProvider.IsInGame)
             {
-                var window = _hudControlProvider.GetComponent<CodeDrawnExpTrackerWindow>(Controls.HudControlIdentifier.ExpTrackerWindow);
+                var window = (IExpTrackerWindow)_hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.ExpTrackerWindow);
                 window.Toggle();
             }
         }
@@ -155,13 +156,19 @@ namespace EndlessClient.HUD
         {
             if (_hudControlProvider.IsInGame)
             {
-                var window = _hudControlProvider.GetComponent<CodeDrawnQuestWindow>(Controls.HudControlIdentifier.QuestWindow);
-                var tracker = _hudControlProvider.GetComponent<CodeDrawnQuestTrackerWindow>(Controls.HudControlIdentifier.QuestTrackerWindow);
+                var tracker = (IQuestTrackerWindow)_hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.QuestTrackerWindow);
+                var component = _hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.QuestWindow);
 
-                // Link the windows together (idempotent)
-                window.SetQuestTrackerWindow(tracker);
-
-                window.Toggle();
+                if (component is CodeDrawnQuestWindow codeDrawn)
+                {
+                    codeDrawn.SetQuestTrackerWindow(tracker);
+                    codeDrawn.Toggle();
+                }
+                else if (component is Windows.MyraQuestWindow myra)
+                {
+                    myra.SetQuestTrackerWindow(tracker);
+                    myra.Toggle();
+                }
             }
         }
 
@@ -169,7 +176,7 @@ namespace EndlessClient.HUD
         {
             if (_hudControlProvider.IsInGame)
             {
-                var window = _hudControlProvider.GetComponent<CodeDrawnBountyTrackerWindow>(Controls.HudControlIdentifier.BountyTrackerWindow);
+                var window = (IBountyTrackerWindow)_hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.BountyTrackerWindow);
                 window.Toggle();
             }
         }
@@ -178,7 +185,7 @@ namespace EndlessClient.HUD
         {
             if (_hudControlProvider.IsInGame)
             {
-                var window = _hudControlProvider.GetComponent<CodeDrawnGuildInfoWindow>(Controls.HudControlIdentifier.GuildInfoWindow);
+                var window = (IGuildInfoWindow)_hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.GuildInfoWindow);
                 window.Toggle();
             }
         }
@@ -187,7 +194,7 @@ namespace EndlessClient.HUD
         {
             if (_hudControlProvider.IsInGame)
             {
-                var window = _hudControlProvider.GetComponent<CodeDrawnGuildPanel>(Controls.HudControlIdentifier.GuildPanel);
+                var window = (IGuildPanel)_hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.GuildPanel);
                 window.Toggle();
             }
         }
@@ -201,7 +208,7 @@ namespace EndlessClient.HUD
         {
             if (_hudControlProvider.IsInGame)
             {
-                var window = _hudControlProvider.GetComponent<Windows.CodeDrawnAchievementWindow>(Controls.HudControlIdentifier.AchievementWindow);
+                var window = (IAchievementWindow)_hudControlProvider.GetComponent<IGameComponent>(Controls.HudControlIdentifier.AchievementWindow);
                 window.Toggle();
             }
         }

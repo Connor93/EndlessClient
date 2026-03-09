@@ -3,9 +3,12 @@ using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.GameExecution;
 using EndlessClient.Input;
+using EndlessClient.UI.Myra;
 using EndlessClient.UIControls;
+using EOLib.Config;
 using EOLib.Domain.Login;
 using EOLib.Graphics;
+using EOLib.Localization;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -19,6 +22,10 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IPlayerInfoProvider _playerInfoProvider;
         private readonly IEODialogButtonService _eoDialogButtonService;
         private readonly IXnaControlSoundMapper _xnaControlSoundMapper;
+        private readonly ILocalizedStringFinder _localizedStringFinder;
+        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public ChangePasswordDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                            IGameStateProvider gameStateProvider,
@@ -26,7 +33,11 @@ namespace EndlessClient.Dialogs.Factories
                                            IEOMessageBoxFactory eoMessageBoxFactory,
                                            IPlayerInfoProvider playerInfoProvider,
                                            IEODialogButtonService eoDialogButtonService,
-                                           IXnaControlSoundMapper xnaControlSoundMapper)
+                                           IXnaControlSoundMapper xnaControlSoundMapper,
+                                           ILocalizedStringFinder localizedStringFinder,
+                                           IConfigurationProvider configurationProvider,
+                                           IMyraUIManager myraUIManager,
+                                           IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _gameStateProvider = gameStateProvider;
@@ -35,10 +46,24 @@ namespace EndlessClient.Dialogs.Factories
             _playerInfoProvider = playerInfoProvider;
             _eoDialogButtonService = eoDialogButtonService;
             _xnaControlSoundMapper = xnaControlSoundMapper;
+            _localizedStringFinder = localizedStringFinder;
+            _configurationProvider = configurationProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public ChangePasswordDialog BuildChangePasswordDialog()
+        public IChangePasswordDialog BuildChangePasswordDialog()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraChangePasswordDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _localizedStringFinder,
+                    _eoMessageBoxFactory,
+                    _playerInfoProvider);
+            }
+
             return new ChangePasswordDialog(_nativeGraphicsManager,
                                             _gameStateProvider,
                                             _contentProvider,

@@ -48,7 +48,7 @@ namespace EndlessClient.HUD.Windows
         // Quest Tracker state
         private bool _questTrackerEnabled = false;
         private readonly HashSet<string> _trackedQuestNames = new HashSet<string>();
-        private CodeDrawnQuestTrackerWindow _questTrackerWindow;
+        private IQuestTrackerWindow _questTrackerWindow;
 
         private const int WindowWidth = 320;
         private const int WindowHeight = 250;
@@ -109,7 +109,7 @@ namespace EndlessClient.HUD.Windows
             Visible = false;
         }
 
-        public void SetQuestTrackerWindow(CodeDrawnQuestTrackerWindow trackerWindow)
+        public void SetQuestTrackerWindow(IQuestTrackerWindow trackerWindow)
         {
             _questTrackerWindow = trackerWindow;
         }

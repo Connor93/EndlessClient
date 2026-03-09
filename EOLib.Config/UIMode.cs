@@ -13,6 +13,11 @@ namespace EOLib.Config
         /// <summary>
         /// Use procedurally-drawn code-based UI
         /// </summary>
-        Code
+        Code,
+
+        /// <summary>
+        /// Use Myra UI framework
+        /// </summary>
+        Myra
     }
 }

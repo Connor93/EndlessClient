@@ -6,6 +6,7 @@ using EndlessClient.GameExecution;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.Rendering;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
@@ -37,6 +38,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public LockerDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                    ILockerActions lockerActions,
@@ -54,7 +57,9 @@ namespace EndlessClient.Dialogs.Factories
                                    IGameStateProvider gameStateProvider,
                                    IContentProvider contentProvider,
                                    IClientWindowSizeProvider clientWindowSizeProvider,
-                                   IGraphicsDeviceProvider graphicsDeviceProvider)
+                                   IGraphicsDeviceProvider graphicsDeviceProvider,
+                                   IMyraUIManager myraUIManager,
+                                   IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _lockerActions = lockerActions;
@@ -73,16 +78,16 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public IXNADialog Create()
         {
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
-                return new CodeDrawnGridLockerDialog(_styleProviderFactory.Create(),
-                    _gameStateProvider,
-                    _clientWindowSizeProvider,
-                    _graphicsDeviceProvider,
+                return new MyraGridLockerDialog(_myraUIManager,
+                    _myraFontProvider,
                     _nativeGraphicsManager,
                     _lockerActions,
                     _localizedStringFinder,
@@ -91,8 +96,7 @@ namespace EndlessClient.Dialogs.Factories
                     _messageBoxFactory,
                     _characterProvider,
                     _lockerDataProvider,
-                    _eifFileProvider,
-                    _contentProvider);
+                    _eifFileProvider);
             }
 
             return new LockerDialog(_nativeGraphicsManager,

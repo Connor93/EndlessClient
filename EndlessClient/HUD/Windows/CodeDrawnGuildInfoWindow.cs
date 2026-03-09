@@ -21,7 +21,7 @@ namespace EndlessClient.HUD.Windows
     /// name/tag, level, EXP bar, points, contribution, and active buffs.
     /// Polls independently so data updates without the quest window being open.
     /// </summary>
-    public class CodeDrawnGuildInfoWindow : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnGuildInfoWindow : DraggableHudPanel, IZOrderedWindow, IGuildInfoWindow
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;

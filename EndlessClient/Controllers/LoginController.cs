@@ -151,7 +151,7 @@ namespace EndlessClient.Controllers
                 unableToLoadMap = true;
             }
 
-            GameLoadingDialog gameLoadingDialog = null;
+            IGameLoadingDialog gameLoadingDialog = null;
             try
             {
                 gameLoadingDialog = _gameLoadingDialogFactory.CreateGameLoadingDialog();

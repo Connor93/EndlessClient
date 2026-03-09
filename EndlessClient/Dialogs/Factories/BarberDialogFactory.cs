@@ -4,7 +4,9 @@ using EndlessClient.Content;
 using EndlessClient.GameExecution;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Factories;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Barber;
 using EOLib.Graphics;
@@ -29,6 +31,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly ISfxPlayer _sfxPlayer;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public BarberDialogFactory(IUIStyleProvider styleProvider,
                                    IGameStateProvider gameStateProvider,
@@ -42,7 +47,10 @@ namespace EndlessClient.Dialogs.Factories
                                    IEIFFileProvider eifFileProvider,
                                    ISfxPlayer sfxPlayer,
                                    IClientWindowSizeProvider clientWindowSizeProvider,
-                                   IGraphicsDeviceProvider graphicsDeviceProvider)
+                                   IGraphicsDeviceProvider graphicsDeviceProvider,
+                                   IConfigurationProvider configProvider,
+                                   IMyraUIManager myraUIManager,
+                                   IMyraFontProvider myraFontProvider)
         {
             _styleProvider = styleProvider;
             _gameStateProvider = gameStateProvider;
@@ -57,10 +65,27 @@ namespace EndlessClient.Dialogs.Factories
             _sfxPlayer = sfxPlayer;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _configProvider = configProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public CodeDrawnBarberDialog Create()
+        public IBarberDialog Create()
         {
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraBarberDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _characterRendererFactory,
+                    _characterRepository,
+                    _clientWindowSizeProvider,
+                    _localizedStringFinder,
+                    _barberActions,
+                    _characterInventoryProvider,
+                    _eifFileProvider);
+            }
+
             return new CodeDrawnBarberDialog(_styleProvider,
                                              _gameStateProvider,
                                              _characterRendererFactory,
@@ -79,6 +104,6 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IBarberDialogFactory
     {
-        CodeDrawnBarberDialog Create();
+        IBarberDialog Create();
     }
 }

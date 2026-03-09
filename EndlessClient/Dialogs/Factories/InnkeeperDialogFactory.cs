@@ -1,10 +1,13 @@
 ﻿using AutomaticTypeMapper;
 using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
+using EndlessClient.UI.Myra;
+using EOLib.Config;
 using EOLib.Domain.Interact.Citizen;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -21,6 +24,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly IENFFileProvider _enfFileProvider;
         private readonly ICitizenDataProvider _citizenDataProvider;
+        private readonly IConfigurationProvider _configurationProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public InnkeeperDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                IEODialogButtonService dialogButtonService,
@@ -31,7 +37,10 @@ namespace EndlessClient.Dialogs.Factories
                                ICitizenActions citizenActions,
                                IContentProvider contentProvider,
                                IENFFileProvider enfFileProvider,
-                               ICitizenDataProvider citizenDataProvider)
+                               ICitizenDataProvider citizenDataProvider,
+                               IConfigurationProvider configurationProvider,
+                               IMyraUIManager myraUIManager,
+                               IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _dialogButtonService = dialogButtonService;
@@ -43,10 +52,26 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _enfFileProvider = enfFileProvider;
             _citizenDataProvider = citizenDataProvider;
+            _configurationProvider = configurationProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public InnkeeperDialog Create()
+        public IXNADialog Create()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraInnkeeperDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _localizedStringFinder,
+                    _messageBoxFactory,
+                    _textInputDialogFactory,
+                    _citizenActions,
+                    _citizenDataProvider,
+                    _enfFileProvider);
+            }
+
             return new InnkeeperDialog(_nativeGraphicsManager,
                 _dialogButtonService,
                 _dialogIconService,
@@ -62,6 +87,6 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IInnkeeperDialogFactory
     {
-        InnkeeperDialog Create();
+        IXNADialog Create();
     }
 }

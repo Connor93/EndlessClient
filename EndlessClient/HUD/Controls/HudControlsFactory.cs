@@ -38,6 +38,7 @@ using EOLib.Graphics;
 using EOLib.Localization;
 using EOLib.Shared;
 using EndlessClient.HUD.Windows;
+using EndlessClient.UI.Myra;
 using Microsoft.Xna.Framework;
 using XNAControls;
 
@@ -102,6 +103,8 @@ namespace EndlessClient.HUD.Controls
         private readonly IAchievementProvider _achievementProvider;
         private readonly IAchievementActions _achievementActions;
         private readonly IEIFFileProvider _eifFileProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
         private IChatController _chatController;
         private IMainButtonController _mainButtonController;
 
@@ -157,7 +160,9 @@ namespace EndlessClient.HUD.Controls
                                   ICharacterInventoryProvider characterInventoryProvider,
                                   IAchievementProvider achievementProvider,
                                   IAchievementActions achievementActions,
-                                  IEIFFileProvider eifFileProvider)
+                                  IEIFFileProvider eifFileProvider,
+                                  IMyraUIManager myraUIManager,
+                                  IMyraFontProvider myraFontProvider)
         {
             _hudButtonController = hudButtonController;
             _hudPanelFactory = hudPanelFactory;
@@ -212,6 +217,8 @@ namespace EndlessClient.HUD.Controls
             _achievementProvider = achievementProvider;
             _achievementActions = achievementActions;
             _eifFileProvider = eifFileProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public void InjectChatController(IChatController chatController,
@@ -611,7 +618,7 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateStatePanel(InGameStates whichState)
         {
-            DraggableHudPanel retPanel;
+            IHudPanel retPanel;
 
             switch (whichState)
             {
@@ -651,11 +658,14 @@ namespace EndlessClient.HUD.Controls
                     codeDrawnChatPanel.OnInputClicked += (_, _) => _chatController.SelectChatTextBox();
                     codeDrawnChatPanel.OnInputTextChanged += (_, _) => _chatController.ClearAndWarnIfJailAndGlobal();
                 }
+                else if (retPanel is MyraChatPanel myraChatPanel)
+                {
+                    myraChatPanel.OnEnterPressed += (_, _) => _chatController.SendChatAndClearTextBox();
+                }
             }
             else
             {
-                retPanel.Visible = (_newsProvider.NewsText.Any() && whichState == InGameStates.News) ||
-                                   (!_newsProvider.NewsText.Any() && whichState == InGameStates.Chat);
+                retPanel.Visible = (!_newsProvider.NewsText.Any() && whichState == InGameStates.Chat);
             }
 
             if (_clientWindowSizeRepository.Resizable)
@@ -677,7 +687,7 @@ namespace EndlessClient.HUD.Controls
                     // Don't let config override chat panel visibility in code UI mode
                     // (chat panel with integrated input should always be visible)
                     if (panelConfig.GetValue("PANELS", $"{retPanel.GetType().Name}:Visible", out bool visible) &&
-                        !(_configurationProvider.UIMode == UIMode.Code && retPanel is CodeDrawnChatPanel))
+                        !(_configurationProvider.UIMode == UIMode.Code && (retPanel is CodeDrawnChatPanel or MyraChatPanel)))
                     {
                         retPanel.Visible = visible;
                     }
@@ -695,7 +705,7 @@ namespace EndlessClient.HUD.Controls
             {
                 if (initialPosition)
                 {
-                    if (retPanel is CodeDrawnChatPanel)
+                    if (retPanel is CodeDrawnChatPanel or MyraChatPanel)
                     {
                         // Chat panel anchors near the bottom
                         retPanel.DrawArea = retPanel.DrawArea.WithPosition(new Vector2(
@@ -776,6 +786,23 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateExpTrackerWindow()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraWindow = new Windows.MyraExpTrackerWindow(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    (ICharacterProvider)_characterRepository,
+                    _characterSessionRepository,
+                    _characterSessionProvider,
+                    _experienceTableProvider,
+                    _characterInventoryProvider)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 20
+                };
+                return myraWindow;
+            }
+
             var window = new Windows.CodeDrawnExpTrackerWindow(
                 (ICharacterProvider)_characterRepository,
                 _characterSessionRepository,
@@ -798,6 +825,20 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateQuestTrackerWindow()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraWindow = new Windows.MyraQuestTrackerWindow(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _questDataProvider,
+                    _questActions)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 25
+                };
+                return myraWindow;
+            }
+
             var window = new Windows.CodeDrawnQuestTrackerWindow(
                 _styleProvider,
                 _graphicsDeviceProvider,
@@ -843,6 +884,20 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateBountyTrackerWindow()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraWindow = new Windows.MyraBountyTrackerWindow(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _bountyDataProvider,
+                    _questActions)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 26
+                };
+                return myraWindow;
+            }
+
             var window = new Windows.CodeDrawnBountyTrackerWindow(
                 _styleProvider,
                 _graphicsDeviceProvider,
@@ -888,6 +943,20 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateGuildInfoWindow()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraWindow = new Windows.MyraGuildInfoWindow(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _bountyDataProvider,
+                    _questActions)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 27
+                };
+                return myraWindow;
+            }
+
             var window = new Windows.CodeDrawnGuildInfoWindow(
                 _styleProvider,
                 _graphicsDeviceProvider,
@@ -933,6 +1002,25 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateGuildPanel()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraPanel = new Windows.MyraGuildPanel(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _bountyDataProvider,
+                    _questActions,
+                    _chatActions,
+                    _textInputDialogFactory,
+                    _textMultiInputDialogFactory,
+                    (ICharacterProvider)_characterRepository,
+                    _lockerDataRepository)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 28
+                };
+                return myraPanel;
+            }
+
             var window = new Windows.CodeDrawnGuildPanel(
                 _styleProvider,
                 _graphicsDeviceProvider,
@@ -983,6 +1071,23 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateAchievementWindow()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraWindow = new Windows.MyraAchievementWindow(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _achievementProvider,
+                    _achievementActions,
+                    _eifFileProvider,
+                    _contentProvider,
+                    _characterRepository)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 30
+                };
+                return myraWindow;
+            }
+
             var achWindow = new Windows.CodeDrawnAchievementWindow(
                 _styleProvider,
                 _graphicsDeviceProvider,
@@ -990,7 +1095,8 @@ namespace EndlessClient.HUD.Controls
                 _clientWindowSizeRepository,
                 _achievementProvider,
                 _achievementActions,
-                _eifFileProvider)
+                _eifFileProvider,
+                _characterRepository)
             {
                 DrawOrder = HUD_CONTROL_LAYER + 30
             };
@@ -1029,6 +1135,20 @@ namespace EndlessClient.HUD.Controls
 
         private IGameComponent CreateQuestWindow()
         {
+            if (_configurationProvider.UIMode != UIMode.Gfx)
+            {
+                var myraWindow = new Windows.MyraQuestWindow(
+                    (Game)_endlessGameProvider.Game,
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _questDataProvider,
+                    _questActions)
+                {
+                    DrawOrder = HUD_CONTROL_LAYER + 20
+                };
+                return myraWindow;
+            }
+
             var questWindow = new Windows.CodeDrawnQuestWindow(
                 (ICharacterProvider)_characterRepository,
                 _questDataProvider,
@@ -1045,8 +1165,6 @@ namespace EndlessClient.HUD.Controls
             _windowZOrderManager.Register(questWindow);
             questWindow.Activated += () => _windowZOrderManager.BringToFront(questWindow);
 
-            // Link the quest window to the tracker window after controls are created
-            // This will be done via Initialize or a separate linking step
             return questWindow;
         }
 

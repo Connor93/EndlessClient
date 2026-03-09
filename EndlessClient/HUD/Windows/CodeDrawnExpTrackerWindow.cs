@@ -22,7 +22,7 @@ namespace EndlessClient.HUD.Windows
     /// Shows live session stats: duration, EXP/hr, time-to-level, kills, gold, and level progress.
     /// Supports start/pause/reset session controls.
     /// </summary>
-    public class CodeDrawnExpTrackerWindow : DraggableHudPanel, IZOrderedWindow
+    public class CodeDrawnExpTrackerWindow : DraggableHudPanel, IZOrderedWindow, IExpTrackerWindow
     {
         private readonly ICharacterProvider _characterProvider;
         private readonly ICharacterSessionRepository _sessionRepository;

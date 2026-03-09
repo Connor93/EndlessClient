@@ -6,6 +6,7 @@ using EndlessClient.GameExecution;
 using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.Rendering.Map;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
@@ -36,6 +37,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IUIStyleProviderFactory _styleProviderFactory;
         private readonly IGameStateProvider _gameStateProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public TradeDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                   ITradeActions tradeActions,
@@ -52,7 +55,9 @@ namespace EndlessClient.Dialogs.Factories
                                   IConfigurationProvider configProvider,
                                   IUIStyleProviderFactory styleProviderFactory,
                                   IGameStateProvider gameStateProvider,
-                                  IContentProvider contentProvider)
+                                  IContentProvider contentProvider,
+                                  IMyraUIManager myraUIManager,
+                                  IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _tradeActions = tradeActions;
@@ -70,15 +75,16 @@ namespace EndlessClient.Dialogs.Factories
             _styleProviderFactory = styleProviderFactory;
             _gameStateProvider = gameStateProvider;
             _contentProvider = contentProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public IXNADialog Create()
         {
-            if (_configProvider.UIMode == UIMode.Code)
+            if (_configProvider.UIMode != UIMode.Gfx)
             {
-                return new CodeDrawnTradeDialog(_styleProviderFactory.Create(),
-                    _gameStateProvider,
-                    _nativeGraphicsManager,
+                return new MyraTradeDialog(_myraUIManager,
+                    _myraFontProvider,
                     _tradeActions,
                     _localizedStringFinder,
                     _messageBoxFactory,
@@ -88,8 +94,7 @@ namespace EndlessClient.Dialogs.Factories
                     _characterProvider,
                     _eifFileProvider,
                     _mapItemGraphicProvider,
-                    _sfxPlayer,
-                    _contentProvider);
+                    _sfxPlayer);
             }
 
             return new TradeDialog(_nativeGraphicsManager,

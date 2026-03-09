@@ -93,7 +93,7 @@ namespace EndlessClient.Dialogs.Actions
                 dlg.AddItem($"[{id}] {itemRecord.Name}", () => ShowItemInfo(capturedId));
             }
 
-            dlg.DialogClosed += (_, _) => _activeDialogRepository.SearchResultsDialog = Option.None<CodeDrawnSearchResultsDialog>();
+            dlg.DialogClosed += (_, _) => _activeDialogRepository.SearchResultsDialog = Option.None<ISearchResultsDialog>();
             _activeDialogRepository.SearchResultsDialog = Option.Some(dlg);
 
             dlg.DialogClosing += (_, _) => _sfxPlayer.PlaySfx(SoundEffectID.DialogButtonClick);

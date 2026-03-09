@@ -7,6 +7,7 @@ using EndlessClient.HUD;
 using EndlessClient.HUD.Inventory;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Map;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
 using EOLib.Config;
 using EOLib.Domain.Character;
@@ -38,6 +39,8 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IContentProvider _contentProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;
         private readonly IGraphicsDeviceProvider _graphicsDeviceProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public ChestDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                   IChestActions chestActions,
@@ -55,7 +58,9 @@ namespace EndlessClient.Dialogs.Factories
                                   IGameStateProvider gameStateProvider,
                                   IContentProvider contentProvider,
                                   IClientWindowSizeProvider clientWindowSizeProvider,
-                                  IGraphicsDeviceProvider graphicsDeviceProvider)
+                                  IGraphicsDeviceProvider graphicsDeviceProvider,
+                                  IMyraUIManager myraUIManager,
+                                  IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _chestActions = chestActions;
@@ -74,10 +79,27 @@ namespace EndlessClient.Dialogs.Factories
             _contentProvider = contentProvider;
             _clientWindowSizeProvider = clientWindowSizeProvider;
             _graphicsDeviceProvider = graphicsDeviceProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
         public IXNADialog Create()
         {
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraChestDialog(_myraUIManager,
+                    _myraFontProvider,
+                    _chestActions,
+                    _messageBoxFactory,
+                    _statusLabelSetter,
+                    _localizedStringFinder,
+                    _inventorySpaceValidator,
+                    _mapItemGraphicProvider,
+                    _chestDataProvider,
+                    _eifFileProvider,
+                    _characterProvider);
+            }
+
             if (_configProvider.UIMode == UIMode.Code)
             {
                 return new CodeDrawnChestDialog(_styleProviderFactory.Create(),
@@ -115,4 +137,3 @@ namespace EndlessClient.Dialogs.Factories
         IXNADialog Create();
     }
 }
-

@@ -1,4 +1,5 @@
 ﻿using System;
+using EndlessClient.Rendering.Character;
 using EndlessClient.Rendering.Factories;
 using EOLib;
 using EOLib.Domain.Character;
@@ -32,6 +33,11 @@ namespace EndlessClient.UIControls
             SetSize(99, 123);
             _lastPosition = Vector2.Zero;
         }
+
+        /// <summary>
+        /// Expose the underlying renderer for direct drawing (e.g. PostRenderOverlay).
+        /// </summary>
+        public ICharacterRenderer GetRenderer() => _characterRenderer;
 
         protected override void OnUpdateControl(GameTime gameTime)
         {

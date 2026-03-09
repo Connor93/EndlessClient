@@ -29,7 +29,7 @@ namespace EndlessClient.Dialogs.Actions
             return dialog.ShowDialogAsync()
                 .ContinueWith(dialogTask =>
                     dialogTask.Result.SomeWhen(x => x == XNADialogResult.OK)
-                        .Map<ICharacterCreateParameters>(x => new CharacterCreateParameters(dialog.Name, dialog.Gender, dialog.HairStyle, dialog.HairColor, dialog.Race)));
+                        .Map<ICharacterCreateParameters>(x => new CharacterCreateParameters(dialog.CharacterName, dialog.Gender, dialog.HairStyle, dialog.HairColor, dialog.Race)));
         }
 
         public void ShowCharacterReplyDialog(CharacterReply response)

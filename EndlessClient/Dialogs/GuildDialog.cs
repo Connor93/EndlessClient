@@ -630,7 +630,7 @@ namespace EndlessClient.Dialogs
 
                 var goldName = _eifFileProvider.EIFFile[1].Name;
                 var goldInventoryItem = _characterInventoryProvider.ItemInventory.Single(x => x.ItemID == 1);
-                var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(goldName, CodeDrawnItemTransferDialog.TransferType.DropItems, goldInventoryItem.Amount, EOResourceID.DIALOG_TRANSFER_DROP);
+                var transferDialog = _itemTransferDialogFactory.CreateItemTransferDialog(goldName, ItemTransferType.DropItems, goldInventoryItem.Amount, EOResourceID.DIALOG_TRANSFER_DROP);
                 transferDialog.DialogClosing += (_, e) =>
                 {
                     if (e.Result != XNADialogResult.OK)

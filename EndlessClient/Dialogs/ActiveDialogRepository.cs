@@ -9,15 +9,15 @@ namespace EndlessClient.Dialogs
 {
     public interface IActiveDialogProvider : IDisposable
     {
-        Option<FriendIgnoreListDialog> FriendIgnoreDialog { get; }
+        Option<IXNADialog> FriendIgnoreDialog { get; }
 
-        Option<SessionExpDialog> SessionExpDialog { get; }
+        Option<IXNADialog> SessionExpDialog { get; }
 
-        Option<QuestStatusDialog> QuestStatusDialog { get; }
+        Option<IXNADialog> QuestStatusDialog { get; }
 
         Option<IXNADialog> PaperdollDialog { get; }
 
-        Option<BookDialog> BookDialog { get; }
+        Option<IXNADialog> BookDialog { get; }
 
         Option<IXNADialog> ShopDialog { get; }
 
@@ -27,11 +27,11 @@ namespace EndlessClient.Dialogs
 
         Option<IXNADialog> LockerDialog { get; }
 
-        Option<BankAccountDialog> BankAccountDialog { get; }
+        Option<IXNADialog> BankAccountDialog { get; }
 
-        Option<SkillmasterDialog> SkillmasterDialog { get; }
+        Option<IXNADialog> SkillmasterDialog { get; }
 
-        Option<BardDialog> BardDialog { get; }
+        Option<IXNADialog> BardDialog { get; }
 
         Option<ScrollingListDialog> MessageDialog { get; }
 
@@ -39,23 +39,23 @@ namespace EndlessClient.Dialogs
 
         Option<EOMessageBox> MessageBox { get; }
 
-        Option<BoardDialog> BoardDialog { get; }
+        Option<IXNADialog> BoardDialog { get; }
 
-        Option<JukeboxDialog> JukeboxDialog { get; }
+        Option<IXNADialog> JukeboxDialog { get; }
 
-        Option<InnkeeperDialog> InnkeeperDialog { get; }
+        Option<IXNADialog> InnkeeperDialog { get; }
 
-        Option<LawDialog> LawDialog { get; }
+        Option<IXNADialog> LawDialog { get; }
 
-        Option<CodeDrawnBarberDialog> BarberDialog { get; }
+        Option<IBarberDialog> BarberDialog { get; }
 
-        Option<ScrollingListDialog> HelpDialog { get; }
+        Option<IXNADialog> HelpDialog { get; }
 
         Option<IXNADialog> ItemInfoDialog { get; }
 
         Option<IXNADialog> NpcInfoDialog { get; }
 
-        Option<CodeDrawnSearchResultsDialog> SearchResultsDialog { get; }
+        Option<ISearchResultsDialog> SearchResultsDialog { get; }
 
         Option<IniEditorDialog> IniEditorDialog { get; }
 
@@ -64,15 +64,15 @@ namespace EndlessClient.Dialogs
 
     public interface IActiveDialogRepository : IDisposable
     {
-        Option<FriendIgnoreListDialog> FriendIgnoreDialog { get; set; }
+        Option<IXNADialog> FriendIgnoreDialog { get; set; }
 
-        Option<SessionExpDialog> SessionExpDialog { get; set; }
+        Option<IXNADialog> SessionExpDialog { get; set; }
 
-        Option<QuestStatusDialog> QuestStatusDialog { get; set; }
+        Option<IXNADialog> QuestStatusDialog { get; set; }
 
         Option<IXNADialog> PaperdollDialog { get; set; }
 
-        Option<BookDialog> BookDialog { get; set; }
+        Option<IXNADialog> BookDialog { get; set; }
 
         Option<IXNADialog> ShopDialog { get; set; }
 
@@ -82,11 +82,11 @@ namespace EndlessClient.Dialogs
 
         Option<IXNADialog> LockerDialog { get; set; }
 
-        Option<BankAccountDialog> BankAccountDialog { get; set; }
+        Option<IXNADialog> BankAccountDialog { get; set; }
 
-        Option<SkillmasterDialog> SkillmasterDialog { get; set; }
+        Option<IXNADialog> SkillmasterDialog { get; set; }
 
-        Option<BardDialog> BardDialog { get; set; }
+        Option<IXNADialog> BardDialog { get; set; }
 
         Option<ScrollingListDialog> MessageDialog { get; set; }
 
@@ -94,25 +94,25 @@ namespace EndlessClient.Dialogs
 
         Option<EOMessageBox> MessageBox { get; set; }
 
-        Option<BoardDialog> BoardDialog { get; set; }
+        Option<IXNADialog> BoardDialog { get; set; }
 
-        Option<JukeboxDialog> JukeboxDialog { get; set; }
+        Option<IXNADialog> JukeboxDialog { get; set; }
 
-        Option<InnkeeperDialog> InnkeeperDialog { get; set; }
+        Option<IXNADialog> InnkeeperDialog { get; set; }
 
-        Option<LawDialog> LawDialog { get; set; }
+        Option<IXNADialog> LawDialog { get; set; }
 
-        Option<CodeDrawnBarberDialog> BarberDialog { get; set; }
+        Option<IBarberDialog> BarberDialog { get; set; }
 
-        Option<GuildDialog> GuildDialog { get; set; }
+        Option<IXNADialog> GuildDialog { get; set; }
 
-        Option<ScrollingListDialog> HelpDialog { get; set; }
+        Option<IXNADialog> HelpDialog { get; set; }
 
         Option<IXNADialog> ItemInfoDialog { get; set; }
 
         Option<IXNADialog> NpcInfoDialog { get; set; }
 
-        Option<CodeDrawnSearchResultsDialog> SearchResultsDialog { get; set; }
+        Option<ISearchResultsDialog> SearchResultsDialog { get; set; }
 
         Option<IniEditorDialog> IniEditorDialog { get; set; }
 
@@ -122,15 +122,15 @@ namespace EndlessClient.Dialogs
     [AutoMappedType(IsSingleton = true)]
     public class ActiveDialogRepository : IActiveDialogRepository, IActiveDialogProvider
     {
-        public Option<FriendIgnoreListDialog> FriendIgnoreDialog { get; set; }
+        public Option<IXNADialog> FriendIgnoreDialog { get; set; }
 
-        public Option<SessionExpDialog> SessionExpDialog { get; set; }
+        public Option<IXNADialog> SessionExpDialog { get; set; }
 
-        public Option<QuestStatusDialog> QuestStatusDialog { get; set; }
+        public Option<IXNADialog> QuestStatusDialog { get; set; }
 
         public Option<IXNADialog> PaperdollDialog { get; set; }
 
-        public Option<BookDialog> BookDialog { get; set; }
+        public Option<IXNADialog> BookDialog { get; set; }
 
         public Option<IXNADialog> ShopDialog { get; set; }
 
@@ -140,11 +140,11 @@ namespace EndlessClient.Dialogs
 
         public Option<IXNADialog> LockerDialog { get; set; }
 
-        public Option<BankAccountDialog> BankAccountDialog { get; set; }
+        public Option<IXNADialog> BankAccountDialog { get; set; }
 
-        public Option<SkillmasterDialog> SkillmasterDialog { get; set; }
+        public Option<IXNADialog> SkillmasterDialog { get; set; }
 
-        public Option<BardDialog> BardDialog { get; set; }
+        public Option<IXNADialog> BardDialog { get; set; }
 
         public Option<ScrollingListDialog> MessageDialog { get; set; }
 
@@ -152,25 +152,25 @@ namespace EndlessClient.Dialogs
 
         public Option<EOMessageBox> MessageBox { get; set; }
 
-        public Option<BoardDialog> BoardDialog { get; set; }
+        public Option<IXNADialog> BoardDialog { get; set; }
 
-        public Option<JukeboxDialog> JukeboxDialog { get; set; }
+        public Option<IXNADialog> JukeboxDialog { get; set; }
 
-        public Option<InnkeeperDialog> InnkeeperDialog { get; set; }
+        public Option<IXNADialog> InnkeeperDialog { get; set; }
 
-        public Option<LawDialog> LawDialog { get; set; }
+        public Option<IXNADialog> LawDialog { get; set; }
 
-        public Option<CodeDrawnBarberDialog> BarberDialog { get; set; }
+        public Option<IBarberDialog> BarberDialog { get; set; }
 
-        public Option<GuildDialog> GuildDialog { get; set; }
+        public Option<IXNADialog> GuildDialog { get; set; }
 
-        public Option<ScrollingListDialog> HelpDialog { get; set; }
+        public Option<IXNADialog> HelpDialog { get; set; }
 
         public Option<IXNADialog> ItemInfoDialog { get; set; }
 
         public Option<IXNADialog> NpcInfoDialog { get; set; }
 
-        public Option<CodeDrawnSearchResultsDialog> SearchResultsDialog { get; set; }
+        public Option<ISearchResultsDialog> SearchResultsDialog { get; set; }
 
         public Option<IniEditorDialog> IniEditorDialog { get; set; }
 
@@ -224,31 +224,31 @@ namespace EndlessClient.Dialogs
             foreach (var dlg in ActiveDialogs)
                 dlg.MatchSome(d => d.Dispose());
 
-            FriendIgnoreDialog = Option.None<FriendIgnoreListDialog>();
-            SessionExpDialog = Option.None<SessionExpDialog>();
-            QuestStatusDialog = Option.None<QuestStatusDialog>();
+            FriendIgnoreDialog = Option.None<IXNADialog>();
+            SessionExpDialog = Option.None<IXNADialog>();
+            QuestStatusDialog = Option.None<IXNADialog>();
             PaperdollDialog = Option.None<IXNADialog>();
-            BookDialog = Option.None<BookDialog>();
+            BookDialog = Option.None<IXNADialog>();
             ShopDialog = Option.None<IXNADialog>();
             QuestDialog = Option.None<IXNADialog>();
             ChestDialog = Option.None<IXNADialog>();
             LockerDialog = Option.None<IXNADialog>();
-            BankAccountDialog = Option.None<BankAccountDialog>();
-            SkillmasterDialog = Option.None<SkillmasterDialog>();
-            BardDialog = Option.None<BardDialog>();
+            BankAccountDialog = Option.None<IXNADialog>();
+            SkillmasterDialog = Option.None<IXNADialog>();
+            BardDialog = Option.None<IXNADialog>();
             MessageDialog = Option.None<ScrollingListDialog>();
             TradeDialog = Option.None<IXNADialog>();
             MessageBox = Option.None<EOMessageBox>();
-            BoardDialog = Option.None<BoardDialog>();
-            JukeboxDialog = Option.None<JukeboxDialog>();
-            InnkeeperDialog = Option.None<InnkeeperDialog>();
-            LawDialog = Option.None<LawDialog>();
-            BarberDialog = Option.None<CodeDrawnBarberDialog>();
-            GuildDialog = Option.None<GuildDialog>();
-            HelpDialog = Option.None<ScrollingListDialog>();
+            BoardDialog = Option.None<IXNADialog>();
+            JukeboxDialog = Option.None<IXNADialog>();
+            InnkeeperDialog = Option.None<IXNADialog>();
+            LawDialog = Option.None<IXNADialog>();
+            BarberDialog = Option.None<IBarberDialog>();
+            GuildDialog = Option.None<IXNADialog>();
+            HelpDialog = Option.None<IXNADialog>();
             ItemInfoDialog = Option.None<IXNADialog>();
             NpcInfoDialog = Option.None<IXNADialog>();
-            SearchResultsDialog = Option.None<CodeDrawnSearchResultsDialog>();
+            SearchResultsDialog = Option.None<ISearchResultsDialog>();
             IniEditorDialog = Option.None<IniEditorDialog>();
         }
     }

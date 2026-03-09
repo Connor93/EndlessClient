@@ -28,7 +28,7 @@ namespace EndlessClient.Dialogs
     /// so that fills and the character preview draw to the render target
     /// while crisp text/borders are drawn post-scale.
     /// </summary>
-    public class CodeDrawnBarberDialog : XNADialog, IPostScaleDrawable
+    public class CodeDrawnBarberDialog : XNADialog, IPostScaleDrawable, IBarberDialog
     {
         private readonly IUIStyleProvider _styleProvider;
         private readonly IClientWindowSizeProvider _clientWindowSizeProvider;

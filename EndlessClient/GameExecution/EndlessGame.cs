@@ -11,6 +11,7 @@ using EndlessClient.Dialogs.Factories;
 using EndlessClient.Rendering;
 using EndlessClient.Rendering.Chat;
 using EndlessClient.Test;
+using EndlessClient.UI.Myra;
 using EndlessClient.UIControls;
 using EOLib;
 using EOLib.Config;
@@ -47,6 +48,7 @@ namespace EndlessClient.GameExecution
         private readonly IFixedTimeStepRepository _fixedTimeStepRepository;
         private readonly IMainButtonController _mainButtonController;
         private readonly IScrollingListDialogFactory _scrollingListDialogFactory;
+        private readonly IMyraUIManager _myraUIManager;
 
         private GraphicsDeviceManager _graphicsDeviceManager;
 
@@ -63,6 +65,8 @@ namespace EndlessClient.GameExecution
 #else
         private SpriteBatch _spriteBatch;
 #endif
+
+
 
         // Render target scaling fields
         private RenderTarget2D _gameRenderTarget;
@@ -81,7 +85,8 @@ namespace EndlessClient.GameExecution
                            IXnaControlSoundMapper soundMapper,
                            IFixedTimeStepRepository fixedTimeStepRepository,
                            IMainButtonController mainButtonController,
-                           IScrollingListDialogFactory scrollingListDialogFactory)
+                           IScrollingListDialogFactory scrollingListDialogFactory,
+                           IMyraUIManager myraUIManager)
         {
 
             _windowSizeRepository = windowSizeRepository;
@@ -99,6 +104,7 @@ namespace EndlessClient.GameExecution
             _fixedTimeStepRepository = fixedTimeStepRepository;
             _mainButtonController = mainButtonController;
             _scrollingListDialogFactory = scrollingListDialogFactory;
+            _myraUIManager = myraUIManager;
 
             _graphicsDeviceManager = new GraphicsDeviceManager(this)
             {
@@ -219,6 +225,9 @@ namespace EndlessClient.GameExecution
                 SurfaceFormat.Color,
                 DepthFormat.None);
 
+            // Initialize Myra UI system (theme, fonts, desktop, text input)
+            _myraUIManager.Initialize(this);
+
             SetUpInitialControlSet();
 
             if (_configurationProvider.MusicEnabled)
@@ -267,6 +276,7 @@ namespace EndlessClient.GameExecution
                 try
                 {
                     base.Update(gameTime);
+                    _myraUIManager.UpdateDialogs(gameTime);
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("Collection was modified"))
                 {
@@ -344,8 +354,8 @@ namespace EndlessClient.GameExecution
             _spriteBatch.Draw(_gameRenderTarget, destRect, Color.White);
             _spriteBatch.End();
 
-            // Draw post-scale UI controls directly to backbuffer for crisp rendering
-            DrawPostScaleControls(scale, new Point(offset.X, offset.Y));
+            // Post-scale controls (dragged items, chat bubbles) are drawn AFTER Myra
+            // so that dragged inventory items render on top of Myra dialog windows.
 
 #if DEBUG
             _frames++;
@@ -365,6 +375,14 @@ namespace EndlessClient.GameExecution
                 _lastFrameRenderTime = Stopwatch.StartNew();
             }
 #endif
+
+            // Render Myra UI last — on top of all game content.
+            // Desktop.Scale + BoundsFetcher handle scaling and mouse coordinate transform.
+            _myraUIManager.Render();
+
+            // Draw post-scale UI controls directly to backbuffer for crisp rendering
+            // This is after Myra so dragged items appear above Myra dialogs.
+            DrawPostScaleControls(scale, new Point(offset.X, offset.Y));
         }
 
         private void AttemptToLoadPubFiles()
@@ -471,5 +489,6 @@ namespace EndlessClient.GameExecution
                 }
             }
         }
+
     }
 }

@@ -2,11 +2,14 @@
 using EndlessClient.Content;
 using EndlessClient.Dialogs.Services;
 using EndlessClient.HUD;
+using EndlessClient.UI.Myra;
+using EOLib.Config;
 using EOLib.Domain.Character;
 using EOLib.Domain.Interact.Skill;
 using EOLib.Graphics;
 using EOLib.IO.Repositories;
 using EOLib.Localization;
+using XNAControls;
 
 namespace EndlessClient.Dialogs.Factories
 {
@@ -26,6 +29,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly ICharacterInventoryProvider _characterInventoryProvider;
         private readonly IPubFileProvider _pubFileProvider;
         private readonly IContentProvider _contentProvider;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public SkillmasterDialogFactory(INativeGraphicsManager nativeGraphicsManager,
                                         ISkillmasterActions skillmasterActions,
@@ -39,7 +45,10 @@ namespace EndlessClient.Dialogs.Factories
                                         ICharacterProvider characterProvider,
                                         ICharacterInventoryProvider characterInventoryProvider,
                                         IPubFileProvider pubFileProvider,
-                                        IContentProvider contentProvider)
+                                        IContentProvider contentProvider,
+                                        IConfigurationProvider configProvider,
+                                        IMyraUIManager myraUIManager,
+                                        IMyraFontProvider myraFontProvider)
         {
             _nativeGraphicsManager = nativeGraphicsManager;
             _skillmasterActions = skillmasterActions;
@@ -54,10 +63,29 @@ namespace EndlessClient.Dialogs.Factories
             _characterInventoryProvider = characterInventoryProvider;
             _pubFileProvider = pubFileProvider;
             _contentProvider = contentProvider;
+            _configProvider = configProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public SkillmasterDialog Create()
+        public IXNADialog Create()
         {
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                return new MyraSkillmasterDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _skillmasterActions,
+                    _localizedStringFinder,
+                    _statusLabelSetter,
+                    _messageBoxFactory,
+                    _textInputDialogFactory,
+                    _skillDataProvider,
+                    _characterProvider,
+                    _characterInventoryProvider,
+                    _pubFileProvider);
+            }
+
             return new SkillmasterDialog(_nativeGraphicsManager,
                                          _skillmasterActions,
                                          _dialogButtonService,
@@ -76,6 +104,6 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface ISkillmasterDialogFactory
     {
-        SkillmasterDialog Create();
+        IXNADialog Create();
     }
 }

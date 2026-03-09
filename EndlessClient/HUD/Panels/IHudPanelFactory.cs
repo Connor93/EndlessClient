@@ -2,26 +2,26 @@
 {
     public interface IHudPanelFactory
     {
-        NewsPanel CreateNewsPanel();
+        IHudPanel CreateNewsPanel();
 
         InventoryPanel CreateInventoryPanel();
 
         ActiveSpellsPanel CreateActiveSpellsPanel();
 
-        PassiveSpellsPanel CreatePassiveSpellsPanel();
+        IHudPanel CreatePassiveSpellsPanel();
 
-        DraggableHudPanel CreateChatPanel();
+        IHudPanel CreateChatPanel();
 
-        DraggableHudPanel CreateStatsPanel();
+        IHudPanel CreateStatsPanel();
 
-        DraggableHudPanel CreateOnlineListPanel();
+        IHudPanel CreateOnlineListPanel();
 
-        DraggableHudPanel CreatePartyPanel();
+        IHudPanel CreatePartyPanel();
 
-        DraggableHudPanel CreateSettingsPanel();
+        IHudPanel CreateSettingsPanel();
 
         MacroPanel CreateMacroPanel();
 
-        HelpPanel CreateHelpPanel();
+        IHudPanel CreateHelpPanel();
     }
 }

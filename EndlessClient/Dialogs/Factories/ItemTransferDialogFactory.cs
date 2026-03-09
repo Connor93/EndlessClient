@@ -4,7 +4,9 @@ using EndlessClient.Content;
 using EndlessClient.GameExecution;
 using EndlessClient.HUD.Chat;
 using EndlessClient.Rendering;
+using EndlessClient.UI.Myra;
 using EndlessClient.UI.Styles;
+using EOLib.Config;
 using EOLib.Graphics;
 using EOLib.Localization;
 using XNAControls;
@@ -22,6 +24,9 @@ namespace EndlessClient.Dialogs.Factories
         private readonly IChatTextBoxActions _chatTextBoxActions;
         private readonly ILocalizedStringFinder _localizedStringFinder;
         private readonly ISfxPlayer _sfxPlayer;
+        private readonly IConfigurationProvider _configProvider;
+        private readonly IMyraUIManager _myraUIManager;
+        private readonly IMyraFontProvider _myraFontProvider;
 
         public ItemTransferDialogFactory(IUIStyleProvider styleProvider,
                                          IGameStateProvider gameStateProvider,
@@ -30,7 +35,10 @@ namespace EndlessClient.Dialogs.Factories
                                          IContentProvider contentProvider,
                                          IChatTextBoxActions chatTextBoxActions,
                                          ILocalizedStringFinder localizedStringFinder,
-                                         ISfxPlayer sfxPlayer)
+                                         ISfxPlayer sfxPlayer,
+                                         IConfigurationProvider configProvider,
+                                         IMyraUIManager myraUIManager,
+                                         IMyraFontProvider myraFontProvider)
         {
             _styleProvider = styleProvider;
             _gameStateProvider = gameStateProvider;
@@ -40,21 +48,40 @@ namespace EndlessClient.Dialogs.Factories
             _chatTextBoxActions = chatTextBoxActions;
             _localizedStringFinder = localizedStringFinder;
             _sfxPlayer = sfxPlayer;
+            _configProvider = configProvider;
+            _myraUIManager = myraUIManager;
+            _myraFontProvider = myraFontProvider;
         }
 
-        public CodeDrawnItemTransferDialog CreateItemTransferDialog(string itemName, CodeDrawnItemTransferDialog.TransferType transferType, int totalAmount, EOResourceID message)
+        public IItemTransferDialog CreateItemTransferDialog(string itemName, ItemTransferType transferType, int totalAmount, EOResourceID message)
         {
-            var dlg = new CodeDrawnItemTransferDialog(_styleProvider,
-                _gameStateProvider,
-                _clientWindowSizeProvider,
-                _graphicsDeviceProvider,
-                _contentProvider,
-                _chatTextBoxActions,
-                _localizedStringFinder,
-                itemName,
-                transferType,
-                totalAmount,
-                message);
+            IItemTransferDialog dlg;
+
+            if (_configProvider.UIMode != UIMode.Gfx)
+            {
+                dlg = new MyraItemTransferDialog(
+                    _myraUIManager,
+                    _myraFontProvider,
+                    _localizedStringFinder,
+                    itemName,
+                    transferType,
+                    totalAmount,
+                    message);
+            }
+            else
+            {
+                dlg = new CodeDrawnItemTransferDialog(_styleProvider,
+                    _gameStateProvider,
+                    _clientWindowSizeProvider,
+                    _graphicsDeviceProvider,
+                    _contentProvider,
+                    _chatTextBoxActions,
+                    _localizedStringFinder,
+                    itemName,
+                    transferType,
+                    totalAmount,
+                    message);
+            }
 
             dlg.DialogClosing += (sender, args) =>
             {
@@ -69,6 +96,7 @@ namespace EndlessClient.Dialogs.Factories
 
     public interface IItemTransferDialogFactory
     {
-        CodeDrawnItemTransferDialog CreateItemTransferDialog(string itemName, CodeDrawnItemTransferDialog.TransferType transferType, int totalAmount, EOResourceID message);
+        IItemTransferDialog CreateItemTransferDialog(string itemName, ItemTransferType transferType, int totalAmount, EOResourceID message);
     }
 }
+
